@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("CLIENT")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects  Project[] @relation("ProjectOwner")
+  roomMemberships RoomMember[]
+  messages  Message[]
+  
+  privateSessionsAsInitiator PrivateSession[] @relation("Initiator")
+  privateSessionsAsTarget    PrivateSession[] @relation("Target")
+  createdInvitations         Invitation[]     @relation("InvitationCreator")
+  adminActions               ActionLog[]      @relation("AdminActions")
+  targetActions              ActionLog[]      @relation("TargetActions")
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String
+  owner     User     @relation("ProjectOwner", fields: [ownerId], references: [id])
+  rooms     Room[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Room {
+  id        String   @id @default(uuid())
+  name      String
+  description String?
+  isPrivate Boolean  @default(false)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  members   RoomMember[]
+  messages  Message[]
+  invitations Invitation[]
+  actionLogs ActionLog[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RoomMember {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime @default(now())
+  lastReadAt DateTime @default(now())
+
+  @@unique([userId, roomId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String?
+  translations String? // JSON string to store translations { "en": "...", "zh": "..." }
+  attachmentUrl String?
+  attachmentType String?
+  attachmentName String?
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  isPrivate Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model PrivateSession {
+  id          String   @id @default(uuid())
+  initiatorId String
+  targetId    String
+  initiator   User     @relation("Initiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  target      User     @relation("Target", fields: [targetId], references: [id], onDelete: Cascade)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  endedAt     DateTime?
+}
+
+model Invitation {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  role      String   // MANAGER, CLIENT
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  creatorId String
+  creator   User     @relation("InvitationCreator", fields: [creatorId], references: [id])
+}
+
+model ActionLog {
+  id        String   @id @default(uuid())
+  action    String   // e.g. "REMOVE_USER"
+  details   String?  // e.g. Reason
+  adminId   String
+  admin     User     @relation("AdminActions", fields: [adminId], references: [id])
+  targetId  String?
+  target    User?    @relation("TargetActions", fields: [targetId], references: [id])
+  roomId    String?
+  room      Room?    @relation(fields: [roomId], references: [id])
+  createdAt DateTime @default(now())
+}
