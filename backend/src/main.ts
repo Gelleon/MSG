@@ -2,16 +2,25 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import helmet from 'helmet';
 
 async function bootstrap() {
   try {
     console.log('Starting application...');
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
+    
+    // Security Headers
+    app.use(helmet({
+      crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow resource loading
+    }));
+
+    // CORS Configuration
     app.enableCors({
-      origin: true,
+      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       credentials: true,
     });
+
     // Serve static files from uploads directory
     app.useStaticAssets(join(process.cwd(), 'uploads'), {
       prefix: '/uploads/',
