@@ -32,6 +32,8 @@ export declare class RoomsController {
             password: string;
             name: string | null;
             role: string;
+            resetToken: string | null;
+            resetTokenExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -42,6 +44,8 @@ export declare class RoomsController {
                 password: string;
                 name: string | null;
                 role: string;
+                resetToken: string | null;
+                resetTokenExpires: Date | null;
                 createdAt: Date;
                 updatedAt: Date;
             };
@@ -74,6 +78,8 @@ export declare class RoomsController {
                 password: string;
                 name: string | null;
                 role: string;
+                resetToken: string | null;
+                resetTokenExpires: Date | null;
                 createdAt: Date;
                 updatedAt: Date;
             };
@@ -103,6 +109,8 @@ export declare class RoomsController {
             password: string;
             name: string | null;
             role: string;
+            resetToken: string | null;
+            resetTokenExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -113,6 +121,8 @@ export declare class RoomsController {
                 password: string;
                 name: string | null;
                 role: string;
+                resetToken: string | null;
+                resetTokenExpires: Date | null;
                 createdAt: Date;
                 updatedAt: Date;
             };
@@ -145,6 +155,8 @@ export declare class RoomsController {
                 password: string;
                 name: string | null;
                 role: string;
+                resetToken: string | null;
+                resetTokenExpires: Date | null;
                 createdAt: Date;
                 updatedAt: Date;
             };
@@ -171,6 +183,8 @@ export declare class RoomsController {
             password: string;
             name: string | null;
             role: string;
+            resetToken: string | null;
+            resetTokenExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -181,6 +195,8 @@ export declare class RoomsController {
                 password: string;
                 name: string | null;
                 role: string;
+                resetToken: string | null;
+                resetTokenExpires: Date | null;
                 createdAt: Date;
                 updatedAt: Date;
             };
@@ -213,6 +229,8 @@ export declare class RoomsController {
                 password: string;
                 name: string | null;
                 role: string;
+                resetToken: string | null;
+                resetTokenExpires: Date | null;
                 createdAt: Date;
                 updatedAt: Date;
             };
@@ -240,6 +258,8 @@ export declare class RoomsController {
             password: string;
             name: string | null;
             role: string;
+            resetToken: string | null;
+            resetTokenExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -278,6 +298,8 @@ export declare class RoomsController {
                 password: string;
                 name: string | null;
                 role: string;
+                resetToken: string | null;
+                resetTokenExpires: Date | null;
                 createdAt: Date;
                 updatedAt: Date;
             } | null;
@@ -287,6 +309,8 @@ export declare class RoomsController {
                 password: string;
                 name: string | null;
                 role: string;
+                resetToken: string | null;
+                resetTokenExpires: Date | null;
                 createdAt: Date;
                 updatedAt: Date;
             } | null;

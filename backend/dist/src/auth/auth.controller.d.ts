@@ -11,8 +11,23 @@ export declare class AuthController {
         email: string;
         name: string | null;
         role: string;
+        resetToken: string | null;
+        resetTokenExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
+    }>;
+    forgotPassword(email: string): Promise<{
+        message: string;
+        debug_token?: undefined;
+    } | {
+        message: string;
+        debug_token: string;
+    }>;
+    resetPassword(body: {
+        token: string;
+        password: string;
+    }): Promise<{
+        message: string;
     }>;
     getProfile(req: any): any;
 }

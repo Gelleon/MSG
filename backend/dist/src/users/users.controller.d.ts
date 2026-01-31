@@ -14,6 +14,8 @@ export declare class UsersController {
         password: string;
         name: string | null;
         role: string;
+        resetToken: string | null;
+        resetTokenExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -25,6 +27,8 @@ export declare class UsersController {
         password: string;
         name: string | null;
         role: string;
+        resetToken: string | null;
+        resetTokenExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
     } | null>;
@@ -34,6 +38,8 @@ export declare class UsersController {
         password: string;
         name: string | null;
         role: string;
+        resetToken: string | null;
+        resetTokenExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -43,6 +49,8 @@ export declare class UsersController {
         password: string;
         name: string | null;
         role: string;
+        resetToken: string | null;
+        resetTokenExpires: Date | null;
         createdAt: Date;
         updatedAt: Date;
     }>;

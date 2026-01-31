@@ -24,6 +24,8 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
             password: string;
             name: string | null;
             role: string;
+            resetToken: string | null;
+            resetTokenExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -34,6 +36,8 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
                 password: string;
                 name: string | null;
                 role: string;
+                resetToken: string | null;
+                resetTokenExpires: Date | null;
                 createdAt: Date;
                 updatedAt: Date;
             };
@@ -66,6 +70,8 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
                 password: string;
                 name: string | null;
                 role: string;
+                resetToken: string | null;
+                resetTokenExpires: Date | null;
                 createdAt: Date;
                 updatedAt: Date;
             };

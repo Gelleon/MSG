@@ -34,6 +34,27 @@ export class UsersService {
     });
   }
 
+  async setResetToken(email: string, token: string, expires: Date): Promise<User> {
+    return this.prisma.user.update({
+      where: { email },
+      data: {
+        resetToken: token,
+        resetTokenExpires: expires,
+      },
+    });
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        resetToken: token,
+        resetTokenExpires: {
+          gt: new Date(),
+        },
+      },
+    });
+  }
+
   async findAll(params: {
     skip?: number;
     take?: number;

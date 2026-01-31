@@ -6,6 +6,8 @@ export declare class UsersService {
     findOne(email: string): Promise<User | null>;
     createUser(data: Prisma.UserCreateInput): Promise<User>;
     findById(id: string): Promise<User | null>;
+    setResetToken(email: string, token: string, expires: Date): Promise<User>;
+    findByResetToken(token: string): Promise<User | null>;
     findAll(params?: {
         skip?: number;
         take?: number;

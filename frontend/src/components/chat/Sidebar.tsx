@@ -1,0 +1,488 @@
+'use client';
+
+import { useEffect, useState, useMemo } from 'react';
+import { useAuthStore } from '@/lib/store';
+import { useChatStore } from '@/lib/chat-store';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTranslations } from 'next-intl';
+import { 
+  Plus, 
+  Search, 
+  Settings, 
+  LogOut, 
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Copy,
+  MessageSquarePlus,
+  User,
+  ShieldCheck
+} from 'lucide-react';
+import { useRouter } from '@/navigation';
+import CreateRoomDialog from './CreateRoomDialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+
+import { cn, stringToColor } from '@/lib/utils';
+import InviteMemberModal from './InviteMemberModal';
+import RoomMembersDialog from './RoomMembersDialog';
+import { Lock, CornerDownRight } from 'lucide-react';
+
+import { useNotificationStore } from '@/lib/notification-store';
+import { Label } from '@/components/ui/label';
+
+export default function Sidebar({ className }: { className?: string }) {
+  const { user, logout } = useAuthStore();
+  const { rooms, fetchRooms, joinRoom, currentRoomId, createRoom, renameRoom, deleteRoom } = useChatStore();
+  const { soundEnabled, visualEnabled, toggleSound, toggleVisual } = useNotificationStore();
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const tSidebar = useTranslations('Sidebar');
+  const tCommon = useTranslations('Common');
+  const tDialogs = useTranslations('Dialogs');
+  const tSettings = useTranslations('Settings');
+
+  // Rename Dialog State
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [roomToRename, setRoomToRename] = useState<{id: string, name: string} | null>(null);
+  const [newName, setNewName] = useState('');
+
+  // Delete Dialog State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
+
+  // Invite Dialog State
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteRoomId, setInviteRoomId] = useState<string | null>(null);
+
+  // Members Dialog State
+  const [membersDialogOpen, setMembersDialogOpen] = useState(false);
+  const [membersRoom, setMembersRoom] = useState<{id: string, name: string} | null>(null);
+
+  // Settings Dialog State
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+
+  const handleRenameClick = (id: string, name: string) => {
+    setRoomToRename({ id, name });
+    setNewName(name);
+    setRenameDialogOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setRoomToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDuplicateClick = async (room: {id: string, name: string, description?: string}) => {
+    try {
+      await createRoom(tSidebar('copyOf', {name: room.name}), room.description);
+    } catch (error) {
+      console.error("Failed to duplicate room", error);
+    }
+  };
+
+  const handleInviteClick = (id: string) => {
+      setInviteRoomId(id);
+      setInviteDialogOpen(true);
+  };
+
+  const handleViewMembersClick = (id: string, name: string) => {
+    setMembersRoom({ id, name });
+    setMembersDialogOpen(true);
+  };
+
+  const confirmRename = async () => {
+    if (roomToRename && newName.trim()) {
+      await renameRoom(roomToRename.id, newName);
+      setRenameDialogOpen(false);
+      setRoomToRename(null);
+      setNewName('');
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (roomToDelete) {
+      await deleteRoom(roomToDelete);
+      setDeleteDialogOpen(false);
+      setRoomToDelete(null);
+    }
+  };
+
+  const displayRooms = useMemo(() => {
+    // Helper to check if a room matches search
+    const matchesSearch = (room: {name: string}) => 
+        room.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const parents = rooms.filter(r => !r.parentRoomId);
+    const children = rooms.filter(r => r.parentRoomId);
+    
+    const result: typeof rooms = [];
+    const addedIds = new Set<string>();
+
+    parents.forEach(p => {
+        const pMatches = matchesSearch(p);
+        const myChildren = children.filter(c => c.parentRoomId === p.id);
+        const matchingChildren = myChildren.filter(c => matchesSearch(c));
+        
+        // Show parent if it matches OR if it has matching children (context)
+        // If no search query, show everything
+        if (!searchQuery || pMatches || matchingChildren.length > 0) {
+            if (!addedIds.has(p.id)) {
+                result.push(p);
+                addedIds.add(p.id);
+            }
+            
+            // If search query exists, only show matching children
+            // If no search query, show all children
+            const childrenToShow = searchQuery ? matchingChildren : myChildren;
+            
+            childrenToShow.forEach(c => {
+                if (!addedIds.has(c.id)) {
+                    result.push(c);
+                    addedIds.add(c.id);
+                }
+            });
+        }
+    });
+    
+    // Handle orphans (children whose parents are missing or not in the main list)
+    const orphans = children.filter(c => !parents.find(p => p.id === c.parentRoomId));
+    orphans.forEach(c => {
+         if ((!searchQuery || matchesSearch(c)) && !addedIds.has(c.id)) {
+            result.push(c);
+            addedIds.add(c.id);
+        }
+    });
+    
+    return result;
+  }, [rooms, searchQuery]);
+
+  return (
+    <div className={cn("w-[320px] flex flex-col h-full bg-sidebar border-r border-sidebar-border text-sidebar-foreground font-sans", className)}>
+      
+      {/* Header Section */}
+      <div className="p-4 space-y-4">
+        <div className="flex items-center justify-between px-1">
+           <h2 className="text-2xl font-bold tracking-tight text-sidebar-foreground">{tSidebar('chats')}</h2>
+           <CreateRoomDialog>
+             <Button variant="ghost" size="icon" className="h-10 w-10 bg-secondary/20 hover:bg-secondary/40 text-secondary-foreground rounded-full transition-all duration-200">
+               <MessageSquarePlus className="h-5 w-5" />
+             </Button>
+           </CreateRoomDialog>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative px-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70 pointer-events-none" />
+          <Input 
+            placeholder={tSidebar('searchPlaceholder')}
+            className="pl-10 h-10 rounded-full bg-secondary/50 border-none focus-visible:ring-1 focus-visible:ring-ring/20 transition-all placeholder:text-muted-foreground/60" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Chat List */}
+      <ScrollArea className="flex-1 px-3">
+        <div className="space-y-1 py-2">
+            {displayRooms.length === 0 && (
+                <div className="text-center py-8 px-4 text-muted-foreground text-sm">
+                    {tSidebar('noChats')} <br/>{tSidebar('startConversation')}
+                </div>
+            )}
+            
+            {displayRooms.map((room) => {
+                const isActive = currentRoomId === room.id;
+                const isPrivate = room.isPrivate;
+                const isChild = !!room.parentRoomId;
+                
+                return (
+                 <ContextMenu key={room.id}>
+                   <ContextMenuTrigger asChild>
+                     <button
+                       className={cn(
+                          "w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all duration-300 ease-in-out group relative overflow-hidden",
+                          // Animation
+                          "animate__animated animate__fadeInLeft animate__faster",
+                          // Active State
+                          isActive 
+                            ? "bg-secondary/80 text-secondary-foreground shadow-md ring-1 ring-border/50 scale-[1.01] z-10" 
+                            : "hover:bg-secondary/40 text-sidebar-foreground z-0 hover:z-10 hover:shadow-sm",
+                          // Child styling
+                          isChild 
+                            ? "ml-6 w-[calc(100%-1.5rem)] border-l-2 border-primary/20 rounded-l-md mt-0.5 bg-gradient-to-r from-secondary/10 to-transparent" 
+                            : "mb-1 border border-transparent hover:border-border/30"
+                        )}
+                       onClick={() => joinRoom(room.id)}
+                      >
+                        {/* Connecting Line for Child */}
+                        {isChild && (
+                           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary/20 rounded-r-full opacity-50" />
+                        )}
+                        <div className="relative">
+                           <Avatar className={cn(
+                               "h-12 w-12 border-2 shadow-sm transition-transform duration-300 group-hover:scale-105", 
+                               isPrivate ? "ring-2 ring-primary/10 border-primary/10" : "border-background",
+                               isActive ? "ring-2 ring-background" : ""
+                           )}>
+                               <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room.id}`} />
+                               <AvatarFallback 
+                                style={{ backgroundColor: isPrivate ? undefined : stringToColor(room.name, 70, 95), color: isPrivate ? undefined : stringToColor(room.name, 80, 40) }}
+                                className={cn("text-xs font-bold", isPrivate ? "bg-secondary text-secondary-foreground" : "")}>
+                                    {isPrivate ? <Lock className="w-4 h-4" /> : room.name.substring(0, 2).toUpperCase()}
+                               </AvatarFallback>
+                           </Avatar>
+                           {isChild && (
+                               <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 shadow-sm border border-border z-20">
+                                   <CornerDownRight className="w-3 h-3 text-muted-foreground" />
+                               </div>
+                           )}
+                       </div>
+                       
+                       <div className="flex-1 min-w-0 flex flex-col gap-1 z-10">
+                         <div className="flex justify-between items-center">
+                             <span className={cn("font-semibold text-[15px] truncate leading-tight tracking-tight flex items-center gap-1.5", isActive ? "text-foreground" : "text-foreground/90")}>
+                                 {room.name}
+                             </span>
+                             {/* Mock time for now */}
+                             {/* <span className="text-[11px] tabular-nums text-muted-foreground/60">
+                                 12:30
+                             </span> */}
+                         </div>
+                         <div className="flex justify-between items-center gap-2">
+                             <p className={cn("text-[13px] truncate flex-1 transition-colors duration-200", isActive ? "text-foreground/80 font-medium" : "text-muted-foreground group-hover:text-muted-foreground/80")}>
+                                 {room.description || (isPrivate ? tSidebar('privateSession') : tSidebar('noDescription'))}
+                             </p>
+                             {(room.unreadCount || 0) > 0 && (
+                                <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center h-4 flex items-center justify-center shadow-sm ring-2 ring-background animate-pulse">
+                                    {room.unreadCount}
+                                </span>
+                             )}
+                         </div>
+                       </div>
+                     </button>
+                   </ContextMenuTrigger>
+                   <ContextMenuContent className="w-56">
+                     <ContextMenuItem onClick={() => handleViewMembersClick(room.id, room.name)}>
+                        <User className="mr-2 h-4 w-4" />
+                        {tSidebar('viewMembers')}
+                     </ContextMenuItem>
+                     {user?.role === 'ADMIN' && (
+                       <ContextMenuItem onClick={() => handleInviteClick(room.id)}>
+                         <Plus className="mr-2 h-4 w-4" />
+                         {tSidebar('inviteMembers')}
+                       </ContextMenuItem>
+                     )}
+                     {user?.role === 'ADMIN' && (
+                       <>
+                         <ContextMenuItem onClick={() => handleRenameClick(room.id, room.name)}>
+                           <Pencil className="mr-2 h-4 w-4" />
+                           {tSidebar('rename')}
+                         </ContextMenuItem>
+                         <ContextMenuItem onClick={() => handleDuplicateClick(room)}>
+                           <Copy className="mr-2 h-4 w-4" />
+                           {tSidebar('duplicate')}
+                         </ContextMenuItem>
+                         <ContextMenuSeparator />
+                         <ContextMenuItem 
+                            onClick={() => handleDeleteClick(room.id)}
+                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                         >
+                           <Trash2 className="mr-2 h-4 w-4" />
+                           {tSidebar('delete')}
+                         </ContextMenuItem>
+                       </>
+                     )}
+                   </ContextMenuContent>
+                 </ContextMenu>
+                );
+            })}
+        </div>
+      </ScrollArea>
+
+      {/* User Footer */}
+      <div className="p-3 mt-auto border-t border-border/40 bg-background/50 backdrop-blur-sm">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start px-3 py-6 rounded-2xl hover:bg-secondary/50 group transition-all duration-200">
+              <div className="flex items-center gap-3 text-left w-full">
+                <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                    {user?.username?.[0]?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate text-foreground group-hover:text-foreground">{user?.username || tSidebar('guestUser')}</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <p className="text-xs text-muted-foreground truncate">{tSidebar('online')}</p>
+                  </div>
+                </div>
+                <Settings className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 mb-2" side="right">
+            <DropdownMenuLabel>{tSidebar('myAccount')}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {user?.role === 'ADMIN' && (
+              <>
+                 <DropdownMenuItem onClick={() => router.push('/admin/users')}>
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    {tSidebar('adminPanel')}
+                 </DropdownMenuItem>
+                 <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem onClick={() => setSettingsDialogOpen(true)}>
+              <Settings className="mr-2 h-4 w-4" />
+              {tCommon('settings')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+              <LogOut className="mr-2 h-4 w-4" />
+              {tCommon('logout')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Dialogs */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{tDialogs('renameRoom.title')}</DialogTitle>
+            <DialogDescription>
+              {tDialogs('renameRoom.description')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input 
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder={tDialogs('renameRoom.label')}
+              onKeyDown={(e) => e.key === 'Enter' && confirmRename()}
+              className="col-span-3"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>{tCommon('cancel')}</Button>
+            <Button onClick={confirmRename}>{tDialogs('renameRoom.submit')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{tDialogs('deleteRoom.title')}</DialogTitle>
+            <DialogDescription>
+              {tDialogs('deleteRoom.description')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>{tCommon('cancel')}</Button>
+            <Button variant="destructive" onClick={confirmDelete}>{tDialogs('deleteRoom.confirm')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Invite Member Modal */}
+      {inviteRoomId && (
+        <InviteMemberModal 
+          isOpen={inviteDialogOpen} 
+          onClose={() => {
+            setInviteDialogOpen(false);
+            setInviteRoomId(null);
+          }} 
+          roomId={inviteRoomId} 
+        />
+      )}
+
+      {membersRoom && (
+        <RoomMembersDialog 
+          isOpen={membersDialogOpen} 
+          onClose={() => {
+            setMembersDialogOpen(false);
+            setMembersRoom(null);
+          }} 
+          roomId={membersRoom.id}
+          roomName={membersRoom.name}
+        />
+      )}
+
+      {/* Settings Dialog */}
+      <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{tSettings('title')}</DialogTitle>
+            <DialogDescription>
+              {tSettings('description')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            <div className="flex items-center justify-between space-x-2">
+              <div className="flex flex-col space-y-1">
+                <Label htmlFor="sound-notifications">{tSettings('soundTitle')}</Label>
+                <span className="text-xs text-muted-foreground">{tSettings('soundDesc')}</span>
+              </div>
+              <Switch
+                id="sound-notifications"
+                checked={soundEnabled}
+                onCheckedChange={toggleSound}
+              />
+            </div>
+            <div className="flex items-center justify-between space-x-2">
+              <div className="flex flex-col space-y-1">
+                <Label htmlFor="visual-notifications">{tSettings('visualTitle')}</Label>
+                <span className="text-xs text-muted-foreground">{tSettings('visualDesc')}</span>
+              </div>
+              <Switch
+                id="visual-notifications"
+                checked={visualEnabled}
+                onCheckedChange={toggleVisual}
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+    </div>
+  );
+}

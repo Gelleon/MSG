@@ -1,0 +1,43 @@
+DEBUG LOG STARTED2026-01-31T22:21:51.599Z: DEBUG: register called with {"username":"ignored_user","email":"test_1769898111530@example.com","password":"password123","name":"Integration Test User"}
+2026-01-31T22:21:51.600Z: DEBUG: calling findOne
+2026-01-31T22:21:51.614Z: DEBUG: error caught 
+Invalid `this.prisma.user.findUnique()` invocation in
+C:\Users\ethan\Desktop\project\MSG\backend\dist\src\users\users.service.js:55:33
+
+  52     this.prisma = prisma;
+  53 }
+  54 async findOne(email) {
+→ 55     return this.prisma.user.findUnique(
+The column `main.User.resetToken` does not exist in the current database.
+Stack: PrismaClientKnownRequestError: 
+Invalid `this.prisma.user.findUnique()` invocation in
+C:\Users\ethan\Desktop\project\MSG\backend\dist\src\users\users.service.js:55:33
+
+  52     this.prisma = prisma;
+  53 }
+  54 async findOne(email) {
+→ 55     return this.prisma.user.findUnique(
+The column `main.User.resetToken` does not exist in the current database.
+    at $n.handleRequestError (C:\Users\ethan\Desktop\project\MSG\backend\node_modules\@prisma\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (C:\Users\ethan\Desktop\project\MSG\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (C:\Users\ethan\Desktop\project\MSG\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (C:\Users\ethan\Desktop\project\MSG\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async AuthService.register (C:\Users\ethan\Desktop\project\MSG\backend\dist\src\auth\auth.service.js:81:34)
+    at async C:\Users\ethan\Desktop\project\MSG\backend\node_modules\@nestjs\core\router\router-execution-context.js:46:28
+    at async C:\Users\ethan\Desktop\project\MSG\backend\node_modules\@nestjs\core\router\router-proxy.js:9:17
+2026-01-31T22:23:08.386Z: DEBUG: register called with {"username":"ignored_user","email":"test_1769898188319@example.com","password":"password123","name":"Integration Test User"}
+2026-01-31T22:23:08.387Z: DEBUG: calling findOne
+2026-01-31T22:23:08.394Z: DEBUG: creating user
+2026-01-31T22:23:08.506Z: DEBUG: user created dbcfe866-7ed6-4f37-873f-b780f9ffa030
+2026-01-31T22:23:08.520Z: DEBUG: register called with {"username":"ignored_user_2","email":"test_1769898188319@example.com","password":"password123","name":"Duplicate User"}
+2026-01-31T22:23:08.521Z: DEBUG: calling findOne
+2026-01-31T22:23:08.525Z: DEBUG: user exists
+2026-01-31T22:23:08.527Z: DEBUG: error caught User with this email already exists
+Stack: BadRequestException: User with this email already exists
+    at AuthService.register (C:\Users\ethan\Desktop\project\MSG\backend\dist\src\auth\auth.service.js:85:23)
+    at async C:\Users\ethan\Desktop\project\MSG\backend\node_modules\@nestjs\core\router\router-execution-context.js:46:28
+    at async C:\Users\ethan\Desktop\project\MSG\backend\node_modules\@nestjs\core\router\router-proxy.js:9:17
+2026-01-31T22:23:08.535Z: DEBUG: register called with {"email":"extra_1769898188532@example.com","password":"password123","name":"Extra Fields User","unknownField":"should_be_ignored","role":"ADMIN"}
+2026-01-31T22:23:08.536Z: DEBUG: calling findOne
+2026-01-31T22:23:08.537Z: DEBUG: creating user
+2026-01-31T22:23:08.646Z: DEBUG: user created fef0240e-8fb6-49af-9648-4efb8c8695fb
