@@ -39,11 +39,14 @@ model Project {
 
 model Room {
   id        String   @id @default(uuid())
-  name      String
+  name      String   @unique
   description String?
   isPrivate Boolean  @default(false)
   projectId String?
   project   Project? @relation(fields: [projectId], references: [id])
+  parentRoomId String?
+  parentRoom   Room?    @relation("RoomHierarchy", fields: [parentRoomId], references: [id], onDelete: SetNull)
+  childRooms   Room[]   @relation("RoomHierarchy")
   members   RoomMember[]
   messages  Message[]
   invitations Invitation[]
@@ -107,8 +110,8 @@ model ActionLog {
   id        String   @id @default(uuid())
   action    String   // e.g. "REMOVE_USER"
   details   String?  // e.g. Reason
-  adminId   String
-  admin     User     @relation("AdminActions", fields: [adminId], references: [id])
+  adminId   String?
+  admin     User?    @relation("AdminActions", fields: [adminId], references: [id])
   targetId  String?
   target    User?    @relation("TargetActions", fields: [targetId], references: [id])
   roomId    String?

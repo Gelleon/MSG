@@ -4,9 +4,10 @@ import { MessagesModule } from '../messages/messages.module';
 import { RoomsModule } from '../rooms/rooms.module';
 import { AuthModule } from '../auth/auth.module';
 import { TranslationModule } from '../translation/translation.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [MessagesModule, forwardRef(() => RoomsModule), AuthModule, TranslationModule],
+  imports: [MessagesModule, forwardRef(() => RoomsModule), AuthModule, TranslationModule, UsersModule],
   providers: [ChatGateway],
   exports: [ChatGateway],
 })

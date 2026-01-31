@@ -13,12 +13,15 @@ exports.MessagesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const translation_service_1 = require("../translation/translation.service");
+const files_service_1 = require("../files/files.service");
 let MessagesService = class MessagesService {
     prisma;
     translationService;
-    constructor(prisma, translationService) {
+    filesService;
+    constructor(prisma, translationService, filesService) {
         this.prisma = prisma;
         this.translationService = translationService;
+        this.filesService = filesService;
     }
     async create(data) {
         if (data.content) {
@@ -32,12 +35,17 @@ let MessagesService = class MessagesService {
                 console.error('Failed to auto-translate message', error);
             }
         }
-        return this.prisma.message.create({
+        const message = await this.prisma.message.create({
             data,
             include: {
                 sender: true,
             },
         });
+        await this.prisma.room.update({
+            where: { id: data.roomId },
+            data: { updatedAt: new Date() },
+        });
+        return message;
     }
     async findAll(roomId, user) {
         const where = { roomId };
@@ -107,6 +115,9 @@ let MessagesService = class MessagesService {
         if (message.senderId !== userId) {
             throw new Error('Unauthorized');
         }
+        if (message.attachmentUrl) {
+            await this.filesService.deleteFile(message.attachmentUrl);
+        }
         return this.prisma.message.delete({
             where: { id: messageId },
             include: { sender: true },
@@ -117,6 +128,7 @@ exports.MessagesService = MessagesService;
 exports.MessagesService = MessagesService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        translation_service_1.TranslationService])
+        translation_service_1.TranslationService,
+        files_service_1.FilesService])
 ], MessagesService);
 //# sourceMappingURL=messages.service.js.map

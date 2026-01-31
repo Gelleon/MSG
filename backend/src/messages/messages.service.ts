@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, Message } from '@prisma/client';
 import { TranslationService } from '../translation/translation.service';
+import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class MessagesService {
   constructor(
     private prisma: PrismaService,
     private translationService: TranslationService,
+    private filesService: FilesService,
   ) {}
 
   async create(data: Prisma.MessageUncheckedCreateInput): Promise<Message> {
@@ -23,12 +25,20 @@ export class MessagesService {
       }
     }
 
-    return this.prisma.message.create({
+    const message = await this.prisma.message.create({
       data,
       include: {
         sender: true,
       },
     });
+
+    // Update room's updatedAt timestamp
+    await this.prisma.room.update({
+      where: { id: data.roomId },
+      data: { updatedAt: new Date() },
+    });
+
+    return message;
   }
 
   async findAll(roomId: string, user?: any): Promise<Message[]> {
@@ -111,6 +121,11 @@ export class MessagesService {
 
     if (message.senderId !== userId) {
       throw new Error('Unauthorized');
+    }
+
+    // Attempt to delete associated file if it exists
+    if (message.attachmentUrl) {
+      await this.filesService.deleteFile(message.attachmentUrl);
     }
 
     return this.prisma.message.delete({

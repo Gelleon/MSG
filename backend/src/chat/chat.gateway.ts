@@ -14,6 +14,8 @@ import { JwtService } from '@nestjs/jwt';
 import { MessagesService } from '../messages/messages.service';
 import { RoomsService } from '../rooms/rooms.service';
 
+import { UsersService } from '../users/users.service';
+
 @WebSocketGateway({
   cors: {
     origin: '*', // In production, replace with specific origin
@@ -27,6 +29,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private jwtService: JwtService,
     private messagesService: MessagesService,
     @Inject(forwardRef(() => RoomsService)) private roomsService: RoomsService,
+    private usersService: UsersService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -85,6 +88,94 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return false;
   }
 
+  @SubscribeMessage('startPrivateSession')
+  async handleStartPrivateSession(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { userIds: string[], sourceRoomId?: string },
+  ) {
+    const user = client.data.user;
+    if (!user) {
+      throw new WsException('Unauthorized');
+    }
+
+    // 1. Check if creator is CLIENT
+    if (user.role === 'CLIENT') {
+      throw new WsException('Clients cannot create private sessions');
+    }
+
+    try {
+      // 2. Create private room
+      // Use a default name, can be updated later or generated based on participants
+      const roomName = `Private Chat ${new Date().toISOString()}`;
+      const room = await this.roomsService.create({
+        name: roomName,
+        isPrivate: true,
+        parentRoomId: payload.sourceRoomId,
+        // projectId is optional, maybe should be passed if linked to a project
+      } as any);
+
+      // 3. Add members (this will trigger the check in RoomsService.addUsers)
+      const allUserIds = [user.sub || user.userId, ...payload.userIds];
+      const updatedRoom = await this.roomsService.addUsers(room.id, allUserIds);
+
+      // 4. Notify participants
+      // We need to notify each user individually since they might not be in a shared room yet
+      allUserIds.forEach(userId => {
+        this.server.to(`user_${userId}`).emit('privateSessionStarted', updatedRoom);
+      });
+
+      return updatedRoom;
+    } catch (error) {
+      console.error('Failed to start private session:', error);
+      throw new WsException(error.message || 'Failed to start private session');
+    }
+  }
+
+  @SubscribeMessage('closePrivateSession')
+  async handleClosePrivateSession(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { roomId: string },
+  ) {
+    const user = client.data.user;
+    if (!user) {
+      throw new WsException('Unauthorized');
+    }
+
+    // Only ADMIN or MANAGER can close private sessions
+    const role = user.role ? user.role.toUpperCase() : '';
+    if (role !== 'ADMIN' && role !== 'MANAGER') {
+      throw new WsException('Forbidden: Insufficient permissions');
+    }
+
+    const roomId = payload.roomId;
+    const room = await this.roomsService.findOne(roomId);
+
+    if (!room) {
+      throw new WsException('Room not found');
+    }
+
+    if (!room.isPrivate) {
+      throw new WsException('Not a private session');
+    }
+
+    try {
+      // Notify participants BEFORE deleting
+      this.server.to(roomId).emit('privateSessionClosed', { roomId });
+
+      // Log the action
+      console.log(`Private session ${roomId} closed by user ${user.sub || user.userId} (${user.role})`);
+
+      // Close and delete the room using the dedicated service method
+      // This handles ActionLog creation, cleanup, and cascading deletion in a transaction
+      await this.roomsService.closePrivateSession(roomId, user.sub || user.userId);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to close private session:', error);
+      throw new WsException('Failed to close private session');
+    }
+  }
+
   @SubscribeMessage('getRoomUsers')
   async handleGetRoomUsers(
     @ConnectedSocket() client: Socket,
@@ -95,23 +186,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new WsException('Forbidden');
     }
 
-    const sockets = await this.server.in(roomId).fetchSockets();
-    const usersMap = new Map();
-
-    for (const socket of sockets) {
-      const user = socket.data.user;
-      // Filter out CLIENT role and ensure we have user data
-      if (user && user.role !== 'CLIENT') {
-         usersMap.set(user.sub, {
-           id: user.sub,
-           name: user.name,
-           email: user.username,
-           role: user.role,
-         });
-      }
+    // Get all room members regardless of online status
+    const room = await this.roomsService.findOne(roomId);
+    if (!room) {
+        return [];
     }
 
-    return Array.from(usersMap.values());
+    // Map to simple user objects
+    // room.members includes user data
+    
+    const users = (room as any).members
+        .map((member: any) => member.user)
+        .filter((user: any) => user.role !== 'CLIENT'); // Server-side validation
+
+    return users.map((user: any) => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    }));
   }
 
   @SubscribeMessage('joinRoom')
@@ -127,14 +220,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(roomId);
     console.log(`Client ${client.id} joined room ${roomId}`);
     
-    // Broadcast userJoined event
-    if (client.data.user && client.data.user.role !== 'CLIENT') {
-      this.server.to(roomId).emit('userJoined', {
-        id: client.data.user.sub,
-        name: client.data.user.name,
-        email: client.data.user.username,
-        role: client.data.user.role
-      });
+    // Broadcast userJoined event with fresh user data
+    const userId = client.data.user?.sub || client.data.user?.userId;
+    if (userId) {
+      const user = await this.usersService.findById(userId);
+      if (user && user.role !== 'CLIENT') {
+        this.server.to(roomId).emit('userJoined', {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        });
+      }
     }
 
     return { event: 'joinedRoom', data: roomId };

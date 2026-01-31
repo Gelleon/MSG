@@ -10,15 +10,17 @@ exports.MessagesModule = void 0;
 const common_1 = require("@nestjs/common");
 const messages_service_1 = require("./messages.service");
 const messages_controller_1 = require("./messages.controller");
+const prisma_module_1 = require("../prisma/prisma.module");
 const translation_module_1 = require("../translation/translation.module");
+const files_module_1 = require("../files/files.module");
 let MessagesModule = class MessagesModule {
 };
 exports.MessagesModule = MessagesModule;
 exports.MessagesModule = MessagesModule = __decorate([
     (0, common_1.Module)({
-        imports: [translation_module_1.TranslationModule],
-        providers: [messages_service_1.MessagesService],
+        imports: [prisma_module_1.PrismaModule, translation_module_1.TranslationModule, files_module_1.FilesModule],
         controllers: [messages_controller_1.MessagesController],
+        providers: [messages_service_1.MessagesService],
         exports: [messages_service_1.MessagesService],
     })
 ], MessagesModule);

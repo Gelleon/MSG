@@ -13,12 +13,13 @@ const messages_module_1 = require("../messages/messages.module");
 const rooms_module_1 = require("../rooms/rooms.module");
 const auth_module_1 = require("../auth/auth.module");
 const translation_module_1 = require("../translation/translation.module");
+const users_module_1 = require("../users/users.module");
 let ChatModule = class ChatModule {
 };
 exports.ChatModule = ChatModule;
 exports.ChatModule = ChatModule = __decorate([
     (0, common_1.Module)({
-        imports: [messages_module_1.MessagesModule, (0, common_1.forwardRef)(() => rooms_module_1.RoomsModule), auth_module_1.AuthModule, translation_module_1.TranslationModule],
+        imports: [messages_module_1.MessagesModule, (0, common_1.forwardRef)(() => rooms_module_1.RoomsModule), auth_module_1.AuthModule, translation_module_1.TranslationModule, users_module_1.UsersModule],
         providers: [chat_gateway_1.ChatGateway],
         exports: [chat_gateway_1.ChatGateway],
     })

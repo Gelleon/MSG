@@ -11,35 +11,11 @@ export declare class RoomsController {
         isPrivate: boolean;
         description: string | null;
         projectId: string | null;
+        parentRoomId: string | null;
     }>;
     findAll(projectId: string, req: any): Promise<{
-        users: {
-            id: string;
-            email: string;
-            password: string;
-            name: string | null;
-            role: string;
-            createdAt: Date;
-            updatedAt: Date;
-        }[];
+        users: any;
         unreadCount: number;
-        members: ({
-            user: {
-                id: string;
-                email: string;
-                password: string;
-                name: string | null;
-                role: string;
-                createdAt: Date;
-                updatedAt: Date;
-            };
-        } & {
-            id: string;
-            joinedAt: Date;
-            lastReadAt: Date;
-            roomId: string;
-            userId: string;
-        })[];
         id: string;
         name: string;
         createdAt: Date;
@@ -47,6 +23,7 @@ export declare class RoomsController {
         isPrivate: boolean;
         description: string | null;
         projectId: string | null;
+        parentRoomId: string | null;
     }[]>;
     findOne(id: string, req: any): Promise<{
         users: {
@@ -80,6 +57,16 @@ export declare class RoomsController {
             isPrivate: boolean;
             senderId: string;
         })[];
+        parentRoom: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isPrivate: boolean;
+            description: string | null;
+            projectId: string | null;
+            parentRoomId: string | null;
+        } | null;
         members: ({
             user: {
                 id: string;
@@ -104,6 +91,7 @@ export declare class RoomsController {
         isPrivate: boolean;
         description: string | null;
         projectId: string | null;
+        parentRoomId: string | null;
     } | null>;
     markAsRead(id: string, req: any): Promise<{
         success: boolean;
@@ -140,6 +128,16 @@ export declare class RoomsController {
             isPrivate: boolean;
             senderId: string;
         })[];
+        parentRoom: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isPrivate: boolean;
+            description: string | null;
+            projectId: string | null;
+            parentRoomId: string | null;
+        } | null;
         members: ({
             user: {
                 id: string;
@@ -164,6 +162,7 @@ export declare class RoomsController {
         isPrivate: boolean;
         description: string | null;
         projectId: string | null;
+        parentRoomId: string | null;
     } | null>;
     addMembers(id: string, userIds: string[]): Promise<{
         users: {
@@ -197,6 +196,16 @@ export declare class RoomsController {
             isPrivate: boolean;
             senderId: string;
         })[];
+        parentRoom: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isPrivate: boolean;
+            description: string | null;
+            projectId: string | null;
+            parentRoomId: string | null;
+        } | null;
         members: ({
             user: {
                 id: string;
@@ -221,19 +230,21 @@ export declare class RoomsController {
         isPrivate: boolean;
         description: string | null;
         projectId: string | null;
+        parentRoomId: string | null;
     } | null>;
     getMembers(id: string, page?: string, limit?: string, search?: string): Promise<{
         data: {
             joinedAt: Date;
-            status: string;
             id: string;
             email: string;
+            password: string;
             name: string | null;
             role: string;
+            createdAt: Date;
+            updatedAt: Date;
         }[];
         total: number;
         page: number;
-        limit: number;
         totalPages: number;
     }>;
     update(id: string, updateRoomDto: Prisma.RoomUpdateInput): Promise<{
@@ -244,6 +255,7 @@ export declare class RoomsController {
         isPrivate: boolean;
         description: string | null;
         projectId: string | null;
+        parentRoomId: string | null;
     }>;
     remove(id: string): Promise<{
         id: string;
@@ -253,28 +265,31 @@ export declare class RoomsController {
         isPrivate: boolean;
         description: string | null;
         projectId: string | null;
+        parentRoomId: string | null;
     }>;
     removeMember(roomId: string, userId: string, reason: string, req: any): Promise<{
-        id: string;
-        email: string;
-        password: string;
-        name: string | null;
-        role: string;
-        createdAt: Date;
-        updatedAt: Date;
+        success: boolean;
     }>;
     getRoomLogs(roomId: string, page?: string, limit?: string): Promise<{
         data: ({
             target: {
                 id: string;
                 email: string;
+                password: string;
                 name: string | null;
+                role: string;
+                createdAt: Date;
+                updatedAt: Date;
             } | null;
             admin: {
                 id: string;
                 email: string;
+                password: string;
                 name: string | null;
-            };
+                role: string;
+                createdAt: Date;
+                updatedAt: Date;
+            } | null;
         } & {
             id: string;
             createdAt: Date;
@@ -282,11 +297,10 @@ export declare class RoomsController {
             targetId: string | null;
             action: string;
             details: string | null;
-            adminId: string;
+            adminId: string | null;
         })[];
         total: number;
         page: number;
-        limit: number;
         totalPages: number;
     }>;
 }

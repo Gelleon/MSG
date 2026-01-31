@@ -19,15 +19,18 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const messages_service_1 = require("../messages/messages.service");
 const rooms_service_1 = require("../rooms/rooms.service");
+const users_service_1 = require("../users/users.service");
 let ChatGateway = class ChatGateway {
     jwtService;
     messagesService;
     roomsService;
+    usersService;
     server;
-    constructor(jwtService, messagesService, roomsService) {
+    constructor(jwtService, messagesService, roomsService, usersService) {
         this.jwtService = jwtService;
         this.messagesService = messagesService;
         this.roomsService = roomsService;
+        this.usersService = usersService;
     }
     async handleConnection(client) {
         try {
@@ -73,25 +76,79 @@ let ChatGateway = class ChatGateway {
             return true;
         return false;
     }
+    async handleStartPrivateSession(client, payload) {
+        const user = client.data.user;
+        if (!user) {
+            throw new websockets_1.WsException('Unauthorized');
+        }
+        if (user.role === 'CLIENT') {
+            throw new websockets_1.WsException('Clients cannot create private sessions');
+        }
+        try {
+            const roomName = `Private Chat ${new Date().toISOString()}`;
+            const room = await this.roomsService.create({
+                name: roomName,
+                isPrivate: true,
+                parentRoomId: payload.sourceRoomId,
+            });
+            const allUserIds = [user.sub || user.userId, ...payload.userIds];
+            const updatedRoom = await this.roomsService.addUsers(room.id, allUserIds);
+            allUserIds.forEach(userId => {
+                this.server.to(`user_${userId}`).emit('privateSessionStarted', updatedRoom);
+            });
+            return updatedRoom;
+        }
+        catch (error) {
+            console.error('Failed to start private session:', error);
+            throw new websockets_1.WsException(error.message || 'Failed to start private session');
+        }
+    }
+    async handleClosePrivateSession(client, payload) {
+        const user = client.data.user;
+        if (!user) {
+            throw new websockets_1.WsException('Unauthorized');
+        }
+        const role = user.role ? user.role.toUpperCase() : '';
+        if (role !== 'ADMIN' && role !== 'MANAGER') {
+            throw new websockets_1.WsException('Forbidden: Insufficient permissions');
+        }
+        const roomId = payload.roomId;
+        const room = await this.roomsService.findOne(roomId);
+        if (!room) {
+            throw new websockets_1.WsException('Room not found');
+        }
+        if (!room.isPrivate) {
+            throw new websockets_1.WsException('Not a private session');
+        }
+        try {
+            this.server.to(roomId).emit('privateSessionClosed', { roomId });
+            console.log(`Private session ${roomId} closed by user ${user.sub || user.userId} (${user.role})`);
+            await this.roomsService.closePrivateSession(roomId, user.sub || user.userId);
+            return { success: true };
+        }
+        catch (error) {
+            console.error('Failed to close private session:', error);
+            throw new websockets_1.WsException('Failed to close private session');
+        }
+    }
     async handleGetRoomUsers(client, roomId) {
         const hasAccess = await this.validateRoomAccess(client, roomId);
         if (!hasAccess) {
             throw new websockets_1.WsException('Forbidden');
         }
-        const sockets = await this.server.in(roomId).fetchSockets();
-        const usersMap = new Map();
-        for (const socket of sockets) {
-            const user = socket.data.user;
-            if (user && user.role !== 'CLIENT') {
-                usersMap.set(user.sub, {
-                    id: user.sub,
-                    name: user.name,
-                    email: user.username,
-                    role: user.role,
-                });
-            }
+        const room = await this.roomsService.findOne(roomId);
+        if (!room) {
+            return [];
         }
-        return Array.from(usersMap.values());
+        const users = room.members
+            .map((member) => member.user)
+            .filter((user) => user.role !== 'CLIENT');
+        return users.map((user) => ({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        }));
     }
     async handleJoinRoom(client, roomId) {
         const hasAccess = await this.validateRoomAccess(client, roomId);
@@ -100,13 +157,17 @@ let ChatGateway = class ChatGateway {
         }
         client.join(roomId);
         console.log(`Client ${client.id} joined room ${roomId}`);
-        if (client.data.user && client.data.user.role !== 'CLIENT') {
-            this.server.to(roomId).emit('userJoined', {
-                id: client.data.user.sub,
-                name: client.data.user.name,
-                email: client.data.user.username,
-                role: client.data.user.role
-            });
+        const userId = client.data.user?.sub || client.data.user?.userId;
+        if (userId) {
+            const user = await this.usersService.findById(userId);
+            if (user && user.role !== 'CLIENT') {
+                this.server.to(roomId).emit('userJoined', {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role
+                });
+            }
         }
         return { event: 'joinedRoom', data: roomId };
     }
@@ -180,6 +241,22 @@ __decorate([
     __metadata("design:type", socket_io_1.Server)
 ], ChatGateway.prototype, "server", void 0);
 __decorate([
+    (0, websockets_1.SubscribeMessage)('startPrivateSession'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleStartPrivateSession", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('closePrivateSession'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleClosePrivateSession", null);
+__decorate([
     (0, websockets_1.SubscribeMessage)('getRoomUsers'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
@@ -236,6 +313,7 @@ exports.ChatGateway = ChatGateway = __decorate([
     __param(2, (0, common_1.Inject)((0, common_1.forwardRef)(() => rooms_service_1.RoomsService))),
     __metadata("design:paramtypes", [jwt_1.JwtService,
         messages_service_1.MessagesService,
-        rooms_service_1.RoomsService])
+        rooms_service_1.RoomsService,
+        users_service_1.UsersService])
 ], ChatGateway);
 //# sourceMappingURL=chat.gateway.js.map

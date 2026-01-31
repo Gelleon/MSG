@@ -20,6 +20,9 @@ const messages_module_1 = require("./messages/messages.module");
 const chat_module_1 = require("./chat/chat.module");
 const files_module_1 = require("./files/files.module");
 const invitations_module_1 = require("./invitations/invitations.module");
+const transcription_module_1 = require("./transcription/transcription.module");
+const schedule_1 = require("@nestjs/schedule");
+const tasks_module_1 = require("./tasks/tasks.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -27,6 +30,7 @@ exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
+            schedule_1.ScheduleModule.forRoot(),
             users_module_1.UsersModule,
             auth_module_1.AuthModule,
             prisma_module_1.PrismaModule,
@@ -36,6 +40,8 @@ exports.AppModule = AppModule = __decorate([
             chat_module_1.ChatModule,
             files_module_1.FilesModule,
             invitations_module_1.InvitationsModule,
+            transcription_module_1.TranscriptionModule,
+            tasks_module_1.TasksModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

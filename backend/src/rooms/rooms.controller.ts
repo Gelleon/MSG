@@ -18,7 +18,8 @@ export class RoomsController {
         return await this.roomsService.create(createRoomDto);
     } catch (error) {
         console.error('Error creating room:', error);
-        throw new HttpException(error.message || 'Failed to create room', HttpStatus.INTERNAL_SERVER_ERROR);
+        // Pass the error message to the client
+        throw new HttpException(error.message || 'Failed to create room', HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -86,8 +87,12 @@ export class RoomsController {
 
   @Patch(':id')
   @Roles('ADMIN')
-  update(@Param('id') id: string, @Body() updateRoomDto: Prisma.RoomUpdateInput) {
-    return this.roomsService.update(id, updateRoomDto);
+  async update(@Param('id') id: string, @Body() updateRoomDto: Prisma.RoomUpdateInput) {
+    try {
+      return await this.roomsService.update(id, updateRoomDto);
+    } catch (error) {
+      throw new HttpException(error.message || 'Failed to update room', HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Delete(':id')

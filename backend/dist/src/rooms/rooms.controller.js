@@ -31,7 +31,7 @@ let RoomsController = class RoomsController {
         }
         catch (error) {
             console.error('Error creating room:', error);
-            throw new common_1.HttpException(error.message || 'Failed to create room', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new common_1.HttpException(error.message || 'Failed to create room', common_1.HttpStatus.BAD_REQUEST);
         }
     }
     findAll(projectId, req) {
@@ -78,8 +78,13 @@ let RoomsController = class RoomsController {
             search
         });
     }
-    update(id, updateRoomDto) {
-        return this.roomsService.update(id, updateRoomDto);
+    async update(id, updateRoomDto) {
+        try {
+            return await this.roomsService.update(id, updateRoomDto);
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to update room', common_1.HttpStatus.BAD_REQUEST);
+        }
     }
     remove(id) {
         return this.roomsService.remove(id);
@@ -165,7 +170,7 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], RoomsController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
