@@ -271,7 +271,7 @@ export default function AdminUsersPage() {
                                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                             checked={selectedUsers.includes(user.id)}
                             onChange={() => handleSelectUser(user.id)}
-                            disabled={user.id === currentUser?.userId}
+                            disabled={user.id === currentUser?.id}
                         />
                         </td>
                         <td className="p-4 align-middle font-medium">{user.name || 'N/A'}</td>
@@ -296,7 +296,7 @@ export default function AdminUsersPage() {
                                 size="icon" 
                                 onClick={() => confirmDelete(user)}
                                 className="text-muted-foreground hover:text-destructive"
-                                disabled={user.id === currentUser?.userId}
+                                disabled={user.id === currentUser?.id}
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>

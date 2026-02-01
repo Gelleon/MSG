@@ -309,7 +309,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         <div className="text-xs text-muted-foreground">
                             {member.role}
                         </div>
-                        {currentUser?.role === 'ADMIN' && member.id !== currentUser.userId && (
+                        {currentUser?.role === 'ADMIN' && member.id !== currentUser.id && (
                             <Button
                             variant="ghost"
                             size="icon"
