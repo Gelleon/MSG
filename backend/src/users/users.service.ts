@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -6,6 +6,31 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
+
+  async updateRole(userId: string, newRole: string, adminId: string): Promise<User> {
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: { role: newRole },
+      });
+
+      await tx.actionLog.create({
+        data: {
+          action: 'UPDATE_ROLE',
+          details: `Role changed from ${user.role} to ${newRole}`,
+          adminId: adminId,
+          targetId: userId,
+        },
+      });
+
+      return updatedUser;
+    });
+  }
 
   async findOne(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({

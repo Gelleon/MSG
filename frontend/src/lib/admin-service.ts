@@ -46,5 +46,10 @@ export const adminService = {
   deleteUsers: async (ids: string[]) => {
     const response = await api.delete('/users', { data: { ids } });
     return response.data;
+  },
+
+  updateUserRole: async (id: string, role: string) => {
+    const response = await api.patch(`/users/${id}/role`, { role });
+    return response.data;
   }
 };

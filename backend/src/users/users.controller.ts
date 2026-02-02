@@ -19,6 +19,7 @@ import { UsersService } from './users.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { SuperAdminGuard } from '../auth/super-admin.guard';
 import { Prisma } from '@prisma/client';
 import { Response } from 'express';
 
@@ -30,7 +31,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @Roles('ADMIN')
+  @UseGuards(SuperAdminGuard)
   async findAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
@@ -39,7 +40,7 @@ export class UsersController {
     @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc',
     @Request() req: any
   ) {
-    this.logger.log(`Admin ${req.user.userId} viewing user list`);
+    this.logger.log(`SuperAdmin ${req.user.email} viewing user list`);
     
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
@@ -54,6 +55,22 @@ export class UsersController {
     const orderBy = { [sortBy]: sortOrder };
 
     return this.usersService.findAll({ skip, take, where, orderBy });
+  }
+
+  @Patch(':id/role')
+  @UseGuards(SuperAdminGuard)
+  async updateRole(
+    @Param('id') id: string,
+    @Body('role') role: string,
+    @Request() req: any
+  ) {
+    const allowedRoles = ['CLIENT', 'MANAGER', 'ADMIN'];
+    if (!role || !allowedRoles.includes(role)) {
+      throw new BadRequestException(`Invalid role. Allowed: ${allowedRoles.join(', ')}`);
+    }
+    
+    this.logger.log(`SuperAdmin ${req.user.email} updating user ${id} role to ${role}`);
+    return this.usersService.updateRole(id, role, req.user.userId || req.user.sub);
   }
 
   @Post()

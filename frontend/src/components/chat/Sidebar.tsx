@@ -88,6 +88,9 @@ export default function Sidebar({ className }: { className?: string }) {
   // Settings Dialog State
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
+  const allowedEmails = ['svzelenin@yandex.ru', 'pallermo72@gmail.com'];
+  const isSuperAdmin = user?.email && allowedEmails.includes(user.email);
+
   useEffect(() => {
     fetchRooms();
   }, [fetchRooms]);
@@ -364,7 +367,7 @@ export default function Sidebar({ className }: { className?: string }) {
           <DropdownMenuContent align="end" className="w-56 mb-2" side="right">
             <DropdownMenuLabel>{tSidebar('myAccount')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {user?.role === 'ADMIN' && (
+            {isSuperAdmin && (
               <>
                  <DropdownMenuItem onClick={() => router.push('/admin/users')}>
                     <ShieldCheck className="mr-2 h-4 w-4" />

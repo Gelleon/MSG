@@ -15,6 +15,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { AddUserModal } from './AddUserModal';
 import { 
   Loader2, 
@@ -48,6 +55,8 @@ export default function AdminUsersPage() {
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  const allowedEmails = ['svzelenin@yandex.ru', 'pallermo72@gmail.com'];
+
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -55,6 +64,17 @@ export default function AdminUsersPage() {
     }, 500);
     return () => clearTimeout(timer);
   }, [search, page, sortBy, sortOrder]);
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    try {
+      await adminService.updateUserRole(userId, newRole);
+      toast.success('Role updated successfully');
+      setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update role');
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -150,10 +170,13 @@ export default function AdminUsersPage() {
     }
   };
 
-  if (!isAuthenticated() || currentUser?.role !== 'ADMIN') {
+  if (!isAuthenticated() || !currentUser?.email || !allowedEmails.includes(currentUser.email)) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-muted-foreground">Access Denied</p>
+      <div className="flex flex-col items-center justify-center h-screen space-y-4">
+        <AlertTriangle className="h-12 w-12 text-destructive" />
+        <h1 className="text-2xl font-bold">Access Denied</h1>
+        <p className="text-muted-foreground">You do not have permission to view this page.</p>
+        <Button onClick={() => router.push('/dashboard')}>Return to Dashboard</Button>
       </div>
     );
   }
@@ -277,13 +300,20 @@ export default function AdminUsersPage() {
                         <td className="p-4 align-middle font-medium">{user.name || 'N/A'}</td>
                         <td className="p-4 align-middle">{user.email}</td>
                         <td className="p-4 align-middle">
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-                                user.role === 'ADMIN' ? 'bg-primary/10 text-primary' : 
-                                user.role === 'MANAGER' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
-                                'bg-secondary text-secondary-foreground'
-                            }`}>
-                                {user.role}
-                            </span>
+                            <Select 
+                                defaultValue={user.role} 
+                                onValueChange={(value) => handleRoleChange(user.id, value)}
+                                disabled={user.id === currentUser?.id}
+                            >
+                                <SelectTrigger className="w-[120px] h-8">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="CLIENT">Client</SelectItem>
+                                    <SelectItem value="MANAGER">Manager</SelectItem>
+                                    <SelectItem value="ADMIN">Admin</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </td>
                         <td className="p-4 align-middle">{new Date(user.createdAt).toLocaleDateString()}</td>
                         <td className="p-4 align-middle">
