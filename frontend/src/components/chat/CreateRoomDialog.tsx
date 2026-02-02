@@ -26,7 +26,8 @@ export default function CreateRoomDialog({ children }: { children?: React.ReactN
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const fetchRooms = useChatStore((state) => state.fetchRooms);
+  const createRoom = useChatStore((state) => state.createRoom);
+  const joinRoom = useChatStore((state) => state.joinRoom);
   const { user } = useAuthStore();
   const tDialogs = useTranslations('Dialogs');
   const tCommon = useTranslations('Common');
@@ -37,12 +38,15 @@ export default function CreateRoomDialog({ children }: { children?: React.ReactN
     e.preventDefault();
     setError(null);
     try {
-      await api.post('/rooms', { name, description });
-      fetchRooms(); // Refresh list
+      const newRoom = await createRoom(name, description);
       setOpen(false);
       setName('');
       setDescription('');
       toast.success(tDialogs('createRoom.success'));
+
+      if (newRoom && newRoom.id) {
+        joinRoom(newRoom.id);
+      }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message;
       console.error('Failed to create room', errorMessage);

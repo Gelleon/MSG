@@ -110,7 +110,10 @@ export default function Sidebar({ className }: { className?: string }) {
 
   const handleDuplicateClick = async (room: {id: string, name: string, description?: string}) => {
     try {
-      await createRoom(tSidebar('copyOf', {name: room.name}), room.description);
+      const newRoom = await createRoom(tSidebar('copyOf', {name: room.name}), room.description);
+      if (newRoom && newRoom.id) {
+        joinRoom(newRoom.id);
+      }
     } catch (error) {
       console.error("Failed to duplicate room", error);
     }

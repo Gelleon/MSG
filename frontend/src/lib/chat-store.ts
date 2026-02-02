@@ -40,7 +40,7 @@ interface ChatState {
   connect: () => void;
   disconnect: () => void;
   fetchRooms: () => Promise<void>;
-  createRoom: (name: string, description?: string) => Promise<void>;
+  createRoom: (name: string, description?: string) => Promise<Room>;
   renameRoom: (roomId: string, name: string) => Promise<void>;
   deleteRoom: (roomId: string) => Promise<void>;
   joinRoom: (roomId: string) => void;
@@ -163,8 +163,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   createRoom: async (name: string, description?: string) => {
     try {
-        await api.post('/rooms', { name, description });
-        get().fetchRooms();
+        const response = await api.post('/rooms', { name, description });
+        await get().fetchRooms();
+        return response.data;
     } catch (error) {
         console.error('Failed to create room', error);
         throw error;
