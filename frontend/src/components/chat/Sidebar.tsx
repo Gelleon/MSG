@@ -416,7 +416,7 @@ export default function Sidebar({ className }: { className?: string }) {
               {tDialogs('deleteRoom.description')}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>{tCommon('cancel')}</Button>
             <Button variant="destructive" onClick={confirmDelete}>{tDialogs('deleteRoom.confirm')}</Button>
           </DialogFooter>
