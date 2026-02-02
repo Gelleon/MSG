@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import io, { Socket } from 'socket.io-client';
 import api from './api';
 import { useAuthStore } from './store';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
