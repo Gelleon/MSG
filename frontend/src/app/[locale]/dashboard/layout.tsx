@@ -8,7 +8,7 @@ import Sidebar from '@/components/chat/Sidebar';
 import { PrivateChatNotifier } from '@/components/chat/PrivateChatNotifier';
 import { Menu, MessageSquare, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 
 export default function DashboardLayout({
   children,
