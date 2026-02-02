@@ -225,7 +225,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       });
 
       // 2. Load messages for the room
+      console.log(`[joinRoom] Fetching messages for room: ${roomId}`);
       const response = await api.get(`/messages/room/${roomId}`);
+      console.log(`[joinRoom] Received ${response.data.length} messages`);
+
+      if (!Array.isArray(response.data)) {
+        console.error('[joinRoom] Invalid response structure', response.data);
+        throw new Error('Invalid messages format');
+      }
+
       set({ messages: response.data, currentRoomId: roomId });
       
       // 3. Join via Socket

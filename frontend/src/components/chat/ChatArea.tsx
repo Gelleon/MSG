@@ -32,6 +32,9 @@ const LANGUAGES = [
 export default function ChatArea() {
   const { messages, currentRoomId, deleteMessage, socket } = useChatStore();
   const { user } = useAuthStore();
+  
+  console.log(`[ChatArea] Rendering for room ${currentRoomId}, messages count: ${messages.length}`);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showTranslations, setShowTranslations] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);

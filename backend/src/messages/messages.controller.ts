@@ -14,8 +14,13 @@ export class MessagesController {
   }
 
   @Get('room/:roomId')
-  findAll(@Param('roomId') roomId: string, @Request() req: any) {
-    return this.messagesService.findAll(roomId, req.user);
+  async findAll(@Param('roomId') roomId: string, @Request() req: any) {
+    try {
+      return await this.messagesService.findAll(roomId, req.user);
+    } catch (error) {
+      console.error(`[MessagesController] Error fetching messages for room ${roomId}:`, error);
+      throw error;
+    }
   }
 
   @Post(':id/translate')

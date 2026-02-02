@@ -42,9 +42,13 @@ export class MessagesService {
   }
 
   async findAll(roomId: string, user?: any): Promise<Message[]> {
+    console.log(`[MessagesService.findAll] Fetching messages for room ${roomId}, user: ${user?.userId} (${user?.role})`);
+    
     const where: Prisma.MessageWhereInput = { roomId };
+    const allowedEmails = ['svzelenin@yandex.ru', 'pallermo72@gmail.com'];
+    const isSuperAdmin = user?.email && allowedEmails.includes(user.email);
 
-    if (user && user.role === 'CLIENT') {
+    if (user && user.role === 'CLIENT' && !isSuperAdmin) {
       const membership = await this.prisma.roomMember.findUnique({
         where: {
           userId_roomId: {
@@ -53,23 +57,29 @@ export class MessagesService {
           },
         },
       });
+      
+      console.log(`[MessagesService.findAll] Membership for CLIENT:`, membership);
 
       if (membership) {
         where.createdAt = {
           gte: membership.joinedAt,
         };
       } else {
+        console.log(`[MessagesService.findAll] CLIENT has no membership, returning empty array`);
         return [];
       }
     }
 
-    return this.prisma.message.findMany({
+    const messages = await this.prisma.message.findMany({
       where,
       orderBy: { createdAt: 'asc' },
       include: {
         sender: true,
       },
     });
+    
+    console.log(`[MessagesService.findAll] Found ${messages.length} messages`);
+    return messages;
   }
 
   async translateMessage(messageId: string, targetLang: string): Promise<string> {
