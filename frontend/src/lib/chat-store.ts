@@ -203,8 +203,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
 
     try {
-      // 1. Join the room in DB (ensure membership)
-      await api.post(`/rooms/${roomId}/join`, {});
+      console.log(`[joinRoom] Joining room: ${roomId}`);
+      // 1. Join the room in DB (ensure membership) and get updated room details
+      const joinResponse = await api.post(`/rooms/${roomId}/join`, {});
+      const joinedRoom = joinResponse.data;
+
+      // Update rooms list with the joined room (handles case where room wasn't in list yet or needs update)
+      set((state) => {
+          const existingRoomIndex = state.rooms.findIndex(r => r.id === roomId);
+          const updatedRoom = { ...joinedRoom, unreadCount: 0 }; // Reset unread count on join
+          
+          let newRooms;
+          if (existingRoomIndex >= 0) {
+              newRooms = [...state.rooms];
+              newRooms[existingRoomIndex] = { ...newRooms[existingRoomIndex], ...updatedRoom };
+          } else {
+              newRooms = [...state.rooms, updatedRoom];
+          }
+          return { rooms: newRooms };
+      });
 
       // 2. Load messages for the room
       const response = await api.get(`/messages/room/${roomId}`);
@@ -216,9 +233,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
 
       // 4. Mark as read
-      get().markRoomAsRead(roomId);
+      api.post(`/rooms/${roomId}/read`);
+      
+      // 5. Reset unread count in local state
+      set((state) => ({
+        rooms: state.rooms.map(r => 
+          r.id === roomId ? { ...r, unreadCount: 0 } : r
+        )
+      }));
+
     } catch (error) {
-      console.error('Failed to join room', error);
+        console.error('Failed to join room', error);
+        toast.error('Failed to join room');
     }
   },
 

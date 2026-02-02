@@ -112,7 +112,7 @@ export default function Sidebar({ className }: { className?: string }) {
     try {
       const newRoom = await createRoom(tSidebar('copyOf', {name: room.name}), room.description);
       if (newRoom && newRoom.id) {
-        joinRoom(newRoom.id);
+        await joinRoom(newRoom.id);
       }
     } catch (error) {
       console.error("Failed to duplicate room", error);
@@ -419,7 +419,7 @@ export default function Sidebar({ className }: { className?: string }) {
               {tDialogs('deleteRoom.description')}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-4 sm:gap-4">
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>{tCommon('cancel')}</Button>
             <Button variant="destructive" onClick={confirmDelete}>{tDialogs('deleteRoom.confirm')}</Button>
           </DialogFooter>

@@ -42,18 +42,31 @@ export class RoomsService {
     return trimmedName;
   }
 
-  async create(data: Prisma.RoomUncheckedCreateInput) {
+  async create(data: Prisma.RoomUncheckedCreateInput, creatorId?: string) {
     const validatedName = await this.validateRoomName(data.name);
     try {
-      return await this.prisma.room.create({
-        data: {
-          ...data,
-          name: validatedName,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const room = await tx.room.create({
+          data: {
+            ...data,
+            name: validatedName,
+          },
+        });
+
+        if (creatorId) {
+          await tx.roomMember.create({
+            data: {
+              roomId: room.id,
+              userId: creatorId,
+            },
+          });
+        }
+
+        return room;
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-         throw new Error('Комната с таким названием уже существует');
+        throw new Error('Комната с таким названием уже существует');
       }
       throw error;
     }

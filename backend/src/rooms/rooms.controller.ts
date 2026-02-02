@@ -12,10 +12,11 @@ export class RoomsController {
 
   @Post()
   @Roles('ADMIN')
-  async create(@Body() createRoomDto: Prisma.RoomUncheckedCreateInput) {
+  async create(@Body() createRoomDto: Prisma.RoomUncheckedCreateInput, @Request() req: any) {
     try {
         console.log('Creating room:', createRoomDto);
-        return await this.roomsService.create(createRoomDto);
+        const userId = req.user?.userId || req.user?.sub;
+        return await this.roomsService.create(createRoomDto, userId);
     } catch (error) {
         console.error('Error creating room:', error);
         // Pass the error message to the client

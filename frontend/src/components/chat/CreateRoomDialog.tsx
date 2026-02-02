@@ -45,7 +45,12 @@ export default function CreateRoomDialog({ children }: { children?: React.ReactN
       toast.success(tDialogs('createRoom.success'));
 
       if (newRoom && newRoom.id) {
-        joinRoom(newRoom.id);
+        try {
+          await joinRoom(newRoom.id);
+        } catch (joinError) {
+          console.error('Failed to auto-join room:', joinError);
+          toast.error(tCommon('errors.autoJoinFailed') || 'Failed to join room automatically');
+        }
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message;
