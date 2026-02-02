@@ -88,6 +88,10 @@ export class UsersService {
     orderBy?: Prisma.UserOrderByWithRelationInput;
   } = {}): Promise<{ data: User[]; total: number }> {
     const { skip, take, cursor, where, orderBy } = params;
+    
+    // Add logging for debugging
+    console.log('UsersService.findAll query:', JSON.stringify({ skip, take, where, orderBy }));
+
     const [data, total] = await Promise.all([
       this.prisma.user.findMany({
         skip,
@@ -98,6 +102,7 @@ export class UsersService {
       }),
       this.prisma.user.count({ where }),
     ]);
+
     return { data, total };
   }
 

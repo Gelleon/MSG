@@ -8,12 +8,13 @@ export class SuperAdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
+    const userEmail = user?.email || user?.username;
 
-    if (!user || !user.email) {
+    if (!user || !userEmail) {
       return false;
     }
 
-    if (this.allowedEmails.includes(user.email)) {
+    if (this.allowedEmails.includes(userEmail)) {
       return true;
     }
 

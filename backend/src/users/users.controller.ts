@@ -40,21 +40,29 @@ export class UsersController {
     @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc',
     @Request() req: any
   ) {
-    this.logger.log(`SuperAdmin ${req.user.email} viewing user list`);
+    const adminEmail = req.user.email || req.user.username;
+    this.logger.log(`SuperAdmin ${adminEmail} viewing user list with params: page=${page}, limit=${limit}, search=${search}`);
     
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
     
     const where: Prisma.UserWhereInput = search ? {
       OR: [
-        { email: { contains: search } },
+        { email: { contains: search } }, // Case-insensitive handled by DB usually, or need mode: 'insensitive' for Postgres, but here likely SQLite/MySQL default
         { name: { contains: search } }
       ]
     } : {};
 
     const orderBy = { [sortBy]: sortOrder };
 
-    return this.usersService.findAll({ skip, take, where, orderBy });
+    try {
+      const result = await this.usersService.findAll({ skip, take, where, orderBy });
+      this.logger.log(`Found ${result.total} users. Returning ${result.data.length} records.`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Error fetching users: ${error.message}`, error.stack);
+      throw new BadRequestException('Failed to fetch users');
+    }
   }
 
   @Patch(':id/role')
@@ -69,8 +77,15 @@ export class UsersController {
       throw new BadRequestException(`Invalid role. Allowed: ${allowedRoles.join(', ')}`);
     }
     
-    this.logger.log(`SuperAdmin ${req.user.email} updating user ${id} role to ${role}`);
-    return this.usersService.updateRole(id, role, req.user.userId || req.user.sub);
+    const adminEmail = req.user.email || req.user.username;
+    this.logger.log(`SuperAdmin ${adminEmail} updating user ${id} role to ${role}`);
+    
+    try {
+      return await this.usersService.updateRole(id, role, req.user.userId || req.user.sub);
+    } catch (error) {
+      this.logger.error(`Error updating role: ${error.message}`);
+      throw error;
+    }
   }
 
   @Post()
