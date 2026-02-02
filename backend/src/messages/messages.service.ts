@@ -42,11 +42,14 @@ export class MessagesService {
   }
 
   async findAll(roomId: string, user?: any): Promise<Message[]> {
-    console.log(`[MessagesService.findAll] Fetching messages for room ${roomId}, user: ${user?.userId} (${user?.role})`);
+    console.log(`[MessagesService.findAll] Fetching messages for room ${roomId}, user: ${user?.userId} (${user?.role}), email: ${user?.email}`);
     
     const where: Prisma.MessageWhereInput = { roomId };
     const allowedEmails = ['svzelenin@yandex.ru', 'pallermo72@gmail.com'];
-    const isSuperAdmin = user?.email && allowedEmails.includes(user.email);
+    const userEmail = user?.email ? user.email.toLowerCase() : '';
+    const isSuperAdmin = allowedEmails.includes(userEmail);
+
+    console.log(`[MessagesService.findAll] isSuperAdmin: ${isSuperAdmin} (email: ${userEmail})`);
 
     if (user && user.role === 'CLIENT' && !isSuperAdmin) {
       const membership = await this.prisma.roomMember.findUnique({
