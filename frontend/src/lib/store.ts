@@ -6,6 +6,7 @@ import api from './api';
 interface User {
   id: string;
   username: string;
+  email: string;
   name?: string;
   role: string;
 }
@@ -32,6 +33,7 @@ export const useAuthStore = create<AuthState>()(
           const user: User = {
              id: decoded.sub,
              username: decoded.username,
+             email: decoded.username, // username in token payload IS the email
              name: decoded.name,
              role: decoded.role
           };
