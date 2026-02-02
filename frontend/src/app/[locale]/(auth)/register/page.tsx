@@ -41,7 +41,7 @@ export default function RegisterPage() {
     }
 
     try {
-      await register(username, email, password, fullName);
+      await register(username, email.trim(), password, fullName);
       toast.success(tAuth('registrationSuccess'));
       router.push("/login");
     } catch (error: any) {

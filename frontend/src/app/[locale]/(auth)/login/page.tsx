@@ -29,7 +29,7 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth/login', { email: email.trim(), password });
       login(response.data.access_token);
       router.push(callbackUrl);
     } catch (err: any) {
