@@ -89,7 +89,8 @@ export default function Sidebar({ className }: { className?: string }) {
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
   const allowedEmails = ['svzelenin@yandex.ru', 'pallermo72@gmail.com'];
-  const isSuperAdmin = user?.email && allowedEmails.includes(user.email);
+  const userEmail = user?.email || user?.username;
+  const isSuperAdmin = userEmail && allowedEmails.includes(userEmail);
 
   useEffect(() => {
     fetchRooms();

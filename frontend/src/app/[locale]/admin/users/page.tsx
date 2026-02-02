@@ -56,6 +56,7 @@ export default function AdminUsersPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const allowedEmails = ['svzelenin@yandex.ru', 'pallermo72@gmail.com'];
+  const userEmail = currentUser?.email || currentUser?.username;
 
   // Debounced search
   useEffect(() => {
@@ -170,7 +171,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  if (!isAuthenticated() || !currentUser?.email || !allowedEmails.includes(currentUser.email)) {
+  if (!isAuthenticated() || !userEmail || !allowedEmails.includes(userEmail)) {
     return (
       <div className="flex flex-col items-center justify-center h-screen space-y-4">
         <AlertTriangle className="h-12 w-12 text-destructive" />
