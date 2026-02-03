@@ -352,6 +352,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `DeleteMessage request from ${user.username} for message ${payload.messageId}`,
       );
 
+      const hasAccess = await this.validateRoomAccess(client, payload.roomId);
+      if (!hasAccess) {
+        throw new WsException('Forbidden');
+      }
+
       const deletedMessage = await this.messagesService.delete(
         payload.messageId,
         user.sub,
@@ -366,5 +371,52 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.error('DeleteMessage error:', error);
       client.emit('error', 'Failed to delete message: ' + error.message);
     }
+  }
+
+  @SubscribeMessage('editMessage')
+  async handleEditMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { messageId: string; roomId: string; content: string },
+  ) {
+    try {
+      const user = client.data.user;
+      if (!user) return;
+
+      console.log(
+        `EditMessage request from ${user.username} for message ${payload.messageId}`,
+      );
+
+      const hasAccess = await this.validateRoomAccess(client, payload.roomId);
+      if (!hasAccess) {
+        throw new WsException('Forbidden');
+      }
+
+      const updatedMessage = await this.messagesService.update(
+        payload.messageId,
+        user.sub,
+        payload.content,
+      );
+
+      this.server
+        .to(payload.roomId)
+        .emit('messageUpdated', updatedMessage);
+
+      return updatedMessage;
+    } catch (error) {
+      console.error('EditMessage error:', error);
+      client.emit('error', 'Failed to edit message: ' + error.message);
+    }
+  }
+
+  @SubscribeMessage('getMessageHistory')
+  async handleGetMessageHistory(
+      @ConnectedSocket() client: Socket,
+      @MessageBody() payload: { messageId: string; roomId: string }
+  ) {
+      const hasAccess = await this.validateRoomAccess(client, payload.roomId);
+      if (!hasAccess) {
+        throw new WsException('Forbidden');
+      }
+      return this.messagesService.getHistory(payload.messageId);
   }
 }

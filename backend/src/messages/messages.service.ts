@@ -55,7 +55,7 @@ export class MessagesService {
       `[MessagesService.findAll] Fetching messages for room ${roomId}, user: ${user?.userId}, cursor: ${cursor}, limit: ${limit}`,
     );
 
-    const where: Prisma.MessageWhereInput = { roomId };
+    const where: Prisma.MessageWhereInput = { roomId, deletedAt: null };
     const allowedEmails = ['svzelenin@yandex.ru', 'pallermo72@gmail.com'];
     const userEmail = user?.email ? user.email.toLowerCase() : '';
     const isSuperAdmin = allowedEmails.includes(userEmail);
@@ -188,13 +188,64 @@ export class MessagesService {
     }
 
     // Attempt to delete associated file if it exists
-    if (message.attachmentUrl) {
-      await this.filesService.deleteFile(message.attachmentUrl);
-    }
+    // if (message.attachmentUrl) {
+    //   await this.filesService.deleteFile(message.attachmentUrl);
+    // }
 
-    return this.prisma.message.delete({
+    console.log(`[MessagesService.delete] Soft deleting message ${messageId} by user ${userId}`);
+
+    return this.prisma.message.update({
       where: { id: messageId },
+      data: { deletedAt: new Date() },
       include: { sender: true },
     });
+  }
+
+  async update(messageId: string, userId: string, content: string): Promise<Message> {
+    const message = await this.prisma.message.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      throw new Error('Message not found');
+    }
+
+    if (message.senderId !== userId) {
+      throw new Error('Unauthorized');
+    }
+
+    // Create history entry with OLD content
+    if (message.content) {
+        await this.prisma.messageHistory.create({
+        data: {
+            messageId: message.id,
+            content: message.content,
+        },
+        });
+    }
+
+    // Update message
+    return this.prisma.message.update({
+      where: { id: messageId },
+      data: {
+        content,
+        isEdited: true,
+      },
+      include: {
+        sender: true,
+        replyTo: {
+          include: {
+            sender: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getHistory(messageId: string) {
+     return this.prisma.messageHistory.findMany({
+        where: { messageId },
+        orderBy: { changedAt: 'desc' }
+     });
   }
 }

@@ -12,6 +12,7 @@ import { ChatModule } from './chat/chat.module';
 import { FilesModule } from './files/files.module';
 import { InvitationsModule } from './invitations/invitations.module';
 import { TranscriptionModule } from './transcription/transcription.module';
+import { CleanupModule } from './cleanup/cleanup.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TasksModule } from './tasks/tasks.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -37,6 +38,7 @@ import { APP_GUARD } from '@nestjs/core';
     FilesModule,
     InvitationsModule,
     TranscriptionModule,
+    CleanupModule,
     TasksModule,
   ],
   controllers: [AppController],

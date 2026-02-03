@@ -85,6 +85,18 @@ model Message {
   replyTo   Message? @relation("ReplyTo", fields: [replyToId], references: [id], onDelete: SetNull)
   replies   Message[] @relation("ReplyTo")
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isEdited  Boolean  @default(false)
+  deletedAt DateTime?
+  history   MessageHistory[]
+}
+
+model MessageHistory {
+  id        String   @id @default(uuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  content   String?
+  changedAt DateTime @default(now())
 }
 
 model PrivateSession {
