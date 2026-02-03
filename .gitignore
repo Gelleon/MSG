@@ -2,3 +2,4 @@ deploy-fix.ps1
 migrate-vps.ps1
 deploy.ps1
 promt.md
+find-db.sh

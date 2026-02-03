@@ -54,7 +54,7 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
         }
         // Filter CLIENT role and current user (case-insensitive check)
         const validUsers = response.filter(u => 
-          u.role.toUpperCase() !== 'CLIENT' && u.id !== currentUser?.id
+          u.role && u.role.toUpperCase() !== 'CLIENT' && u.id !== currentUser?.id
         );
         setUsers(validUsers);
         setLoading(false);
@@ -62,7 +62,7 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
 
       // Listen for updates
       const handleUserJoined = (user: ConnectedUser) => {
-        if (user.role.toUpperCase() !== 'CLIENT' && user.id !== currentUser?.id) {
+        if (user.role && user.role.toUpperCase() !== 'CLIENT' && user.id !== currentUser?.id) {
           setUsers(prev => {
             if (prev.some(u => u.id === user.id)) return prev;
             return [...prev, user];

@@ -53,7 +53,7 @@ interface ChatState {
   createRoom: (name: string, description?: string) => Promise<Room>;
   renameRoom: (roomId: string, name: string) => Promise<void>;
   deleteRoom: (roomId: string) => Promise<void>;
-  joinRoom: (roomId: string) => void;
+  joinRoom: (roomId: string, invitationCode?: string) => void;
   loadMoreMessages: () => Promise<void>;
   leaveRoom: (roomId: string) => void;
   sendMessage: (content: string, attachmentUrl?: string, attachmentType?: string, attachmentName?: string) => void;
@@ -221,16 +221,38 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  joinRoom: async (roomId: string) => {
+  joinRoom: async (roomId: string, invitationCode?: string) => {
     const { socket, currentRoomId } = get();
     if (currentRoomId) {
         if(socket) socket.emit('leaveRoom', currentRoomId);
     }
 
+    const toastId = toast.loading('Вход в комнату...');
+
     try {
-      console.log(`[joinRoom] Joining room: ${roomId}`);
-      // 1. Join the room in DB (ensure membership) and get updated room details
-      const joinResponse = await api.post(`/rooms/${roomId}/join`, {});
+      console.log(`[joinRoom] Starting join process for room: ${roomId} (code: ${invitationCode || 'none'})`);
+      
+      // 1. Join the room in DB (ensure membership) with retry mechanism
+      let retries = 3;
+      let delay = 1000;
+      let joinResponse;
+
+      while (retries > 0) {
+        try {
+            console.log(`[joinRoom] API join attempt (retries left: ${retries})`);
+            joinResponse = await api.post(`/rooms/${roomId}/join`, { invitationCode });
+            console.log(`[joinRoom] API join successful`);
+            break;
+        } catch (error) {
+            console.error(`[joinRoom] Attempt failed. Retries left: ${retries - 1}`, error);
+            retries--;
+            if (retries === 0) throw error;
+            toast.loading(`Повторная попытка входа... (${3 - retries}/3)`, { id: toastId });
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2; // Exponential backoff
+        }
+      }
+
       const joinedRoom = joinResponse.data;
 
       // Update rooms list with the joined room (handles case where room wasn't in list yet or needs update)
@@ -266,11 +288,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
       
       // 3. Join via Socket
       if (socket) {
+        console.log(`[joinRoom] Emitting socket joinRoom event: ${roomId}`);
         socket.emit('joinRoom', roomId);
+      } else {
+        console.warn(`[joinRoom] Socket not connected, skipping socket join`);
       }
 
       // 4. Mark as read
-      api.post(`/rooms/${roomId}/read`);
+      api.post(`/rooms/${roomId}/read`).catch(e => console.error('[joinRoom] Failed to mark as read', e));
       
       // 5. Reset unread count in local state
       set((state) => ({
@@ -279,9 +304,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         )
       }));
 
-    } catch (error) {
-        console.error('Failed to join room', error);
-        toast.error('Failed to join room');
+      toast.success('Вы успешно вошли в комнату', { id: toastId });
+
+    } catch (error: any) {
+        console.error('[joinRoom] Final failure:', error);
+        const errorMessage = error.response?.data?.message || 'Не удалось войти в комнату';
+        toast.error(errorMessage, { id: toastId });
     }
   },
 

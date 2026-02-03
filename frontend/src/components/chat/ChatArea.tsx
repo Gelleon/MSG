@@ -12,6 +12,7 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import {
   ContextMenu,
@@ -196,9 +197,12 @@ export default function ChatArea() {
       }, (response: any) => {
           if (response && response.error) {
               console.error('Failed to start private session:', response.error);
+              toast.error(tCommon('error'), {
+                  description: response.error
+              });
           }
       });
-  }, [socket, currentRoomId]);
+  }, [socket, currentRoomId, tCommon]);
 
   const handleDelete = useCallback(async (messageId: string) => {
     if (window.confirm(t('deleteMessageConfirm'))) {

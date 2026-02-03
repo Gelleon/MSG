@@ -294,7 +294,7 @@ export default memo(function MessageBubble({
                        </ContextMenuItem>
                    )}
                    <ContextMenuItem 
-                       disabled={isMe || user?.role === 'CLIENT' || message.sender?.role === 'CLIENT'}
+                       disabled={isMe || (user?.role && user.role.toUpperCase() === 'CLIENT') || (message.sender?.role && message.sender.role.toUpperCase() === 'CLIENT')}
                        onClick={() => onInviteToPrivate(message.senderId)}
                    >
                        <Lock className="w-4 h-4 mr-2" />

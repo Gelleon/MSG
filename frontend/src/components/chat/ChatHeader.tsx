@@ -71,7 +71,7 @@ export default function ChatHeader() {
   // Roles allowed to start private session
   const canStartPrivate = !isPrivate && user?.role && ['OWNER', 'ADMIN', 'MANAGER'].includes(user.role.toUpperCase());
   // Roles allowed to invite
-  const canInvite = user?.role && ['OWNER', 'ADMIN'].includes(user.role.toUpperCase());
+  const canInvite = user?.role && ['OWNER', 'ADMIN', 'MANAGER'].includes(user.role.toUpperCase());
 
   const canCloseSession = isPrivate && user?.role && ['ADMIN', 'MANAGER'].includes(user.role.toUpperCase());
 
