@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { randomBytes } from 'crypto';
 
@@ -16,8 +20,8 @@ export class InvitationsService {
     // For now assuming the caller checks or we check user role
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || (user.role !== 'OWNER' && user.role !== 'ADMIN')) {
-        // throw new BadRequestException('Only Owner or Admin can create invitations');
-        // Temporarily allow for testing if roles aren't set up perfectly yet
+      // throw new BadRequestException('Only Owner or Admin can create invitations');
+      // Temporarily allow for testing if roles aren't set up perfectly yet
     }
 
     const token = randomBytes(32).toString('hex');
@@ -75,16 +79,16 @@ export class InvitationsService {
   }
 
   async getInvitation(token: string) {
-      return this.prisma.invitation.findUnique({
-          where: { token },
-          include: { 
-              room: {
-                  select: { name: true }
-              },
-              creator: {
-                  select: { name: true }
-              }
-          }
-      });
+    return this.prisma.invitation.findUnique({
+      where: { token },
+      include: {
+        room: {
+          select: { name: true },
+        },
+        creator: {
+          select: { name: true },
+        },
+      },
+    });
   }
 }

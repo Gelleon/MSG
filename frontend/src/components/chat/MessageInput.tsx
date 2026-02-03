@@ -278,7 +278,7 @@ export default function MessageInput() {
 
            {/* Voice Recorder UI */}
            {(isRecording || audioBlob) ? (
-               <div className="flex items-center gap-2 bg-secondary/60 p-2 rounded-3xl transition-all shadow-sm h-[52px]">
+               <div className="flex items-center gap-2 bg-secondary/60 p-2 rounded-xl transition-all shadow-sm h-[52px]">
                    {isRecording ? (
                        <>
                            <div className="flex items-center gap-3 px-2 flex-1 animate-in fade-in slide-in-from-bottom-1">

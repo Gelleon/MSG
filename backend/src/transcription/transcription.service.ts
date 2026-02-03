@@ -16,7 +16,7 @@ export class TranscriptionService {
 
   async transcribe(filename: string): Promise<string> {
     const filePath = path.join(process.cwd(), 'uploads', filename);
-    
+
     if (!fs.existsSync(filePath)) {
       throw new Error('File not found');
     }

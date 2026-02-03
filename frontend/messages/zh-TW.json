@@ -184,7 +184,8 @@
       "noUsers": "沒有可用使用者",
       "cancel": "取消",
       "ready": "與 {name} 的聊天已就緒。",
-      "openChat": "開啟聊天"
+      "openChat": "開啟聊天",
+      "success": "私人會話已開始"
     }
   },
   "Invite": {

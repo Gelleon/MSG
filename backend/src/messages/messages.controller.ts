@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Query, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Query,
+  Request,
+} from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { Prisma } from '@prisma/client';
 import { AuthGuard } from '@nestjs/passport';
@@ -14,18 +23,38 @@ export class MessagesController {
   }
 
   @Get('room/:roomId')
-  async findAll(@Param('roomId') roomId: string, @Request() req: any) {
+  async findAll(
+    @Param('roomId') roomId: string,
+    @Request() req: any,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+  ) {
     try {
-      return await this.messagesService.findAll(roomId, req.user);
+      const parsedLimit = limit ? parseInt(limit, 10) : 50;
+      return await this.messagesService.findAll(
+        roomId,
+        req.user,
+        cursor,
+        parsedLimit,
+      );
     } catch (error) {
-      console.error(`[MessagesController] Error fetching messages for room ${roomId}:`, error);
+      console.error(
+        `[MessagesController] Error fetching messages for room ${roomId}:`,
+        error,
+      );
       throw error;
     }
   }
 
   @Post(':id/translate')
-  async translate(@Param('id') id: string, @Body('targetLang') targetLang: string) {
-    const translatedText = await this.messagesService.translateMessage(id, targetLang);
+  async translate(
+    @Param('id') id: string,
+    @Body('targetLang') targetLang: string,
+  ) {
+    const translatedText = await this.messagesService.translateMessage(
+      id,
+      targetLang,
+    );
     return { translatedText };
   }
 }

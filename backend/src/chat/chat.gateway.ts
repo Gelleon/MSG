@@ -42,21 +42,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const payload = this.jwtService.verify(token);
       client.data.user = payload;
-      
+
       // Join user specific room
       const userId = payload.sub || payload.userId;
       if (userId) {
         client.join(`user_${userId}`);
       }
-      
+
       // Handle disconnecting event to access rooms before they are cleared
       client.on('disconnecting', () => {
         const rooms = Array.from(client.rooms);
         // Filter out socket ID room and user specific room
-        const chatRooms = rooms.filter(r => r !== client.id && !r.startsWith('user_'));
-        
-        chatRooms.forEach(roomId => {
-          this.server.to(roomId).emit('userLeft', { userId: client.data.user.sub });
+        const chatRooms = rooms.filter(
+          (r) => r !== client.id && !r.startsWith('user_'),
+        );
+
+        chatRooms.forEach((roomId) => {
+          this.server
+            .to(roomId)
+            .emit('userLeft', { userId: client.data.user.sub });
         });
       });
 
@@ -72,35 +76,37 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async validateRoomAccess(client: Socket, roomId: string): Promise<boolean> {
-      const user = client.data.user;
-      if (!user) return false;
-      
-      // ADMIN and MANAGER have global access
-      if (user.role === 'ADMIN' || user.role === 'MANAGER') return true;
+    const user = client.data.user;
+    if (!user) return false;
 
-      const room = await this.roomsService.findOne(roomId);
-      if (!room) return false;
+    // ADMIN and MANAGER have global access
+    if (user.role === 'ADMIN' || user.role === 'MANAGER') return true;
 
-      // Check if user is in room.users
-      const isParticipant = (room as any).users.some((u: any) => u.id === user.sub);
-      if (isParticipant) return true;
-      
-      return false;
+    const room = await this.roomsService.findOne(roomId);
+    if (!room) return false;
+
+    // Check if user is in room.users
+    const isParticipant = (room as any).users.some(
+      (u: any) => u.id === user.sub,
+    );
+    if (isParticipant) return true;
+
+    return false;
   }
 
   @SubscribeMessage('startPrivateSession')
   async handleStartPrivateSession(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { userIds: string[], sourceRoomId?: string },
+    @MessageBody() payload: { userIds: string[]; sourceRoomId?: string },
   ) {
     const user = client.data.user;
     if (!user) {
-      throw new WsException('Unauthorized');
+      return { error: 'Unauthorized' };
     }
 
     // 1. Check if creator is CLIENT
     if (user.role === 'CLIENT') {
-      throw new WsException('Clients cannot create private sessions');
+      return { error: 'Clients cannot create private sessions' };
     }
 
     try {
@@ -120,8 +126,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // 4. Notify participants
       // We need to notify each user individually since they might not be in a shared room yet
-      allUserIds.forEach(userId => {
-        this.server.to(`user_${userId}`).emit('privateSessionStarted', updatedRoom);
+      allUserIds.forEach((userId) => {
+        this.server
+          .to(`user_${userId}`)
+          .emit('privateSessionStarted', updatedRoom);
       });
 
       return updatedRoom;
@@ -163,11 +171,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(roomId).emit('privateSessionClosed', { roomId });
 
       // Log the action
-      console.log(`Private session ${roomId} closed by user ${user.sub || user.userId} (${user.role})`);
+      console.log(
+        `Private session ${roomId} closed by user ${user.sub || user.userId} (${user.role})`,
+      );
 
       // Close and delete the room using the dedicated service method
       // This handles ActionLog creation, cleanup, and cascading deletion in a transaction
-      await this.roomsService.closePrivateSession(roomId, user.sub || user.userId);
+      await this.roomsService.closePrivateSession(
+        roomId,
+        user.sub || user.userId,
+      );
 
       return { success: true };
     } catch (error) {
@@ -183,21 +196,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const hasAccess = await this.validateRoomAccess(client, roomId);
     if (!hasAccess) {
-        throw new WsException('Forbidden');
+      return { error: 'Forbidden' };
     }
 
     // Get all room members regardless of online status
     const room = await this.roomsService.findOne(roomId);
     if (!room) {
-        return [];
+      return [];
     }
 
     // Map to simple user objects
     // room.members includes user data
-    
+
     const users = (room as any).members
-        .map((member: any) => member.user)
-        .filter((user: any) => user.role !== 'CLIENT'); // Server-side validation
+      .map((member: any) => member.user)
+      .filter((user: any) => user.role !== 'CLIENT'); // Server-side validation
 
     return users.map((user: any) => ({
       id: user.id,
@@ -214,12 +227,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const hasAccess = await this.validateRoomAccess(client, roomId);
     if (!hasAccess) {
-        throw new WsException('Forbidden');
+      return { error: 'Forbidden' };
     }
 
     client.join(roomId);
     console.log(`Client ${client.id} joined room ${roomId}`);
-    
+
     // Broadcast userJoined event with fresh user data
     const userId = client.data.user?.sub || client.data.user?.userId;
     if (userId) {
@@ -229,7 +242,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
         });
       }
     }
@@ -244,11 +257,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     client.leave(roomId);
     console.log(`Client ${client.id} left room ${roomId}`);
-    
+
     if (client.data.user) {
       this.server.to(roomId).emit('userLeft', { userId: client.data.user.sub });
     }
-    
+
     return { event: 'leftRoom', data: roomId };
   }
 
@@ -262,7 +275,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const userId = user.sub || user.userId;
     await this.roomsService.markAsRead(roomId, userId);
-    
+
     // Notify all sessions of this user
     this.server.to(`user_${userId}`).emit('roomRead', { roomId });
   }
@@ -270,7 +283,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { roomId: string; content: string; attachmentUrl?: string; attachmentType?: string; attachmentName?: string },
+    @MessageBody()
+    payload: {
+      roomId: string;
+      content: string;
+      attachmentUrl?: string;
+      attachmentType?: string;
+      attachmentName?: string;
+    },
   ) {
     try {
       const user = client.data.user;
@@ -279,13 +299,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      console.log(`SendMessage request from ${user.username} to room ${payload.roomId}: ${payload.content}`);
+      console.log(
+        `SendMessage request from ${user.username} to room ${payload.roomId}: ${payload.content}`,
+      );
 
       // Verify access again
       const hasAccess = await this.validateRoomAccess(client, payload.roomId);
       if (!hasAccess) {
-        console.log(`SendMessage: User ${user.username} does not have access to room ${payload.roomId}`);
-        client.emit('error', 'You do not have permission to send messages to this room');
+        console.log(
+          `SendMessage: User ${user.username} does not have access to room ${payload.roomId}`,
+        );
+        client.emit(
+          'error',
+          'You do not have permission to send messages to this room',
+        );
         return;
       }
 
@@ -319,12 +346,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      console.log(`DeleteMessage request from ${user.username} for message ${payload.messageId}`);
+      console.log(
+        `DeleteMessage request from ${user.username} for message ${payload.messageId}`,
+      );
 
-      const deletedMessage = await this.messagesService.delete(payload.messageId, user.sub);
+      const deletedMessage = await this.messagesService.delete(
+        payload.messageId,
+        user.sub,
+      );
 
-      this.server.to(deletedMessage.roomId).emit('messageDeleted', deletedMessage.id);
-      
+      this.server
+        .to(deletedMessage.roomId)
+        .emit('messageDeleted', deletedMessage.id);
+
       return { success: true };
     } catch (error) {
       console.error('DeleteMessage error:', error);

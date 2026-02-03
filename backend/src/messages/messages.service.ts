@@ -16,9 +16,13 @@ export class MessagesService {
     // Auto-translate before saving
     if (data.content) {
       try {
-        const translation = await this.translationService.translateAuto(data.content);
+        const translation = await this.translationService.translateAuto(
+          data.content,
+        );
         if (translation) {
-          data.translations = JSON.stringify({ [translation.lang]: translation.text });
+          data.translations = JSON.stringify({
+            [translation.lang]: translation.text,
+          });
         }
       } catch (error) {
         console.error('Failed to auto-translate message', error);
@@ -41,15 +45,24 @@ export class MessagesService {
     return message;
   }
 
-  async findAll(roomId: string, user?: any): Promise<Message[]> {
-    console.log(`[MessagesService.findAll] Fetching messages for room ${roomId}, user: ${user?.userId} (${user?.role}), email: ${user?.email}`);
-    
+  async findAll(
+    roomId: string,
+    user?: any,
+    cursor?: string,
+    limit: number = 50,
+  ): Promise<Message[]> {
+    console.log(
+      `[MessagesService.findAll] Fetching messages for room ${roomId}, user: ${user?.userId}, cursor: ${cursor}, limit: ${limit}`,
+    );
+
     const where: Prisma.MessageWhereInput = { roomId };
     const allowedEmails = ['svzelenin@yandex.ru', 'pallermo72@gmail.com'];
     const userEmail = user?.email ? user.email.toLowerCase() : '';
     const isSuperAdmin = allowedEmails.includes(userEmail);
 
-    console.log(`[MessagesService.findAll] isSuperAdmin: ${isSuperAdmin} (email: ${userEmail})`);
+    console.log(
+      `[MessagesService.findAll] isSuperAdmin: ${isSuperAdmin} (email: ${userEmail})`,
+    );
 
     if (user && user.role === 'CLIENT' && !isSuperAdmin) {
       const membership = await this.prisma.roomMember.findUnique({
@@ -60,32 +73,62 @@ export class MessagesService {
           },
         },
       });
-      
-      console.log(`[MessagesService.findAll] Membership for CLIENT:`, membership);
 
-      if (membership) {
-        where.createdAt = {
-          gte: membership.joinedAt,
-        };
-      } else {
-        console.log(`[MessagesService.findAll] CLIENT has no membership, returning empty array`);
-        return [];
-      }
+      console.log(
+        `[MessagesService.findAll] Membership for CLIENT:`,
+        membership,
+      );
+
+      // if (membership) {
+      //   where.createdAt = {
+      //     gte: membership.joinedAt,
+      //   };
+      // } else {
+      //   console.log(
+      //     `[MessagesService.findAll] CLIENT has no membership, returning empty array`,
+      //   );
+      //   return [];
+      // }
+    }
+
+    let cursorMessage: Message | null = null;
+    if (cursor) {
+      cursorMessage = await this.prisma.message.findUnique({
+        where: { id: cursor },
+      });
+    }
+
+    if (cursor && !cursorMessage) {
+      return [];
+    }
+
+    if (cursorMessage) {
+      where.OR = [
+        { createdAt: { lt: cursorMessage.createdAt } },
+        {
+          createdAt: cursorMessage.createdAt,
+          id: { lt: cursorMessage.id },
+        },
+      ];
     }
 
     const messages = await this.prisma.message.findMany({
       where,
-      orderBy: { createdAt: 'asc' },
+      take: limit,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       include: {
         sender: true,
       },
     });
-    
+
     console.log(`[MessagesService.findAll] Found ${messages.length} messages`);
-    return messages;
+    return messages.reverse();
   }
 
-  async translateMessage(messageId: string, targetLang: string): Promise<string> {
+  async translateMessage(
+    messageId: string,
+    targetLang: string,
+  ): Promise<string> {
     const message = await this.prisma.message.findUnique({
       where: { id: messageId },
     });
@@ -96,28 +139,31 @@ export class MessagesService {
 
     let translations: Record<string, string> = {};
     if (message.translations) {
-        try {
-            translations = JSON.parse(message.translations);
-        } catch (e) {
-            console.error('Failed to parse translations JSON', e);
-        }
+      try {
+        translations = JSON.parse(message.translations);
+      } catch (e) {
+        console.error('Failed to parse translations JSON', e);
+      }
     }
 
     if (translations[targetLang]) {
-        return translations[targetLang];
+      return translations[targetLang];
     }
 
     if (!message.content) {
-        return '';
+      return '';
     }
 
-    const translatedText = await this.translationService.translateText(message.content, targetLang);
-    
+    const translatedText = await this.translationService.translateText(
+      message.content,
+      targetLang,
+    );
+
     translations[targetLang] = translatedText;
 
     await this.prisma.message.update({
-        where: { id: messageId },
-        data: { translations: JSON.stringify(translations) },
+      where: { id: messageId },
+      data: { translations: JSON.stringify(translations) },
     });
 
     return translatedText;

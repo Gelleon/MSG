@@ -79,9 +79,14 @@ describe('AuthService', () => {
         password: 'password123',
       };
 
-      mockUsersService.findOne.mockResolvedValue({ id: 'existing-id', email: dto.email });
+      mockUsersService.findOne.mockResolvedValue({
+        id: 'existing-id',
+        email: dto.email,
+      });
 
-      await expect(service.register(dto as any)).rejects.toThrow(BadRequestException);
+      await expect(service.register(dto as any)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(mockUsersService.createUser).not.toHaveBeenCalled();
     });
 
@@ -92,9 +97,13 @@ describe('AuthService', () => {
       };
 
       mockUsersService.findOne.mockResolvedValue(null);
-      mockUsersService.createUser.mockRejectedValue(new Error('Database error'));
+      mockUsersService.createUser.mockRejectedValue(
+        new Error('Database error'),
+      );
 
-      await expect(service.register(dto as any)).rejects.toThrow(BadRequestException);
+      await expect(service.register(dto as any)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

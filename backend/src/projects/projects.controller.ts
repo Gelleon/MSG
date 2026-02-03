@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { Prisma } from '@prisma/client';
 import { AuthGuard } from '@nestjs/passport';
@@ -11,7 +21,10 @@ export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post()
-  create(@Request() req: any, @Body() createProjectDto: Prisma.ProjectCreateInput) {
+  create(
+    @Request() req: any,
+    @Body() createProjectDto: Prisma.ProjectCreateInput,
+  ) {
     // Override ownerId with logged in user
     createProjectDto.owner = { connect: { id: req.user.userId } };
     return this.projectsService.create(createProjectDto);
@@ -28,7 +41,10 @@ export class ProjectsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProjectDto: Prisma.ProjectUpdateInput) {
+  update(
+    @Param('id') id: string,
+    @Body() updateProjectDto: Prisma.ProjectUpdateInput,
+  ) {
     return this.projectsService.update(id, updateProjectDto);
   }
 

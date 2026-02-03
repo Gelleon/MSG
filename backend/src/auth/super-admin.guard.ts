@@ -1,9 +1,16 @@
-
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 
 @Injectable()
 export class SuperAdminGuard implements CanActivate {
-  private readonly allowedEmails = ['svzelenin@yandex.ru', 'pallermo72@gmail.com'];
+  private readonly allowedEmails = [
+    'svzelenin@yandex.ru',
+    'pallermo72@gmail.com',
+  ];
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
@@ -18,6 +25,8 @@ export class SuperAdminGuard implements CanActivate {
       return true;
     }
 
-    throw new ForbiddenException('Access denied. Super Admin privileges required.');
+    throw new ForbiddenException(
+      'Access denied. Super Admin privileges required.',
+    );
   }
 }

@@ -28,6 +28,11 @@ export const adminService = {
     return response.data;
   },
 
+  searchUsers: async (search: string = ''): Promise<User[]> => {
+    const response = await api.get<User[]>('/users/search', { params: { search } });
+    return response.data;
+  },
+
   createUser: async (userData: any) => {
     const response = await api.post('/users', userData);
     return response.data;

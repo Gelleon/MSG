@@ -38,6 +38,9 @@ interface ChatState {
   isConnected: boolean;
   translationTargetLang: string;
   
+  isLoadingHistory: boolean;
+  hasMoreMessages: boolean;
+  
   connect: () => void;
   disconnect: () => void;
   fetchRooms: () => Promise<void>;
@@ -45,6 +48,7 @@ interface ChatState {
   renameRoom: (roomId: string, name: string) => Promise<void>;
   deleteRoom: (roomId: string) => Promise<void>;
   joinRoom: (roomId: string) => void;
+  loadMoreMessages: () => Promise<void>;
   leaveRoom: (roomId: string) => void;
   sendMessage: (content: string, attachmentUrl?: string, attachmentType?: string, attachmentName?: string) => void;
   deleteMessage: (messageId: string) => void;
@@ -62,6 +66,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   isConnected: false,
   translationTargetLang: 'ru',
+  isLoadingHistory: false,
+  hasMoreMessages: true,
 
   setTranslationTargetLang: (lang: string) => set({ translationTargetLang: lang }),
 
@@ -226,7 +232,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       // 2. Load messages for the room
       console.log(`[joinRoom] Fetching messages for room: ${roomId}`);
-      const response = await api.get(`/messages/room/${roomId}`);
+      const response = await api.get(`/messages/room/${roomId}?limit=50`);
       console.log(`[joinRoom] Received ${response.data.length} messages`);
 
       if (!Array.isArray(response.data)) {
@@ -234,7 +240,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         throw new Error('Invalid messages format');
       }
 
-      set({ messages: response.data, currentRoomId: roomId });
+      set({ 
+        messages: response.data, 
+        currentRoomId: roomId,
+        hasMoreMessages: response.data.length === 50 
+      });
       
       // 3. Join via Socket
       if (socket) {
@@ -254,6 +264,43 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } catch (error) {
         console.error('Failed to join room', error);
         toast.error('Failed to join room');
+    }
+  },
+
+  loadMoreMessages: async () => {
+    const { currentRoomId, messages, isLoadingHistory, hasMoreMessages } = get();
+    if (!currentRoomId || isLoadingHistory || !hasMoreMessages || messages.length === 0) return;
+
+    set({ isLoadingHistory: true });
+    try {
+        const oldestMessageId = messages[0].id;
+        const response = await api.get(`/messages/room/${currentRoomId}?cursor=${oldestMessageId}&limit=50`);
+        
+        const newMessages = response.data;
+        if (newMessages.length < 50) {
+            set({ hasMoreMessages: false });
+        }
+        
+        if (newMessages.length > 0) {
+            set((state) => {
+                const existingIds = new Set(state.messages.map(m => m.id));
+                const uniqueNewMessages = newMessages.filter((m: Message) => !existingIds.has(m.id));
+                
+                // If all messages were duplicates, we might want to fetch more or stop?
+                // For now, just add unique ones.
+                
+                return {
+                    messages: [...uniqueNewMessages, ...state.messages],
+                    isLoadingHistory: false
+                };
+            });
+        } else {
+            set({ isLoadingHistory: false, hasMoreMessages: false });
+        }
+    } catch (error) {
+        console.error('Failed to load more messages', error);
+        toast.error('Не удалось загрузить историю сообщений');
+        set({ isLoadingHistory: false });
     }
   },
 

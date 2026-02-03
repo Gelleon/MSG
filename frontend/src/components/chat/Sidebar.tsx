@@ -204,21 +204,27 @@ export default function Sidebar({ className }: { className?: string }) {
       
       {/* Header Section */}
       <div className="p-4 space-y-4">
+        {/* Branding & Actions */}
         <div className="flex items-center justify-between px-1">
-           <h2 className="text-2xl font-bold tracking-tight text-sidebar-foreground">{tSidebar('chats')}</h2>
+           <div className="flex items-center gap-2.5">
+             <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/20">
+               <MessageSquarePlus className="h-5 w-5 text-primary-foreground" />
+             </div>
+             <span className="font-bold text-xl tracking-tight text-foreground">MSG.</span>
+           </div>
            <CreateRoomDialog>
-             <Button variant="ghost" size="icon" className="h-10 w-10 bg-secondary/20 hover:bg-secondary/40 text-secondary-foreground rounded-full transition-all duration-200">
-               <MessageSquarePlus className="h-5 w-5" />
+             <Button variant="ghost" size="icon" className="h-9 w-9 bg-background/50 hover:bg-accent text-muted-foreground hover:text-accent-foreground rounded-xl transition-all duration-200 border border-border/40">
+               <Plus className="h-5 w-5" />
              </Button>
            </CreateRoomDialog>
         </div>
 
         {/* Search Bar */}
-        <div className="relative px-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70 pointer-events-none" />
+        <div className="relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-focus-within:text-primary transition-colors duration-200" />
           <Input 
             placeholder={tSidebar('searchPlaceholder')}
-            className="pl-10 h-10 rounded-full bg-secondary/50 border-none focus-visible:ring-1 focus-visible:ring-ring/20 transition-all placeholder:text-muted-foreground/60" 
+            className="pl-9 h-10 rounded-xl bg-secondary/30 border-transparent focus:bg-background focus:border-primary/20 transition-all placeholder:text-muted-foreground/50" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -229,8 +235,14 @@ export default function Sidebar({ className }: { className?: string }) {
       <ScrollArea className="flex-1 px-3">
         <div className="space-y-1 py-2">
             {displayRooms.length === 0 && (
-                <div className="text-center py-8 px-4 text-muted-foreground text-sm">
-                    {tSidebar('noChats')} <br/>{tSidebar('startConversation')}
+                <div className="flex flex-col items-center justify-center py-12 px-4 text-center space-y-3 opacity-60">
+                    <div className="w-12 h-12 rounded-full bg-secondary/50 flex items-center justify-center">
+                        <MessageSquarePlus className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground font-medium">
+                        {tSidebar('noChats')}<br/>
+                        <span className="text-xs opacity-70">{tSidebar('startConversation')}</span>
+                    </p>
                 </div>
             )}
             
@@ -244,56 +256,50 @@ export default function Sidebar({ className }: { className?: string }) {
                    <ContextMenuTrigger asChild>
                      <button
                        className={cn(
-                          "w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all duration-300 ease-in-out group relative overflow-hidden",
-                          // Animation
-                          "animate__animated animate__fadeInLeft animate__faster",
+                          "w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all duration-200 ease-out group relative border border-transparent",
                           // Active State
                           isActive 
-                            ? "bg-secondary/80 text-secondary-foreground shadow-md ring-1 ring-border/50 scale-[1.01] z-10" 
-                            : "hover:bg-secondary/40 text-sidebar-foreground z-0 hover:z-10 hover:shadow-sm",
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm border-sidebar-border/50" 
+                            : "hover:bg-sidebar-accent/50 text-sidebar-foreground/80 hover:text-sidebar-foreground",
                           // Child styling
                           isChild 
-                            ? "ml-6 w-[calc(100%-1.5rem)] border-l-2 border-primary/20 rounded-l-md mt-0.5 bg-gradient-to-r from-secondary/10 to-transparent" 
-                            : "mb-1 border border-transparent hover:border-border/30"
+                            ? "ml-6 w-[calc(100%-1.5rem)] pl-3 border-l-2 border-l-border/50 rounded-l-none border-y-transparent border-r-transparent bg-transparent" 
+                            : ""
                         )}
                        onClick={() => joinRoom(room.id)}
                       >
                         {/* Connecting Line for Child */}
                         {isChild && (
-                           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary/20 rounded-r-full opacity-50" />
+                           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-full bg-transparent" />
                         )}
                         <div className="relative">
                            <Avatar className={cn(
-                               "h-12 w-12 border-2 shadow-sm transition-transform duration-300 group-hover:scale-105", 
-                               isPrivate ? "ring-2 ring-primary/10 border-primary/10" : "border-background",
+                               "h-10 w-10 border shadow-sm transition-transform duration-200 group-hover:scale-105", 
+                               isPrivate ? "ring-2 ring-primary/5 border-primary/10" : "border-background",
                                isActive ? "ring-2 ring-background" : ""
                            )}>
                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room.id}`} />
                                <AvatarFallback 
                                 style={{ backgroundColor: isPrivate ? undefined : stringToColor(room.name, 70, 95), color: isPrivate ? undefined : stringToColor(room.name, 80, 40) }}
                                 className={cn("text-xs font-bold", isPrivate ? "bg-secondary text-secondary-foreground" : "")}>
-                                    {isPrivate ? <Lock className="w-4 h-4" /> : room.name.substring(0, 2).toUpperCase()}
+                                    {isPrivate ? <Lock className="w-3.5 h-3.5" /> : room.name.substring(0, 2).toUpperCase()}
                                </AvatarFallback>
                            </Avatar>
                            {isChild && (
                                <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 shadow-sm border border-border z-20">
-                                   <CornerDownRight className="w-3 h-3 text-muted-foreground" />
+                                   <CornerDownRight className="w-2.5 h-2.5 text-muted-foreground" />
                                </div>
                            )}
                        </div>
                        
-                       <div className="flex-1 min-w-0 flex flex-col gap-1 z-10">
+                       <div className="flex-1 min-w-0 flex flex-col gap-0.5 z-10">
                          <div className="flex justify-between items-center">
-                             <span className={cn("font-semibold text-[15px] truncate leading-tight tracking-tight flex items-center gap-1.5", isActive ? "text-foreground" : "text-foreground/90")}>
+                             <span className={cn("font-semibold text-[14px] truncate leading-tight tracking-tight", isActive ? "text-foreground" : "text-foreground")}>
                                  {room.name}
                              </span>
-                             {/* Mock time for now */}
-                             {/* <span className="text-[11px] tabular-nums text-muted-foreground/60">
-                                 12:30
-                             </span> */}
                          </div>
                          <div className="flex justify-between items-center gap-2">
-                             <p className={cn("text-[13px] truncate flex-1 transition-colors duration-200", isActive ? "text-foreground/80 font-medium" : "text-muted-foreground group-hover:text-muted-foreground/80")}>
+                             <p className={cn("text-[12px] truncate flex-1 transition-colors duration-200", isActive ? "text-muted-foreground font-medium" : "text-muted-foreground/70")}>
                                  {room.description || (isPrivate ? tSidebar('privateSession') : tSidebar('noDescription'))}
                              </p>
                              {(room.unreadCount || 0) > 0 && (
@@ -347,7 +353,7 @@ export default function Sidebar({ className }: { className?: string }) {
       <div className="p-3 mt-auto border-t border-border/40 bg-background/50 backdrop-blur-sm">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start px-3 py-6 rounded-2xl hover:bg-secondary/50 group transition-all duration-200">
+            <Button variant="ghost" className="w-full justify-start px-3 py-6 rounded-xl hover:bg-secondary/50 group transition-all duration-200">
               <div className="flex items-center gap-3 text-left w-full">
                 <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
                   <AvatarFallback className="bg-primary/10 text-primary font-bold">

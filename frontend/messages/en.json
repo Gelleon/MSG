@@ -191,7 +191,8 @@
       "noUsers": "No available users for private chat",
       "cancel": "Cancel",
       "ready": "Chat with {name} is ready.",
-      "openChat": "Open Chat"
+      "openChat": "Open Chat",
+      "success": "Private session started"
     }
   },
   "Invite": {

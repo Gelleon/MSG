@@ -7,7 +7,13 @@ import { TranslationModule } from '../translation/translation.module';
 import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [MessagesModule, forwardRef(() => RoomsModule), AuthModule, TranslationModule, UsersModule],
+  imports: [
+    MessagesModule,
+    forwardRef(() => RoomsModule),
+    AuthModule,
+    TranslationModule,
+    UsersModule,
+  ],
   providers: [ChatGateway],
   exports: [ChatGateway],
 })

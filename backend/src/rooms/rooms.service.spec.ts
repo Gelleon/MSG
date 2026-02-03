@@ -82,18 +82,29 @@ describe('RoomsService', () => {
 
   describe('validateRoomName', () => {
     it('should throw error if name is empty', async () => {
-      await expect(service.validateRoomName('')).rejects.toThrow('Название комнаты не может быть пустым');
-      await expect(service.validateRoomName('   ')).rejects.toThrow('Название комнаты не может быть пустым');
+      await expect(service.validateRoomName('')).rejects.toThrow(
+        'Название комнаты не может быть пустым',
+      );
+      await expect(service.validateRoomName('   ')).rejects.toThrow(
+        'Название комнаты не может быть пустым',
+      );
     });
 
     it('should throw error if name is too long', async () => {
       const longName = 'a'.repeat(101);
-      await expect(service.validateRoomName(longName)).rejects.toThrow('Название комнаты слишком длинное (максимум 100 символов)');
+      await expect(service.validateRoomName(longName)).rejects.toThrow(
+        'Название комнаты слишком длинное (максимум 100 символов)',
+      );
     });
 
     it('should throw error if room with same name exists', async () => {
-      mockPrismaService.room.findFirst.mockResolvedValue({ id: 'existing-id', name: 'Existing Room' });
-      await expect(service.validateRoomName('Existing Room')).rejects.toThrow('Комната с таким названием уже существует');
+      mockPrismaService.room.findFirst.mockResolvedValue({
+        id: 'existing-id',
+        name: 'Existing Room',
+      });
+      await expect(service.validateRoomName('Existing Room')).rejects.toThrow(
+        'Комната с таким названием уже существует',
+      );
       expect(mockPrismaService.room.findFirst).toHaveBeenCalledWith({
         where: {
           name: { equals: 'Existing Room' },
@@ -128,9 +139,15 @@ describe('RoomsService', () => {
 
   describe('create', () => {
     it('should create room successfully', async () => {
-      const createDto: Prisma.RoomUncheckedCreateInput = { name: 'New Room', description: 'Test' };
+      const createDto: Prisma.RoomUncheckedCreateInput = {
+        name: 'New Room',
+        description: 'Test',
+      };
       mockPrismaService.room.findFirst.mockResolvedValue(null); // Validation pass
-      mockPrismaService.room.create.mockResolvedValue({ id: 'new-id', ...createDto });
+      mockPrismaService.room.create.mockResolvedValue({
+        id: 'new-id',
+        ...createDto,
+      });
 
       const result = await service.create(createDto);
       expect(result).toEqual({ id: 'new-id', ...createDto });
@@ -140,14 +157,19 @@ describe('RoomsService', () => {
     it('should throw error if P2002 error occurs', async () => {
       const createDto: Prisma.RoomUncheckedCreateInput = { name: 'New Room' };
       mockPrismaService.room.findFirst.mockResolvedValue(null); // Validation pass
-      
-      const p2002Error = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-        code: 'P2002',
-        clientVersion: '5.0.0',
-      });
+
+      const p2002Error = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+        },
+      );
       mockPrismaService.room.create.mockRejectedValue(p2002Error);
 
-      await expect(service.create(createDto)).rejects.toThrow('Комната с таким названием уже существует');
+      await expect(service.create(createDto)).rejects.toThrow(
+        'Комната с таким названием уже существует',
+      );
     });
 
     it('should rethrow other errors', async () => {
@@ -163,7 +185,10 @@ describe('RoomsService', () => {
     it('should update room name successfully', async () => {
       const updateDto: Prisma.RoomUpdateInput = { name: 'Updated Room' };
       mockPrismaService.room.findFirst.mockResolvedValue(null); // Validation pass
-      mockPrismaService.room.update.mockResolvedValue({ id: 'room-id', name: 'Updated Room' });
+      mockPrismaService.room.update.mockResolvedValue({
+        id: 'room-id',
+        name: 'Updated Room',
+      });
 
       const result = await service.update('room-id', updateDto);
       expect(result).toEqual({ id: 'room-id', name: 'Updated Room' });
@@ -178,14 +203,19 @@ describe('RoomsService', () => {
     it('should throw error on P2002 during update', async () => {
       const updateDto: Prisma.RoomUpdateInput = { name: 'Updated Room' };
       mockPrismaService.room.findFirst.mockResolvedValue(null);
-      
-      const p2002Error = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-        code: 'P2002',
-        clientVersion: '5.0.0',
-      });
+
+      const p2002Error = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        {
+          code: 'P2002',
+          clientVersion: '5.0.0',
+        },
+      );
       mockPrismaService.room.update.mockRejectedValue(p2002Error);
 
-      await expect(service.update('room-id', updateDto)).rejects.toThrow('Комната с таким названием уже существует');
+      await expect(service.update('room-id', updateDto)).rejects.toThrow(
+        'Комната с таким названием уже существует',
+      );
     });
   });
 
@@ -195,16 +225,14 @@ describe('RoomsService', () => {
       const rooms = [
         {
           id: 'room-1',
-          members: [
-            { userId: 'user-1', lastReadAt: new Date('2023-01-01') },
-          ],
+          members: [{ userId: 'user-1', lastReadAt: new Date('2023-01-01') }],
         },
       ];
       mockPrismaService.room.findMany.mockResolvedValue(rooms);
       mockPrismaService.message.count.mockResolvedValue(5);
 
       const result = await service.findAll(undefined, user);
-      
+
       expect(result).toHaveLength(1);
       expect(result[0].unreadCount).toBe(5);
       expect(mockPrismaService.room.findMany).toHaveBeenCalled();
@@ -212,24 +240,28 @@ describe('RoomsService', () => {
 
     it('should filter by project if provided', async () => {
       await service.findAll('project-1');
-      expect(mockPrismaService.room.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: { projectId: 'project-1' },
-      }));
+      expect(mockPrismaService.room.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { projectId: 'project-1' },
+        }),
+      );
     });
 
     it('should filter for CLIENT role', async () => {
       const user = { userId: 'client-1', role: 'CLIENT' };
       mockPrismaService.room.findMany.mockResolvedValue([]);
-      
+
       await service.findAll(undefined, user);
-      
-      expect(mockPrismaService.room.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: {
-          members: {
-            some: { userId: 'client-1' },
+
+      expect(mockPrismaService.room.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            members: {
+              some: { userId: 'client-1' },
+            },
           },
-        },
-      }));
+        }),
+      );
     });
   });
 
@@ -287,22 +319,24 @@ describe('RoomsService', () => {
       // But closePrivateSession calls this.findOne which calls prisma.room.findUnique
       // We need to mock service.findOne or just mock prisma responses that findOne uses.
       // Since we are testing service, we should stick to mocking prisma.
-      
+
       // findOne implementation calls prisma.room.findUnique then prisma.message.findMany
-      mockPrismaService.room.findUnique.mockResolvedValue({ 
-        ...room, 
-        members: [] 
+      mockPrismaService.room.findUnique.mockResolvedValue({
+        ...room,
+        members: [],
       });
       mockPrismaService.message.findMany.mockResolvedValue([]);
 
       await service.closePrivateSession('room-1', 'admin-1');
 
-      expect(mockPrismaService.actionLog.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-          action: 'CLOSE_PRIVATE_SESSION',
-          adminId: 'admin-1',
-        })
-      }));
+      expect(mockPrismaService.actionLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: 'CLOSE_PRIVATE_SESSION',
+            adminId: 'admin-1',
+          }),
+        }),
+      );
       expect(mockPrismaService.room.delete).toHaveBeenCalled();
     });
   });
@@ -316,21 +350,28 @@ describe('RoomsService', () => {
       mockPrismaService.message.findMany.mockResolvedValue([]);
 
       await service.addUser('room-1', 'user-1');
-      
+
       expect(mockPrismaService.roomMember.create).toHaveBeenCalled();
     });
 
     it('should throw if room not found', async () => {
       mockPrismaService.room.findUnique.mockResolvedValue(null);
-      await expect(service.addUser('room-1', 'user-1')).rejects.toThrow('Room not found');
+      await expect(service.addUser('room-1', 'user-1')).rejects.toThrow(
+        'Room not found',
+      );
     });
 
     it('should throw if adding CLIENT to private room', async () => {
       const room = { id: 'room-1', isPrivate: true, members: [] };
       mockPrismaService.room.findUnique.mockResolvedValue(room);
-      mockPrismaService.user.findUnique.mockResolvedValue({ id: 'client-1', role: 'CLIENT' });
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'client-1',
+        role: 'CLIENT',
+      });
 
-      await expect(service.addUser('room-1', 'client-1')).rejects.toThrow('Clients cannot be added to private rooms');
+      await expect(service.addUser('room-1', 'client-1')).rejects.toThrow(
+        'Clients cannot be added to private rooms',
+      );
     });
   });
 
@@ -348,16 +389,20 @@ describe('RoomsService', () => {
 
   describe('removeMember', () => {
     it('should remove member and log action', async () => {
-      mockPrismaService.roomMember.findUnique.mockResolvedValue({ id: 'member-1' });
-      
+      mockPrismaService.roomMember.findUnique.mockResolvedValue({
+        id: 'member-1',
+      });
+
       await service.removeMember('room-1', 'user-1', 'admin-1');
 
-      expect(mockPrismaService.actionLog.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-          action: 'REMOVE_USER',
-          targetId: 'user-1',
-        })
-      }));
+      expect(mockPrismaService.actionLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: 'REMOVE_USER',
+            targetId: 'user-1',
+          }),
+        }),
+      );
       expect(mockPrismaService.roomMember.delete).toHaveBeenCalled();
     });
   });
@@ -366,11 +411,11 @@ describe('RoomsService', () => {
     it('should return members with pagination', async () => {
       mockPrismaService.roomMember.count.mockResolvedValue(10);
       mockPrismaService.roomMember.findMany.mockResolvedValue([
-        { user: { id: 'user-1' }, joinedAt: new Date() }
+        { user: { id: 'user-1' }, joinedAt: new Date() },
       ]);
 
       const result = await service.getMembers('room-1', { page: 1, limit: 10 });
-      
+
       expect(result.total).toBe(10);
       expect(result.data).toHaveLength(1);
     });
@@ -378,10 +423,12 @@ describe('RoomsService', () => {
 
   describe('markAsRead', () => {
     it('should update lastReadAt', async () => {
-      mockPrismaService.roomMember.findUnique.mockResolvedValue({ id: 'member-1' });
-      
+      mockPrismaService.roomMember.findUnique.mockResolvedValue({
+        id: 'member-1',
+      });
+
       await service.markAsRead('room-1', 'user-1');
-      
+
       expect(mockPrismaService.roomMember.update).toHaveBeenCalled();
     });
   });
@@ -390,12 +437,14 @@ describe('RoomsService', () => {
     it('should find inactive rooms', async () => {
       const date = new Date();
       await service.findInactivePrivateRooms(date);
-      expect(mockPrismaService.room.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: {
-          isPrivate: true,
-          updatedAt: { lt: date },
-        },
-      }));
+      expect(mockPrismaService.room.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            isPrivate: true,
+            updatedAt: { lt: date },
+          },
+        }),
+      );
     });
   });
 
@@ -403,10 +452,9 @@ describe('RoomsService', () => {
     it('should return logs', async () => {
       mockPrismaService.actionLog.count.mockResolvedValue(5);
       mockPrismaService.actionLog.findMany.mockResolvedValue([]);
-      
+
       const result = await service.getRoomLogs('room-1', 1, 10);
       expect(result.total).toBe(5);
     });
   });
 });
-

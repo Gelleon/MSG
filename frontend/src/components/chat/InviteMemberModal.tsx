@@ -42,14 +42,8 @@ export default function InviteMemberModal({ isOpen, onClose, roomId }: InviteMem
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch users with search query
-      // Using a larger limit to show more potential candidates
-      const res = await adminService.getUsers({
-        page: 1,
-        limit: 50,
-        search
-      });
-      setUsers(res.data);
+      const data = await adminService.searchUsers(search);
+      setUsers(data);
     } catch (error) {
       console.error(error);
       toast.error(t('fetchError'));
@@ -120,13 +114,13 @@ export default function InviteMemberModal({ isOpen, onClose, roomId }: InviteMem
                       <div
                         key={user.id}
                         className={cn(
-                          "flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors",
+                          "flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-colors",
                           isSelected ? "bg-primary/10" : "hover:bg-muted"
                         )}
                         onClick={() => toggleUser(user.id)}
                       >
                         <div className={cn(
-                          "h-4 w-4 rounded border flex items-center justify-center transition-colors",
+                          "h-4 w-4 rounded-lg border flex items-center justify-center transition-colors",
                           isSelected 
                             ? "bg-primary border-primary text-primary-foreground" 
                             : "border-muted-foreground"

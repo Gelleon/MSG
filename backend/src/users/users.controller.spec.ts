@@ -19,9 +19,7 @@ describe('UsersController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
-      providers: [
-        { provide: UsersService, useValue: mockUsersService },
-      ],
+      providers: [{ provide: UsersService, useValue: mockUsersService }],
     }).compile();
 
     controller = module.get<UsersController>(UsersController);
@@ -38,16 +36,22 @@ describe('UsersController', () => {
       mockUsersService.findAll.mockResolvedValue(result);
 
       const req = { user: { userId: 'admin-id' } };
-      expect(await controller.findAll('1', '10', '', 'createdAt', 'desc', req)).toBe(result);
+      expect(
+        await controller.findAll('1', '10', '', 'createdAt', 'desc', req),
+      ).toBe(result);
       expect(mockUsersService.findAll).toHaveBeenCalled();
     });
   });
 
   describe('create', () => {
     it('should create a user if email is unique', async () => {
-      const dto = { email: 'test@test.com', password: 'password', role: 'CLIENT' };
+      const dto = {
+        email: 'test@test.com',
+        password: 'password',
+        role: 'CLIENT',
+      };
       const req = { user: { userId: 'admin-id' } };
-      
+
       mockUsersService.findOne.mockResolvedValue(null);
       mockUsersService.createUser.mockResolvedValue({ id: '1', ...dto });
 
@@ -55,12 +59,18 @@ describe('UsersController', () => {
     });
 
     it('should throw error if email exists', async () => {
-      const dto = { email: 'existing@test.com', password: 'password', role: 'CLIENT' };
+      const dto = {
+        email: 'existing@test.com',
+        password: 'password',
+        role: 'CLIENT',
+      };
       const req = { user: { userId: 'admin-id' } };
-      
+
       mockUsersService.findOne.mockResolvedValue({ id: '1', ...dto });
 
-      await expect(controller.create(dto, req)).rejects.toThrow(BadRequestException);
+      await expect(controller.create(dto, req)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

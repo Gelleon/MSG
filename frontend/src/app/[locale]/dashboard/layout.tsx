@@ -49,37 +49,31 @@ export default function DashboardLayout({
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden font-sans">
-      {/* Global Header */}
       <PrivateChatNotifier />
-      <header className="h-16 border-b flex items-center justify-between px-4 md:px-6 shrink-0 bg-background/95 backdrop-blur z-50">
-         <div className="flex items-center gap-4 md:gap-10">
-            {/* Mobile Menu Trigger */}
+      
+      {/* Mobile Header - Visible only on mobile */}
+      <header className="md:hidden h-14 border-b flex items-center justify-between px-4 shrink-0 bg-sidebar/95 backdrop-blur z-50">
+         <div className="flex items-center gap-3">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden -ml-2">
+                <Button variant="ghost" size="icon" className="-ml-2">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-[320px] sm:w-[350px]">
+              <SheetContent side="left" className="p-0 w-[320px]">
                 <Sidebar className="w-full border-r-0" />
               </SheetContent>
             </Sheet>
-
-            <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-                    <MessageSquare className="w-5 h-5 text-primary-foreground" />
-                </div>
-                <h1 className="text-primary font-bold text-lg tracking-wide hidden sm:block">MSG APP</h1>
-            </div>
+            <span className="font-bold text-lg text-primary">MSG.</span>
          </div>
       </header>
      
      {/* Main Layout */}
       <div className="flex-1 flex overflow-hidden">
-        <div className="hidden md:flex h-full">
-            <Sidebar />
+        <div className="hidden md:flex h-full w-[320px] shrink-0">
+            <Sidebar className="w-full h-full border-r" />
         </div>
-        <main className="flex-1 flex flex-col h-full min-w-0 bg-background/50 relative">
+        <main className="flex-1 flex flex-col h-full min-w-0 bg-background relative">
           {children}
         </main>
       </div>

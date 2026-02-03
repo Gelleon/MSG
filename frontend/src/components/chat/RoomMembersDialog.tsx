@@ -223,7 +223,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                 )}
              </DialogTitle>
              {currentUser?.role === 'ADMIN' && (
-                 <div className="flex gap-1 bg-muted p-1 rounded-lg">
+                 <div className="flex gap-1 bg-muted p-1 rounded-xl">
                      <Button 
                         variant={view === 'members' ? 'secondary' : 'ghost'} 
                         size="sm" 
@@ -341,7 +341,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                   ) : (
                       <div className="space-y-3">
                           {logs.map((log) => (
-                              <div key={log.id} className="p-3 rounded-lg border bg-card text-sm">
+                              <div key={log.id} className="p-3 rounded-xl border bg-card text-sm">
                                   <div className="flex items-center justify-between mb-1">
                                       <span className="font-medium flex items-center gap-2">
                                           <Shield className="h-3 w-3 text-primary" />
@@ -360,7 +360,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                                       </span>
                                   </div>
                                   {log.details && (
-                                      <div className="bg-muted/50 p-2 rounded text-xs italic">
+                                      <div className="bg-muted/50 p-2 rounded-lg text-xs italic">
                                           "{log.details}"
                                       </div>
                                   )}

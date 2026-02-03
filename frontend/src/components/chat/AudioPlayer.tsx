@@ -86,7 +86,7 @@ export function AudioPlayer({ src, isMe }: AudioPlayerProps) {
 
   return (
     <div className={cn(
-      "flex items-center gap-3 p-2 pr-4 rounded-2xl min-w-[240px] select-none",
+      "flex items-center gap-3 p-2 pr-4 rounded-xl min-w-[240px] select-none",
       // Remove background here if it's already provided by the parent bubble container
       // But keeping transparent/subtle bg ensures standalone visibility
       "bg-transparent"

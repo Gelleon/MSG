@@ -7,7 +7,7 @@ import { ChatGateway } from '../chat/chat.gateway';
 export class RoomsService {
   constructor(
     private prisma: PrismaService,
-    @Inject(forwardRef(() => ChatGateway)) private chatGateway: ChatGateway
+    @Inject(forwardRef(() => ChatGateway)) private chatGateway: ChatGateway,
   ) {}
 
   async validateRoomName(name: string, excludeRoomId?: string) {
@@ -18,7 +18,9 @@ export class RoomsService {
     const trimmedName = name.trim();
 
     if (trimmedName.length > 100) {
-      throw new Error('Название комнаты слишком длинное (максимум 100 символов)');
+      throw new Error(
+        'Название комнаты слишком длинное (максимум 100 символов)',
+      );
     }
 
     // Check for uniqueness (case insensitive approach for better UX, or strict as per prompt)
@@ -65,7 +67,10 @@ export class RoomsService {
         return room;
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
         throw new Error('Комната с таким названием уже существует');
       }
       throw error;
@@ -96,25 +101,29 @@ export class RoomsService {
       } as any,
     });
 
-    const roomsWithCounts = await Promise.all(rooms.map(async (room) => {
-      let unreadCount = 0;
-      if (user) {
-        const member = (room as any).members.find((m: any) => m.userId === user.userId);
-        if (member) {
-          unreadCount = await this.prisma.message.count({
-            where: {
-              roomId: room.id,
-              createdAt: { gt: member.lastReadAt },
-            },
-          });
+    const roomsWithCounts = await Promise.all(
+      rooms.map(async (room) => {
+        let unreadCount = 0;
+        if (user) {
+          const member = (room as any).members.find(
+            (m: any) => m.userId === user.userId,
+          );
+          if (member) {
+            unreadCount = await this.prisma.message.count({
+              where: {
+                roomId: room.id,
+                createdAt: { gt: member.lastReadAt },
+              },
+            });
+          }
         }
-      }
-      return {
-        ...room,
-        users: (room as any).members.map((m: any) => m.user),
-        unreadCount,
-      };
-    }));
+        return {
+          ...room,
+          users: (room as any).members.map((m: any) => m.user),
+          unreadCount,
+        };
+      }),
+    );
 
     return roomsWithCounts;
   }
@@ -158,11 +167,11 @@ export class RoomsService {
 
     // If user is CLIENT, check if they are member
     if (user && user.role === 'CLIENT') {
-       const isMember = room.members.some(m => m.userId === user.userId);
-       if (!isMember) return null;
+      const isMember = room.members.some((m) => m.userId === user.userId);
+      if (!isMember) return null;
     }
 
-    let messageWhere: Prisma.MessageWhereInput = { roomId: id };
+    const messageWhere: Prisma.MessageWhereInput = { roomId: id };
 
     if (user && user.role === 'CLIENT') {
       const membership = room.members.find((m) => m.userId === user.userId);
@@ -241,14 +250,16 @@ export class RoomsService {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
       });
-      
+
       if (user && user.role === 'CLIENT') {
         throw new Error('Clients cannot be added to private rooms');
       }
     }
 
-    const isUserInRoom = room.members.some((member) => member.userId === userId);
-    
+    const isUserInRoom = room.members.some(
+      (member) => member.userId === userId,
+    );
+
     if (!isUserInRoom) {
       await this.prisma.roomMember.create({
         data: {
@@ -287,22 +298,22 @@ export class RoomsService {
     if (room.isPrivate) {
       const users = await this.prisma.user.findMany({
         where: {
-          id: { in: userIds }
-        }
+          id: { in: userIds },
+        },
       });
-      
-      const hasClient = users.some(u => u.role === 'CLIENT');
+
+      const hasClient = users.some((u) => u.role === 'CLIENT');
       if (hasClient) {
         throw new Error('Clients cannot be added to private rooms');
       }
     }
 
-    const existingMemberIds = new Set(room.members.map(m => m.userId));
-    const newMembers = userIds.filter(id => !existingMemberIds.has(id));
+    const existingMemberIds = new Set(room.members.map((m) => m.userId));
+    const newMembers = userIds.filter((id) => !existingMemberIds.has(id));
 
     if (newMembers.length > 0) {
       await this.prisma.roomMember.createMany({
-        data: newMembers.map(userId => ({
+        data: newMembers.map((userId) => ({
           roomId,
           userId,
         })),
@@ -312,7 +323,10 @@ export class RoomsService {
     return this.findOne(roomId);
   }
 
-  async getMembers(roomId: string, params: { page: number; limit: number; search?: string }) {
+  async getMembers(
+    roomId: string,
+    params: { page: number; limit: number; search?: string },
+  ) {
     const { page, limit, search } = params;
     const skip = (page - 1) * limit;
 
@@ -322,10 +336,7 @@ export class RoomsService {
 
     if (search) {
       where.user = {
-        OR: [
-          { name: { contains: search } },
-          { email: { contains: search } },
-        ],
+        OR: [{ name: { contains: search } }, { email: { contains: search } }],
       };
     }
 
@@ -359,17 +370,20 @@ export class RoomsService {
     if (typeof data.name === 'string') {
       data.name = await this.validateRoomName(data.name, id);
     }
-    
+
     try {
       return await this.prisma.room.update({
         where: { id },
         data,
       });
     } catch (error) {
-       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          throw new Error('Комната с таким названием уже существует');
-       }
-       throw error;
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new Error('Комната с таким названием уже существует');
+      }
+      throw error;
     }
   }
 
@@ -377,7 +391,12 @@ export class RoomsService {
     return this.delete(id);
   }
 
-  async removeMember(roomId: string, userId: string, adminId: string, reason?: string) {
+  async removeMember(
+    roomId: string,
+    userId: string,
+    adminId: string,
+    reason?: string,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       const member = await tx.roomMember.findUnique({
         where: {

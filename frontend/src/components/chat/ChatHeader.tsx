@@ -102,8 +102,8 @@ export default function ChatHeader() {
                 {isPrivate ? <Shield className="w-3.5 h-3.5 text-primary" /> : <Hash className="w-3.5 h-3.5 text-muted-foreground/70" />}
                 <h2 className="text-[17px] font-bold text-foreground leading-none tracking-tight group-hover:underline decoration-2 decoration-primary/30 underline-offset-4">{currentRoom.name}</h2>
               </div>
-              <span className="text-[13px] text-muted-foreground mt-1 flex items-center gap-1.5">
-                {isPrivate ? tChat('encrypted') : tChat('publicChannel')}
+              <span className="text-[13px] text-muted-foreground mt-1 flex items-center gap-1.5 truncate max-w-[300px]">
+                {currentRoom.description || (isPrivate ? tChat('encrypted') : tChat('publicChannel'))}
               </span>
            </div>
         </div>
@@ -172,7 +172,7 @@ export default function ChatHeader() {
               <div>
                 {tDialogs('endSession.description')} <br />
                 <span className="font-semibold text-destructive mt-2 block">{tDialogs('endSession.warning')}</span>
-                <ul className="list-disc pl-5 mt-3 space-y-1.5 text-sm text-muted-foreground bg-muted/30 p-3 rounded-md border border-border/50">
+                <ul className="list-disc pl-5 mt-3 space-y-1.5 text-sm text-muted-foreground bg-muted/30 p-3 rounded-xl border border-border/50">
                   <li>{tDialogs('endSession.point1')}</li>
                   <li>{tDialogs('endSession.point2')}</li>
                   <li>{tDialogs('endSession.point3')}</li>

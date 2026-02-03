@@ -7,7 +7,11 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async updateRole(userId: string, newRole: string, adminId: string): Promise<User> {
+  async updateRole(
+    userId: string,
+    newRole: string,
+    adminId: string,
+  ): Promise<User> {
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: userId } });
       if (!user) {
@@ -59,7 +63,11 @@ export class UsersService {
     });
   }
 
-  async setResetToken(email: string, token: string, expires: Date): Promise<User> {
+  async setResetToken(
+    email: string,
+    token: string,
+    expires: Date,
+  ): Promise<User> {
     return this.prisma.user.update({
       where: { email },
       data: {
@@ -80,17 +88,22 @@ export class UsersService {
     });
   }
 
-  async findAll(params: {
-    skip?: number;
-    take?: number;
-    cursor?: Prisma.UserWhereUniqueInput;
-    where?: Prisma.UserWhereInput;
-    orderBy?: Prisma.UserOrderByWithRelationInput;
-  } = {}): Promise<{ data: User[]; total: number }> {
+  async findAll(
+    params: {
+      skip?: number;
+      take?: number;
+      cursor?: Prisma.UserWhereUniqueInput;
+      where?: Prisma.UserWhereInput;
+      orderBy?: Prisma.UserOrderByWithRelationInput;
+    } = {},
+  ): Promise<{ data: User[]; total: number }> {
     const { skip, take, cursor, where, orderBy } = params;
-    
+
     // Add logging for debugging
-    console.log('UsersService.findAll query:', JSON.stringify({ skip, take, where, orderBy }));
+    console.log(
+      'UsersService.findAll query:',
+      JSON.stringify({ skip, take, where, orderBy }),
+    );
 
     const [data, total] = await Promise.all([
       this.prisma.user.findMany({

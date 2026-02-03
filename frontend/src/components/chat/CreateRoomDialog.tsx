@@ -74,9 +74,9 @@ export default function CreateRoomDialog({ children }: { children?: React.ReactN
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] border-none shadow-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl">
+      <DialogContent className="sm:max-w-[425px] border border-border shadow-2xl bg-card/95 backdrop-blur-xl">
         <DialogHeader>
-          <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-violet-600/20 flex items-center justify-center mb-2 ring-1 ring-inset ring-primary/20">
+          <div className="mx-auto w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2 ring-1 ring-inset ring-primary/20">
              <Plus className="text-primary" size={24} />
           </div>
           <DialogTitle className="text-center text-xl">{tDialogs('createRoom.title')}</DialogTitle>

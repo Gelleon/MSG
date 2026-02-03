@@ -38,7 +38,15 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
       setLoading(true);
       
       // Fetch initial users
-      socket.emit('getRoomUsers', roomId, (response: ConnectedUser[]) => {
+      socket.emit('getRoomUsers', roomId, (response: ConnectedUser[] | { error: string }) => {
+        if (!Array.isArray(response) && 'error' in response) {
+          console.error('Error from getRoomUsers:', response.error);
+          toast.error(t('error'), {
+            description: response.error
+          });
+          setLoading(false);
+          return;
+        }
         if (!Array.isArray(response)) {
           console.error('Invalid response from getRoomUsers:', response);
           setLoading(false);
@@ -138,7 +146,7 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
             ) : (
               <div className="space-y-3">
                 {users.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => toggleUser(user.id)}>
+                  <div key={user.id} className="flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => toggleUser(user.id)}>
                      <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 border border-border">
                           <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`} />

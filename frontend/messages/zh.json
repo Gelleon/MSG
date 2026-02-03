@@ -192,7 +192,8 @@
       "noUsers": "没有可用用户",
       "cancel": "取消",
       "ready": "与 {name} 的聊天已就绪。",
-      "openChat": "打开聊天"
+      "openChat": "打开聊天",
+      "success": "私人会话已开始"
     }
   },
   "Invite": {
