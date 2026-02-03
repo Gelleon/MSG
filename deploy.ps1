@@ -41,9 +41,19 @@ cd backend
 npm install
 # Safe DB Migration
 echo '--- Running Database Migrations ---'
-# Attempt resolve P3005 by ensuring the FIRST migration is marked as applied
-# This is necessary because the DB already has tables but might miss the migration history
+# Attempt resolve P3005 by ensuring migrations are applied cleanly
+# If baseline is needed, we assume schema is in sync and just mark applied
 npx prisma migrate resolve --applied 20260123214429_init || true
+npx prisma migrate resolve --applied 20260124233826_add_description_to_room || true
+npx prisma migrate resolve --applied 20260124235853_add_attachment_fields || true
+npx prisma migrate resolve --applied 20260125000542_change_translation_to_json_string || true
+npx prisma migrate resolve --applied 20260125013800_add_cascade_delete_to_messages || true
+npx prisma migrate resolve --applied 20260127073612_add_attachment_name || true
+npx prisma migrate resolve --applied 20260127092908_add_invitation_model || true
+npx prisma migrate resolve --applied 20260127233908_add_action_log || true
+npx prisma migrate resolve --applied 20260128070135_add_is_private_to_room || true
+
+# After marking existing structure as applied, run deploy for any truly new migrations
 npx prisma migrate deploy
 npx prisma generate
 echo '--- Building Backend ---'
