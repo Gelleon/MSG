@@ -77,7 +77,7 @@ model Message {
   attachmentType String?
   attachmentName String?
   senderId  String
-  sender    User     @relation(fields: [senderId], references: [id])
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   roomId    String
   room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
   isPrivate Boolean  @default(false)
@@ -105,7 +105,7 @@ model Invitation {
   expiresAt DateTime
   createdAt DateTime @default(now())
   creatorId String
-  creator   User     @relation("InvitationCreator", fields: [creatorId], references: [id])
+  creator   User     @relation("InvitationCreator", fields: [creatorId], references: [id], onDelete: Cascade)
 }
 
 model ActionLog {

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import io, { Socket } from 'socket.io-client';
-import api from './api';
+import api, { getApiBaseUrl } from './api';
 import { useAuthStore } from './store';
 import { toast } from 'sonner';
 
@@ -75,7 +75,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    const socket = io('http://localhost:4000', {
+    const socket = io(getApiBaseUrl(), {
       extraHeaders: {
         Authorization: `Bearer ${token}`,
       },

@@ -20,6 +20,22 @@ CREATE TABLE "new_ActionLog" (
 INSERT INTO "new_ActionLog" ("action", "adminId", "createdAt", "details", "id", "roomId", "targetId") SELECT "action", "adminId", "createdAt", "details", "id", "roomId", "targetId" FROM "ActionLog";
 DROP TABLE "ActionLog";
 ALTER TABLE "new_ActionLog" RENAME TO "ActionLog";
+CREATE TABLE "new_Invitation" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "token" TEXT NOT NULL,
+    "roomId" TEXT NOT NULL,
+    "role" TEXT NOT NULL,
+    "isUsed" BOOLEAN NOT NULL DEFAULT false,
+    "expiresAt" DATETIME NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "creatorId" TEXT NOT NULL,
+    CONSTRAINT "Invitation_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Invitation_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+INSERT INTO "new_Invitation" ("createdAt", "creatorId", "expiresAt", "id", "isUsed", "role", "roomId", "token") SELECT "createdAt", "creatorId", "expiresAt", "id", "isUsed", "role", "roomId", "token" FROM "Invitation";
+DROP TABLE "Invitation";
+ALTER TABLE "new_Invitation" RENAME TO "Invitation";
+CREATE UNIQUE INDEX "Invitation_token_key" ON "Invitation"("token");
 CREATE TABLE "new_Room" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
