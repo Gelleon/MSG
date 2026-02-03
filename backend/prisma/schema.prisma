@@ -113,9 +113,9 @@ model ActionLog {
   action    String   // e.g. "REMOVE_USER"
   details   String?  // e.g. Reason
   adminId   String?
-  admin     User?    @relation("AdminActions", fields: [adminId], references: [id])
+  admin     User?    @relation("AdminActions", fields: [adminId], references: [id], onDelete: SetNull)
   targetId  String?
-  target    User?    @relation("TargetActions", fields: [targetId], references: [id])
+  target    User?    @relation("TargetActions", fields: [targetId], references: [id], onDelete: SetNull)
   roomId    String?
   room      Room?    @relation(fields: [roomId], references: [id])
   createdAt DateTime @default(now())
