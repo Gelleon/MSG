@@ -80,7 +80,12 @@
     "attachment": "Attachment",
     "fullSizeAttachment": "Full size attachment",
     "transcribeError": "Failed to transcribe audio",
-    "voiceMessage": "Voice Message"
+    "voiceMessage": "Voice Message",
+    "edited": "(edited)",
+    "cancelEdit": "Cancel",
+    "editHistory": "Edit History",
+    "noHistory": "No edit history",
+    "viewHistory": "View History"
   },
   "Sidebar": {
     "channels": "Channels",

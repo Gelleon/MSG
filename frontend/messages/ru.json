@@ -80,7 +80,12 @@
     "attachment": "Вложение",
     "fullSizeAttachment": "Вложение в полном размере",
     "transcribeError": "Не удалось расшифровать аудио",
-    "voiceMessage": "Голосовое сообщение"
+    "voiceMessage": "Голосовое сообщение",
+    "edited": "(изменено)",
+    "cancelEdit": "Отменить",
+    "editHistory": "История изменений",
+    "noHistory": "История изменений пуста",
+    "viewHistory": "Просмотреть историю"
   },
   "Sidebar": {
     "channels": "Каналы",

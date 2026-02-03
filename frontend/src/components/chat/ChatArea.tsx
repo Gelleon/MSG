@@ -21,9 +21,10 @@ import {
 } from "@/components/ui/context-menu";
 
 import MessageBubble from './MessageBubble';
+import { MessageHistoryDialog } from './MessageHistoryDialog';
 
 export default function ChatArea() {
-  const { messages, currentRoomId, deleteMessage, socket, loadMoreMessages, isLoadingHistory, hasMoreMessages, setReplyingTo } = useChatStore();
+  const { messages, currentRoomId, deleteMessage, socket, loadMoreMessages, isLoadingHistory, hasMoreMessages, setReplyingTo, setEditingMessage } = useChatStore();
   const { user } = useAuthStore();
   const currentRoom = useChatStore(state => state.rooms.find(r => r.id === state.currentRoomId));
   
@@ -39,6 +40,7 @@ export default function ChatArea() {
 
   const [showTranslations, setShowTranslations] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [viewingHistoryId, setViewingHistoryId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const t = useTranslations('Chat');
   const tCommon = useTranslations('Common');
@@ -275,6 +277,8 @@ export default function ChatArea() {
                     onDelete={handleDelete}
                     onInviteToPrivate={handleInviteToPrivate}
                     onReply={setReplyingTo}
+                    onEdit={setEditingMessage}
+                    onViewHistory={setViewingHistoryId}
                     onImageClick={setSelectedImage}
                     deletingId={deletingId}
                 />
@@ -306,6 +310,13 @@ export default function ChatArea() {
             )}
         </DialogContent>
       </Dialog>
+
+      <MessageHistoryDialog 
+        open={!!viewingHistoryId} 
+        onOpenChange={(open) => !open && setViewingHistoryId(null)} 
+        messageId={viewingHistoryId || ''} 
+        roomId={currentRoomId || ''}
+      />
     </div>
   );
 }

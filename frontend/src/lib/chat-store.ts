@@ -17,6 +17,8 @@ interface Message {
   translations?: string;
   replyToId?: string;
   replyTo?: Message;
+  updatedAt?: string;
+  isEdited?: boolean;
 }
 
 interface Room {
@@ -40,6 +42,7 @@ interface ChatState {
   isConnected: boolean;
   translationTargetLang: string;
   replyingTo: Message | null;
+  editingMessage: Message | null;
   
   isLoadingHistory: boolean;
   hasMoreMessages: boolean;
@@ -54,11 +57,14 @@ interface ChatState {
   loadMoreMessages: () => Promise<void>;
   leaveRoom: (roomId: string) => void;
   sendMessage: (content: string, attachmentUrl?: string, attachmentType?: string, attachmentName?: string) => void;
+  editMessage: (messageId: string, content: string) => void;
   deleteMessage: (messageId: string) => void;
   addMessage: (message: Message) => void;
+  updateMessage: (message: Message) => void;
   removeMessage: (messageId: string) => void;
   setTranslationTargetLang: (lang: string) => void;
   setReplyingTo: (message: Message | null) => void;
+  setEditingMessage: (message: Message | null) => void;
   translateMessage: (messageId: string, targetLang: string) => Promise<void>;
   markRoomAsRead: (roomId: string) => Promise<void>;
 }
@@ -71,11 +77,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isConnected: false,
   translationTargetLang: 'ru',
   replyingTo: null,
+  editingMessage: null,
   isLoadingHistory: false,
   hasMoreMessages: true,
 
   setTranslationTargetLang: (lang: string) => set({ translationTargetLang: lang }),
   setReplyingTo: (message: Message | null) => set({ replyingTo: message }),
+  setEditingMessage: (message: Message | null) => set({ editingMessage: message }),
 
   connect: () => {
     const token = localStorage.getItem('token');
@@ -134,6 +142,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     socket.on('messageDeleted', (messageId: string) => {
       get().removeMessage(messageId);
+    });
+
+    socket.on('messageUpdated', (message: Message) => {
+      get().updateMessage(message);
     });
 
     socket.on('privateSessionStarted', (room: Room) => {
@@ -333,6 +345,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
+  editMessage: (messageId: string, content: string) => {
+    const { socket, currentRoomId } = get();
+    if (socket && currentRoomId) {
+      socket.emit('editMessage', { 
+        messageId, 
+        roomId: currentRoomId,
+        content
+      });
+    }
+  },
+
   deleteMessage: (messageId: string) => {
     const { socket, currentRoomId } = get();
     if (socket && currentRoomId) {
@@ -345,6 +368,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   addMessage: (message) => {
     set((state) => ({ messages: [...state.messages, message] }));
+  },
+
+  updateMessage: (updatedMessage) => {
+    set((state) => ({
+      messages: state.messages.map(m => m.id === updatedMessage.id ? updatedMessage : m)
+    }));
   },
 
   removeMessage: (messageId: string) => {

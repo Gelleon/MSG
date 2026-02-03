@@ -5,7 +5,7 @@ import { useChatStore } from '@/lib/chat-store';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Paperclip, X, File, Loader2, Smile, Mic, StopCircle, Trash2, Play, Pause, Wand2 } from 'lucide-react';
+import { Send, Paperclip, X, File, Loader2, Smile, Mic, StopCircle, Trash2, Play, Pause, Wand2, Pencil } from 'lucide-react';
 import api from '@/lib/api';
 import EmojiPicker, { EmojiClickData, Theme, EmojiStyle } from 'emoji-picker-react';
 import { useTheme } from 'next-themes';
@@ -19,6 +19,7 @@ interface Attachment {
 
 export default function MessageInput() {
   const t = useTranslations('Chat');
+  const tCommon = useTranslations('Common');
   const [content, setContent] = useState('');
   const [attachment, setAttachment] = useState<Attachment | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -39,7 +40,7 @@ export default function MessageInput() {
 
   const { theme } = useTheme();
   
-  const { sendMessage, currentRoomId, replyingTo, setReplyingTo } = useChatStore();
+  const { sendMessage, editMessage, currentRoomId, replyingTo, setReplyingTo, editingMessage, setEditingMessage } = useChatStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,6 +50,15 @@ export default function MessageInput() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [audioUrl]);
+
+  useEffect(() => {
+    if (editingMessage) {
+      setContent(editingMessage.content);
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }
+  }, [editingMessage]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -141,6 +151,11 @@ export default function MessageInput() {
     }
   };
 
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setContent('');
+  };
+
   const onEmojiClick = (emojiData: EmojiClickData) => {
     setContent((prev) => prev + emojiData.emoji);
   };
@@ -176,7 +191,12 @@ export default function MessageInput() {
             attachmentName = attachment.file.name;
         }
 
-        sendMessage(content, attachmentUrl, attachmentType, attachmentName);
+        if (editingMessage) {
+            editMessage(editingMessage.id, content);
+            setEditingMessage(null);
+        } else {
+            sendMessage(content, attachmentUrl, attachmentType, attachmentName);
+        }
         
         setContent('');
         setAttachment(null);
@@ -256,8 +276,32 @@ export default function MessageInput() {
 
            {/* Previews Container */}
            <div className="absolute bottom-full left-0 w-full flex flex-col gap-2 pb-2 px-1">
+               {/* Edit Preview */}
+               {editingMessage && (
+                   <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 rounded-lg border border-border shadow-lg p-2 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 max-w-xl">
+                       <div className="w-1 self-stretch bg-blue-500 rounded-full" />
+                       <div className="flex-1 min-w-0">
+                           <div className="text-xs font-semibold text-blue-500 mb-0.5 flex items-center gap-1">
+                               <Pencil size={12} />
+                               {tCommon('edit')}
+                           </div>
+                           <div className="text-xs text-muted-foreground truncate">
+                               {editingMessage.content}
+                           </div>
+                       </div>
+                       <Button 
+                           variant="ghost" 
+                           size="icon" 
+                           className="h-6 w-6 rounded-full -mr-1" 
+                           onClick={cancelEdit}
+                       >
+                           <X size={14} />
+                       </Button>
+                   </div>
+               )}
+
                {/* Reply Preview */}
-               {replyingTo && (
+               {replyingTo && !editingMessage && (
                    <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 rounded-lg border border-border shadow-lg p-2 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 max-w-xl">
                        <div className="w-1 self-stretch bg-primary rounded-full" />
                        <div className="flex-1 min-w-0">

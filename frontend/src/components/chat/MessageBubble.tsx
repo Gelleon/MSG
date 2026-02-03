@@ -9,7 +9,9 @@ import {
   Download, 
   Trash2, 
   Lock,
-  Reply
+  Reply,
+  Pencil,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChatStore } from '@/lib/chat-store';
@@ -37,6 +39,8 @@ interface Message {
   translations?: string;
   replyToId?: string;
   replyTo?: Message;
+  updatedAt?: string;
+  isEdited?: boolean;
 }
 
 interface MessageBubbleProps {
@@ -50,6 +54,8 @@ interface MessageBubbleProps {
   onDelete: (id: string) => void;
   onInviteToPrivate: (userId: string) => void;
   onReply: (message: Message) => void;
+  onEdit: (message: Message) => void;
+  onViewHistory: (id: string) => void;
   onImageClick: (url: string) => void;
   deletingId: string | null;
 }
@@ -65,12 +71,15 @@ export default memo(function MessageBubble({
   onDelete,
   onInviteToPrivate,
   onReply,
+  onEdit,
+  onViewHistory,
   onImageClick,
   deletingId
 }: MessageBubbleProps) {
   const { user } = useAuthStore();
   const isReplyingToThis = useChatStore(state => state.replyingTo?.id === message.id);
   const t = useTranslations('Chat');
+  const tCommon = useTranslations('Common');
 
   const getAttachmentUrl = (url: string) => {
     if (url.startsWith('http')) return url;
@@ -236,6 +245,12 @@ export default memo(function MessageBubble({
                            {t('reply')}
                        </button>
 
+                       {message.isEdited && (
+                           <span className="text-[10px] italic opacity-80" title={message.updatedAt ? format(new Date(message.updatedAt), 'PPpp') : undefined}>
+                               {t('edited')}
+                           </span>
+                       )}
+
                        <span className="text-[10px] font-medium">
                           {format(new Date(message.createdAt), 'HH:mm')}
                        </span>
@@ -266,6 +281,18 @@ export default memo(function MessageBubble({
                        <Reply className="w-4 h-4 mr-2" />
                        {t('reply')}
                    </ContextMenuItem>
+                   {isMe && message.content && (
+                       <ContextMenuItem onClick={() => onEdit(message)}>
+                           <Pencil className="w-4 h-4 mr-2" />
+                           {tCommon('edit')}
+                       </ContextMenuItem>
+                   )}
+                   {message.isEdited && (
+                       <ContextMenuItem onClick={() => onViewHistory(message.id)}>
+                           <History className="w-4 h-4 mr-2" />
+                           {t('viewHistory')}
+                       </ContextMenuItem>
+                   )}
                    <ContextMenuItem 
                        disabled={isMe || user?.role === 'CLIENT' || message.sender?.role === 'CLIENT'}
                        onClick={() => onInviteToPrivate(message.senderId)}
