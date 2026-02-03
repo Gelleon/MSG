@@ -2,11 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RoomsService } from './rooms.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChatGateway } from '../chat/chat.gateway';
+import { InvitationsService } from '../invitations/invitations.service';
 import { Prisma } from '@prisma/client';
+import { BadRequestException } from '@nestjs/common';
 
 describe('RoomsService', () => {
   let service: RoomsService;
   let prismaService: PrismaService;
+  let invitationsService: InvitationsService;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let chatGateway: ChatGateway;
 
@@ -31,6 +34,7 @@ describe('RoomsService', () => {
     message: {
       count: jest.fn(),
       findMany: jest.fn(),
+      findUnique: jest.fn(),
     },
     actionLog: {
       create: jest.fn(),
@@ -52,6 +56,10 @@ describe('RoomsService', () => {
     },
   };
 
+  const mockInvitationsService = {
+    validateAndAccept: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -64,13 +72,19 @@ describe('RoomsService', () => {
           provide: ChatGateway,
           useValue: mockChatGateway,
         },
+        {
+          provide: InvitationsService,
+          useValue: mockInvitationsService,
+        },
       ],
     }).compile();
 
     service = module.get<RoomsService>(RoomsService);
     prismaService = module.get<PrismaService>(PrismaService);
     chatGateway = module.get<ChatGateway>(ChatGateway);
+    invitationsService = module.get<InvitationsService>(InvitationsService);
   });
+
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -373,6 +387,62 @@ describe('RoomsService', () => {
         'Clients cannot be added to private rooms',
       );
     });
+
+    it('should not create membership if user already in room', async () => {
+      const room = { 
+        id: 'room-1', 
+        isPrivate: false, 
+        members: [{ userId: 'user-1' }] 
+      };
+      mockPrismaService.room.findUnique.mockResolvedValue(room);
+      // Mock findOne dependencies
+      mockPrismaService.message.findMany.mockResolvedValue([]);
+
+      await service.addUser('room-1', 'user-1');
+
+      expect(mockPrismaService.roomMember.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw if room is full', async () => {
+      const room = { 
+        id: 'room-1', 
+        isPrivate: false, 
+        members: Array(1000).fill({ userId: 'other' }) 
+      };
+      mockPrismaService.room.findUnique.mockResolvedValue(room);
+
+      await expect(service.addUser('room-1', 'user-1')).rejects.toThrow('Room is full');
+    });
+
+    it('should join with valid invitation code', async () => {
+      const room = { id: 'room-1', isPrivate: true, members: [] };
+      mockPrismaService.room.findUnique.mockResolvedValue(room);
+      mockInvitationsService.validateAndAccept.mockResolvedValue({ roomId: 'room-1' });
+      // Mock findOne for return
+      mockPrismaService.message.findMany.mockResolvedValue([]);
+
+      await service.addUser('room-1', 'client-1', 'valid-code');
+
+      expect(mockInvitationsService.validateAndAccept).toHaveBeenCalledWith('valid-code', 'client-1');
+      // Should NOT call roomMember.create because validateAndAccept handles it
+      expect(mockPrismaService.roomMember.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw if invitation code is for different room', async () => {
+      const room = { id: 'room-1', isPrivate: true, members: [] };
+      mockPrismaService.room.findUnique.mockResolvedValue(room);
+      mockInvitationsService.validateAndAccept.mockResolvedValue({ roomId: 'other-room' });
+
+      await expect(service.addUser('room-1', 'client-1', 'valid-code')).rejects.toThrow('Invitation code is for a different room');
+    });
+
+    it('should throw if invitation code is invalid', async () => {
+      const room = { id: 'room-1', isPrivate: true, members: [] };
+      mockPrismaService.room.findUnique.mockResolvedValue(room);
+      mockInvitationsService.validateAndAccept.mockRejectedValue(new Error('Invalid token'));
+
+      await expect(service.addUser('room-1', 'client-1', 'invalid-code')).rejects.toThrow('Invalid token');
+    });
   });
 
   describe('addUsers', () => {
@@ -384,6 +454,17 @@ describe('RoomsService', () => {
       await service.addUsers('room-1', ['user-1', 'user-2']);
 
       expect(mockPrismaService.roomMember.createMany).toHaveBeenCalled();
+    });
+
+    it('should throw if room capacity exceeded', async () => {
+      const room = { 
+        id: 'room-1', 
+        isPrivate: false, 
+        members: Array(999).fill({ userId: 'other' }) 
+      };
+      mockPrismaService.room.findUnique.mockResolvedValue(room);
+
+      await expect(service.addUsers('room-1', ['user-1', 'user-2'])).rejects.toThrow('Room capacity exceeded');
     });
   });
 

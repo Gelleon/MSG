@@ -63,26 +63,32 @@ export class RoomsController {
   @Post(':id/join')
   async joinRoom(
     @Param('id') id: string,
-    @Body('userId') userId: string,
+    @Body() body: { userId?: string; invitationCode?: string },
     @Request() req: any,
   ) {
     try {
-      const uid = userId || req.user?.userId || req.user?.sub;
+      const uid = body.userId || req.user?.userId || req.user?.sub;
 
       if (!uid) {
+        console.error('[RoomsController.joinRoom] User ID missing in request');
         throw new HttpException(
           'User ID not found in request',
           HttpStatus.BAD_REQUEST,
         );
       }
 
-      console.log(`JoinRoom request: Room ${id}, User ${uid}`);
-      return await this.roomsService.addUser(id, uid);
+      console.log(`[RoomsController.joinRoom] Request: Room ${id}, User ${uid}, Code: ${body.invitationCode || 'none'}`);
+      return await this.roomsService.addUser(id, uid, body.invitationCode);
     } catch (e) {
-      console.error('Join room error:', e);
+      console.error(`[RoomsController.joinRoom] Error joining room ${id}:`, e);
+      
+      const status = e instanceof HttpException 
+        ? e.getStatus() 
+        : (e.message === 'Room not found' ? HttpStatus.NOT_FOUND : HttpStatus.INTERNAL_SERVER_ERROR);
+
       throw new HttpException(
         e.message || 'Failed to join room',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        status,
       );
     }
   }

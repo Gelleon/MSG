@@ -105,7 +105,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     // 1. Check if creator is CLIENT
-    if (user.role === 'CLIENT') {
+    if (user.role && user.role.toUpperCase() === 'CLIENT') {
       return { error: 'Clients cannot create private sessions' };
     }
 
@@ -210,7 +210,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const users = (room as any).members
       .map((member: any) => member.user)
-      .filter((user: any) => user.role !== 'CLIENT'); // Server-side validation
+      .filter((user: any) => !user.role || user.role.toUpperCase() !== 'CLIENT'); // Server-side validation
 
     return users.map((user: any) => ({
       id: user.id,

@@ -1,13 +1,17 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, forwardRef, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { ChatGateway } from '../chat/chat.gateway';
+import { InvitationsService } from '../invitations/invitations.service';
 
 @Injectable()
 export class RoomsService {
+  private readonly MAX_ROOM_MEMBERS = 1000;
+
   constructor(
     private prisma: PrismaService,
     @Inject(forwardRef(() => ChatGateway)) private chatGateway: ChatGateway,
+    private invitationsService: InvitationsService,
   ) {}
 
   async validateRoomName(name: string, excludeRoomId?: string) {
@@ -235,14 +239,38 @@ export class RoomsService {
     });
   }
 
-  async addUser(roomId: string, userId: string) {
+  async addUser(roomId: string, userId: string, invitationCode?: string) {
+    console.log(`[RoomsService.addUser] Adding user ${userId} to room ${roomId} (code: ${invitationCode || 'none'})`);
+
     const room = await this.prisma.room.findUnique({
       where: { id: roomId },
       include: { members: true },
     });
 
     if (!room) {
+      console.warn(`[RoomsService.addUser] Room ${roomId} not found`);
       throw new Error('Room not found');
+    }
+
+    // Check if user is already in room
+    const isUserInRoom = room.members.some(
+      (member) => member.userId === userId,
+    );
+
+    if (room.members.length >= this.MAX_ROOM_MEMBERS && !isUserInRoom) {
+      throw new Error('Room is full');
+    }
+
+    if (invitationCode) {
+      try {
+        const result = await this.invitationsService.validateAndAccept(invitationCode, userId);
+        if (result.roomId !== roomId) {
+          throw new BadRequestException('Invitation code is for a different room');
+        }
+        return this.findOne(roomId);
+      } catch (error) {
+        throw new BadRequestException(error.message || 'Invalid invitation code');
+      }
     }
 
     // Check if user is CLIENT and room is private
@@ -250,23 +278,23 @@ export class RoomsService {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
       });
-
-      if (user && user.role === 'CLIENT') {
+      
+      if (user && user.role && user.role.toUpperCase() === 'CLIENT') {
+        console.warn(`[RoomsService.addUser] Client ${userId} tried to join private room ${roomId}`);
         throw new Error('Clients cannot be added to private rooms');
       }
     }
 
-    const isUserInRoom = room.members.some(
-      (member) => member.userId === userId,
-    );
-
     if (!isUserInRoom) {
+      console.log(`[RoomsService.addUser] Creating membership for user ${userId} in room ${roomId}`);
       await this.prisma.roomMember.create({
         data: {
           roomId,
           userId,
         },
       });
+    } else {
+      console.log(`[RoomsService.addUser] User ${userId} is already in room ${roomId}`);
     }
 
     // Return the full room object using findOne to ensure consistency
@@ -298,11 +326,11 @@ export class RoomsService {
     if (room.isPrivate) {
       const users = await this.prisma.user.findMany({
         where: {
-          id: { in: userIds },
-        },
+          id: { in: userIds }
+        }
       });
 
-      const hasClient = users.some((u) => u.role === 'CLIENT');
+      const hasClient = users.some(u => u.role && u.role.toUpperCase() === 'CLIENT');
       if (hasClient) {
         throw new Error('Clients cannot be added to private rooms');
       }
@@ -310,6 +338,10 @@ export class RoomsService {
 
     const existingMemberIds = new Set(room.members.map((m) => m.userId));
     const newMembers = userIds.filter((id) => !existingMemberIds.has(id));
+
+    if (room.members.length + newMembers.length > this.MAX_ROOM_MEMBERS) {
+      throw new Error('Room capacity exceeded');
+    }
 
     if (newMembers.length > 0) {
       await this.prisma.roomMember.createMany({

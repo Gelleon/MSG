@@ -40,8 +40,22 @@ export class CleanupService {
         try {
           // Delete associated file if it exists
           if (message.attachmentUrl) {
-            this.logger.log(`Deleting file for message ${message.id}: ${message.attachmentUrl}`);
-            await this.filesService.deleteFile(message.attachmentUrl);
+            // Check if any other message uses this file
+            const otherUsageCount = await this.prisma.message.count({
+              where: {
+                attachmentUrl: message.attachmentUrl,
+                id: { not: message.id },
+              },
+            });
+
+            if (otherUsageCount === 0) {
+              this.logger.log(`Deleting file for message ${message.id}: ${message.attachmentUrl}`);
+              await this.filesService.deleteFile(message.attachmentUrl);
+            } else {
+              this.logger.log(
+                `Skipping file deletion for message ${message.id} because it is used by ${otherUsageCount} other messages.`,
+              );
+            }
           }
 
           // Permanently delete the message from the database
