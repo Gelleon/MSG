@@ -39,7 +39,7 @@ export default function MessageInput() {
 
   const { theme } = useTheme();
   
-  const { sendMessage, currentRoomId } = useChatStore();
+  const { sendMessage, currentRoomId, replyingTo, setReplyingTo } = useChatStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -254,27 +254,53 @@ export default function MessageInput() {
                </>
            )}
 
-           {/* Attachment Preview */}
-           {attachment && (
-               <div className="absolute bottom-full left-0 mb-2 p-2 bg-card rounded-lg border shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
-                   {attachment.type === 'image' && attachment.preview ? (
-                       <div className="h-12 w-12 rounded overflow-hidden bg-muted relative">
-                           <img src={attachment.preview} alt="Preview" className="h-full w-full object-cover" />
+           {/* Previews Container */}
+           <div className="absolute bottom-full left-0 w-full flex flex-col gap-2 pb-2 px-1">
+               {/* Reply Preview */}
+               {replyingTo && (
+                   <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 rounded-lg border border-border shadow-lg p-2 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 max-w-xl">
+                       <div className="w-1 self-stretch bg-primary rounded-full" />
+                       <div className="flex-1 min-w-0">
+                           <div className="text-xs font-semibold text-primary mb-0.5">
+                               {t('replyTo')} {replyingTo.sender?.name}
+                           </div>
+                           <div className="text-xs text-muted-foreground truncate">
+                               {replyingTo.content || (replyingTo.attachmentName ? t('attachment') : '')}
+                           </div>
                        </div>
-                   ) : (
-                       <div className="h-12 w-12 rounded bg-muted flex items-center justify-center text-muted-foreground">
-                           <File size={20} />
-                       </div>
-                   )}
-                   <div className="flex flex-col max-w-[150px]">
-                       <span className="text-xs font-medium truncate">{attachment.file.name}</span>
-                       <span className="text-[10px] text-muted-foreground">{(attachment.file.size / 1024).toFixed(1)} KB</span>
+                       <Button 
+                           variant="ghost" 
+                           size="icon" 
+                           className="h-6 w-6 rounded-full -mr-1" 
+                           onClick={() => setReplyingTo(null)}
+                       >
+                           <X size={14} />
+                       </Button>
                    </div>
-                   <button onClick={removeAttachment} className="p-1 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
-                       <X size={14} />
-                   </button>
-               </div>
-           )}
+               )}
+
+               {/* Attachment Preview */}
+               {attachment && (
+                   <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 rounded-lg border border-border shadow-lg p-2 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 w-fit max-w-xl">
+                       {attachment.type === 'image' && attachment.preview ? (
+                           <div className="h-10 w-10 rounded overflow-hidden bg-muted relative shrink-0">
+                               <img src={attachment.preview} alt="Preview" className="h-full w-full object-cover" />
+                           </div>
+                       ) : (
+                           <div className="h-10 w-10 rounded bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                               <File size={18} />
+                           </div>
+                       )}
+                       <div className="flex flex-col min-w-0">
+                           <span className="text-xs font-medium truncate max-w-[200px]">{attachment.file.name}</span>
+                           <span className="text-[10px] text-muted-foreground">{(attachment.file.size / 1024).toFixed(1)} KB</span>
+                       </div>
+                       <button onClick={removeAttachment} className="p-1 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
+                           <X size={14} />
+                       </button>
+                   </div>
+               )}
+           </div>
 
            {/* Voice Recorder UI */}
            {(isRecording || audioBlob) ? (

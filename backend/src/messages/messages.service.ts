@@ -118,6 +118,11 @@ export class MessagesService {
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       include: {
         sender: true,
+        replyTo: {
+          include: {
+            sender: true,
+          },
+        },
       },
     });
 

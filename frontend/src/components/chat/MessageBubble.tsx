@@ -8,7 +8,8 @@ import {
   FileText, 
   Download, 
   Trash2, 
-  Lock 
+  Lock,
+  Reply
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,8 @@ interface Message {
   attachmentType?: string;
   attachmentName?: string;
   translations?: string;
+  replyToId?: string;
+  replyTo?: Message;
 }
 
 interface MessageBubbleProps {
@@ -45,6 +48,7 @@ interface MessageBubbleProps {
   showTranslations: boolean;
   onDelete: (id: string) => void;
   onInviteToPrivate: (userId: string) => void;
+  onReply: (message: Message) => void;
   onImageClick: (url: string) => void;
   deletingId: string | null;
 }
@@ -59,6 +63,7 @@ export default memo(function MessageBubble({
   showTranslations,
   onDelete,
   onInviteToPrivate,
+  onReply,
   onImageClick,
   deletingId
 }: MessageBubbleProps) {
@@ -134,6 +139,17 @@ export default memo(function MessageBubble({
                     ? "bg-primary text-primary-foreground rounded-xl rounded-tr-sm border-primary/20" 
                     : "bg-white dark:bg-zinc-900 text-foreground rounded-xl rounded-tl-sm border-border hover:border-primary/20",
             )}>
+                {/* Replied Message */}
+                {message.replyTo && (
+                    <div className={cn(
+                        "mb-2 pl-2 border-l-2 text-xs cursor-pointer opacity-80 hover:opacity-100 transition-opacity",
+                        isMe ? "border-white/50 text-white/90" : "border-primary/50 text-muted-foreground"
+                    )}>
+                        <div className="font-semibold">{message.replyTo.sender?.name}</div>
+                        <div className="line-clamp-1 truncate max-w-[200px]">{message.replyTo.content || t('attachment')}</div>
+                    </div>
+                )}
+
                 {/* Attachment */}
                 {message.attachmentUrl && (
                     <div className="mb-2">
@@ -227,6 +243,10 @@ export default memo(function MessageBubble({
               </div>
               </ContextMenuTrigger>
               <ContextMenuContent>
+                   <ContextMenuItem onClick={() => onReply(message)}>
+                       <Reply className="w-4 h-4 mr-2" />
+                       {t('reply')}
+                   </ContextMenuItem>
                    <ContextMenuItem 
                        disabled={isMe || user?.role === 'CLIENT' || message.sender?.role === 'CLIENT'}
                        onClick={() => onInviteToPrivate(message.senderId)}

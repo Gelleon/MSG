@@ -290,6 +290,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       attachmentUrl?: string;
       attachmentType?: string;
       attachmentName?: string;
+      replyToId?: string;
     },
   ) {
     try {
@@ -323,6 +324,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         attachmentUrl: payload.attachmentUrl,
         attachmentType: payload.attachmentType,
         attachmentName: payload.attachmentName,
+        replyToId: payload.replyToId,
       });
 
       console.log('Message saved:', savedMessage.id);

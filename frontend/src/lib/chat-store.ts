@@ -15,6 +15,8 @@ interface Message {
   attachmentType?: string;
   attachmentName?: string;
   translations?: string;
+  replyToId?: string;
+  replyTo?: Message;
 }
 
 interface Room {
@@ -37,6 +39,7 @@ interface ChatState {
   messages: Message[];
   isConnected: boolean;
   translationTargetLang: string;
+  replyingTo: Message | null;
   
   isLoadingHistory: boolean;
   hasMoreMessages: boolean;
@@ -55,6 +58,7 @@ interface ChatState {
   addMessage: (message: Message) => void;
   removeMessage: (messageId: string) => void;
   setTranslationTargetLang: (lang: string) => void;
+  setReplyingTo: (message: Message | null) => void;
   translateMessage: (messageId: string, targetLang: string) => Promise<void>;
   markRoomAsRead: (roomId: string) => Promise<void>;
 }
@@ -66,10 +70,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   isConnected: false,
   translationTargetLang: 'ru',
+  replyingTo: null,
   isLoadingHistory: false,
   hasMoreMessages: true,
 
   setTranslationTargetLang: (lang: string) => set({ translationTargetLang: lang }),
+  setReplyingTo: (message: Message | null) => set({ replyingTo: message }),
 
   connect: () => {
     const token = localStorage.getItem('token');
@@ -313,15 +319,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   sendMessage: (content: string, attachmentUrl?: string, attachmentType?: string, attachmentName?: string) => {
-    const { socket, currentRoomId } = get();
+    const { socket, currentRoomId, replyingTo } = get();
     if (socket && currentRoomId) {
       socket.emit('sendMessage', { 
         roomId: currentRoomId, 
         content,
         attachmentUrl,
         attachmentType,
-        attachmentName
+        attachmentName,
+        replyToId: replyingTo ? replyingTo.id : undefined
       });
+      set({ replyingTo: null });
     }
   },
 

@@ -23,7 +23,7 @@ import {
 import MessageBubble from './MessageBubble';
 
 export default function ChatArea() {
-  const { messages, currentRoomId, deleteMessage, socket, loadMoreMessages, isLoadingHistory, hasMoreMessages } = useChatStore();
+  const { messages, currentRoomId, deleteMessage, socket, loadMoreMessages, isLoadingHistory, hasMoreMessages, setReplyingTo } = useChatStore();
   const { user } = useAuthStore();
   const currentRoom = useChatStore(state => state.rooms.find(r => r.id === state.currentRoomId));
   
@@ -274,6 +274,7 @@ export default function ChatArea() {
                     showTranslations={showTranslations}
                     onDelete={handleDelete}
                     onInviteToPrivate={handleInviteToPrivate}
+                    onReply={setReplyingTo}
                     onImageClick={setSelectedImage}
                     deletingId={deletingId}
                 />
