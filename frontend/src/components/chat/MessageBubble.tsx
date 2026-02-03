@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import { useAuthStore } from '@/lib/store';
+import { getApiBaseUrl } from '@/lib/api';
 import { format } from 'date-fns';
 import { 
   FileText, 
@@ -66,7 +67,14 @@ export default memo(function MessageBubble({
 
   const getAttachmentUrl = (url: string) => {
     if (url.startsWith('http')) return url;
-    return `http://localhost:4000${url}`;
+    return `${getApiBaseUrl()}${url}`;
+  };
+
+  const getDownloadUrl = (url: string) => {
+    if (url.startsWith('http')) return url;
+    const filename = url.split('/').pop();
+    if (!filename) return getAttachmentUrl(url);
+    return `${getApiBaseUrl()}/files/download/${filename}`;
   };
 
   const getTranslation = (translationsStr?: string) => {
@@ -146,7 +154,7 @@ export default memo(function MessageBubble({
                               />
                           ) : (
                               <a 
-                                  href={getAttachmentUrl(message.attachmentUrl)} 
+                                  href={getDownloadUrl(message.attachmentUrl)} 
                                   target="_blank"  
                                   rel="noopener noreferrer"
                                   download={message.attachmentName || true}

@@ -1,12 +1,18 @@
 import {
   Controller,
   Post,
+  Get,
+  Param,
+  Res,
   UseInterceptors,
   UploadedFile,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import type { Response } from 'express';
+import * as fs from 'fs';
 
 @Controller('files')
 export class FilesController {
@@ -32,5 +38,24 @@ export class FilesController {
       mimetype: file.mimetype,
       originalname: file.originalname,
     };
+  }
+
+  @Get('download/:filename')
+  downloadFile(@Param('filename') filename: string, @Res() res: Response) {
+    const filePath = join(process.cwd(), 'uploads', filename);
+    
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('File not found');
+    }
+
+    res.download(filePath, filename, (err) => {
+      if (err) {
+        // Handle error, but response might have already started
+        console.error('Error downloading file:', err);
+        if (!res.headersSent) {
+           res.status(500).send('Could not download file');
+        }
+      }
+    });
   }
 }
