@@ -58,14 +58,15 @@ npx prisma migrate deploy
 npx prisma generate
 echo '--- Building Backend ---'
 npm run build
-pm2 restart backend
+# Check if process exists, if not start it, else restart
+pm2 describe msg-backend > /dev/null 2>&1 && pm2 restart msg-backend --update-env || pm2 start dist/main.js --name msg-backend
 
 echo '--- Updating Frontend ---'
 cd ../frontend
 npm install
 echo '--- Building Frontend ---'
 npm run build
-pm2 restart frontend
+pm2 describe msg-frontend > /dev/null 2>&1 && pm2 restart msg-frontend --update-env || pm2 start npm --name "msg-frontend" -- start
 
 echo '--- Deployment Complete ---'
 "@
