@@ -253,6 +253,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       }
 
+      if (!joinResponse || !joinResponse.data) {
+        throw new Error('Failed to join room: No response data');
+      }
+
       const joinedRoom = joinResponse.data;
 
       // Update rooms list with the joined room (handles case where room wasn't in list yet or needs update)
