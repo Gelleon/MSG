@@ -127,7 +127,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return updatedRoom;
     } catch (error) {
       console.error('Failed to start private session:', error);
-      throw new WsException(error.message || 'Failed to start private session');
+      return { error: error.message || 'Failed to start private session' };
     }
   }
 

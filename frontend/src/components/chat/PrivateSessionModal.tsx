@@ -9,6 +9,7 @@ import { User, Lock, Loader2 } from 'lucide-react';
 import { useChatStore } from '@/lib/chat-store';
 import { useAuthStore } from '@/lib/store';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 
 interface PrivateSessionModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
   const [users, setUsers] = useState<ConnectedUser[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen && socket) {
@@ -37,6 +39,11 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
       
       // Fetch initial users
       socket.emit('getRoomUsers', roomId, (response: ConnectedUser[]) => {
+        if (!Array.isArray(response)) {
+          console.error('Invalid response from getRoomUsers:', response);
+          setLoading(false);
+          return;
+        }
         // Filter CLIENT role and current user (case-insensitive check)
         const validUsers = response.filter(u => 
           u.role.toUpperCase() !== 'CLIENT' && u.id !== currentUser?.id
@@ -80,19 +87,24 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
   };
 
   const handleStart = () => {
-    if (!socket || selectedUsers.length === 0) return;
+    if (!socket || selectedUsers.length === 0 || isSubmitting) return;
 
     console.log('Starting private session with:', selectedUsers);
+    setIsSubmitting(true);
     
     socket.emit('startPrivateSession', { 
       userIds: selectedUsers,
       sourceRoomId: roomId 
     }, (response: any) => {
-      if (response && response.error) {
-        console.error('Failed to start private session:', response.error);
-        // Could add a toast here for error feedback
+      setIsSubmitting(false);
+      if (response && (response.error || response.status === 'error')) {
+        console.error('Failed to start private session:', response.error || response.message);
+        toast.error(t('error'), {
+          description: response.error || response.message || 'Unknown error occurred'
+        });
       } else {
         console.log('Private session started:', response);
+        toast.success(t('success'));
         onClose();
       }
     });
@@ -148,8 +160,11 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{t('cancel')}</Button>
-          <Button onClick={handleStart} disabled={selectedUsers.length === 0}>{t('start')}</Button>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>{t('cancel')}</Button>
+          <Button onClick={handleStart} disabled={selectedUsers.length === 0 || isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {t('start')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

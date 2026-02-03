@@ -46,32 +46,41 @@ export function PrivateChatNotifier() {
 
     const handlePrivateSessionStarted = (room: any) => {
         if (!visualEnabled) return;
-
-        // Find the other user name
-        // The room object from backend should have members populated now
-        let displayName = 'Unknown User';
-        if (room.members && Array.isArray(room.members)) {
-            const otherMember = room.members.find((m: any) => m.user?.id !== user.id);
-            if (otherMember && otherMember.user) {
-                displayName = otherMember.user.name || otherMember.user.email;
+        
+        try {
+            if (!room || !room.id) {
+                console.error('Invalid room data received in privateSessionStarted:', room);
+                return;
             }
-        }
 
-        if (soundEnabled) {
-            playBeep();
-        }
-
-        toast(t('started'), {
-            description: t('ready', {name: displayName}),
-            action: {
-                label: t('openChat'),
-                onClick: () => {
-                    joinRoom(room.id);
+            // Find the other user name
+            // The room object from backend should have members populated now
+            let displayName = 'Unknown User';
+            if (room.members && Array.isArray(room.members)) {
+                const otherMember = room.members.find((m: any) => m.user?.id !== user.id);
+                if (otherMember && otherMember.user) {
+                    displayName = otherMember.user.name || otherMember.user.email;
                 }
-            },
-            duration: 10000, 
-            icon: <MessageSquare className="w-5 h-5 text-primary" />
-        });
+            }
+
+            if (soundEnabled) {
+                playBeep();
+            }
+
+            toast(t('started'), {
+                description: t('ready', {name: displayName}),
+                action: {
+                    label: t('openChat'),
+                    onClick: () => {
+                        joinRoom(room.id);
+                    }
+                },
+                duration: 10000, 
+                icon: <MessageSquare className="w-5 h-5 text-primary" />
+            });
+        } catch (error) {
+            console.error('Error handling private session notification:', error);
+        }
     };
 
     socket.on('privateSessionStarted', handlePrivateSessionStarted);
