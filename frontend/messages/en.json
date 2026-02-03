@@ -74,6 +74,8 @@
     "you": "You",
     "deleteMessageConfirm": "Are you sure you want to delete this message?",
     "inviteToPrivate": "Invite to Private Chat",
+    "reply": "Reply",
+    "replyTo": "Replying to",
     "micError": "Microphone access denied",
     "attachment": "Attachment",
     "fullSizeAttachment": "Full size attachment",

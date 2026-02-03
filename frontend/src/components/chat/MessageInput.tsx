@@ -261,7 +261,7 @@ export default function MessageInput() {
                    <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 rounded-lg border border-border shadow-lg p-2 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 max-w-xl">
                        <div className="w-1 self-stretch bg-primary rounded-full" />
                        <div className="flex-1 min-w-0">
-                           <div className="text-xs font-semibold text-primary mb-0.5">
+                           <div id="reply-preview-label" className="text-xs font-semibold text-primary mb-0.5">
                                {t('replyTo')} {replyingTo.sender?.name}
                            </div>
                            <div className="text-xs text-muted-foreground truncate">
@@ -383,7 +383,9 @@ export default function MessageInput() {
                        e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
                    }}
                    onKeyDown={handleKeyDown}
-                   placeholder={t('typeMessage')}
+                   placeholder={replyingTo ? `${t('replyTo')} ${replyingTo.sender?.name}...` : t('typeMessage')}
+                   aria-label={replyingTo ? `${t('replyTo')} ${replyingTo.sender?.name}` : t('typeMessage')}
+                   aria-describedby={replyingTo ? "reply-preview-label" : undefined}
                    className="min-h-[40px] max-h-[150px] py-2.5 px-2 bg-transparent border-none focus-visible:ring-0 resize-none shadow-none text-[15px] leading-relaxed scrollbar-thin scrollbar-thumb-muted-foreground/20"
                    rows={1}
                />

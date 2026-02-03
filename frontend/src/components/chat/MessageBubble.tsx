@@ -12,6 +12,7 @@ import {
   Reply
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useChatStore } from '@/lib/chat-store';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import {
@@ -68,6 +69,7 @@ export default memo(function MessageBubble({
   deletingId
 }: MessageBubbleProps) {
   const { user } = useAuthStore();
+  const isReplyingToThis = useChatStore(state => state.replyingTo?.id === message.id);
   const t = useTranslations('Chat');
 
   const getAttachmentUrl = (url: string) => {
@@ -138,6 +140,7 @@ export default memo(function MessageBubble({
                 isMe 
                     ? "bg-primary text-primary-foreground rounded-xl rounded-tr-sm border-primary/20" 
                     : "bg-white dark:bg-zinc-900 text-foreground rounded-xl rounded-tl-sm border-border hover:border-primary/20",
+                isReplyingToThis && "ring-2 ring-primary ring-offset-2 ring-offset-background"
             )}>
                 {/* Replied Message */}
                 {message.replyTo && (
@@ -212,11 +215,27 @@ export default memo(function MessageBubble({
                       </div>
                    )}
 
-                   {/* Time Inside Bubble */}
+                   {/* Time Inside Bubble & Reply Button */}
                    <div className={cn(
-                       "flex justify-end items-center mt-1 select-none",
+                       "flex justify-end items-center mt-1 select-none gap-3",
                        isMe ? "text-white/60" : "text-muted-foreground/60"
                    )}>
+                       <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onReply(message);
+                            }}
+                            className={cn(
+                                "opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide cursor-pointer",
+                                isMe ? "hover:text-white" : "hover:text-primary"
+                            )}
+                            aria-label={t('reply')}
+                            title={t('reply')}
+                       >
+                           <Reply size={11} />
+                           {t('reply')}
+                       </button>
+
                        <span className="text-[10px] font-medium">
                           {format(new Date(message.createdAt), 'HH:mm')}
                        </span>
