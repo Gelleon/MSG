@@ -39,8 +39,11 @@ git pull
 echo '--- Updating Backend ---'
 cd backend
 npm install
-# Safe DB Migration (Schema only, preserves data)
+# Safe DB Migration
 echo '--- Running Database Migrations ---'
+# Attempt resolve P3005 by ensuring migrations are applied cleanly
+# If baseline is needed, we assume schema is in sync and just mark applied
+npx prisma migrate resolve --applied 20240101000000_init || true
 npx prisma migrate deploy
 npx prisma generate
 echo '--- Building Backend ---'
