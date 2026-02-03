@@ -41,9 +41,9 @@ cd backend
 npm install
 # Safe DB Migration
 echo '--- Running Database Migrations ---'
-# Attempt resolve P3005 by ensuring migrations are applied cleanly
-# If baseline is needed, we assume schema is in sync and just mark applied
-npx prisma migrate resolve --applied 20240101000000_init || true
+# Attempt resolve P3005 by ensuring the FIRST migration is marked as applied
+# This is necessary because the DB already has tables but might miss the migration history
+npx prisma migrate resolve --applied 20260123214429_init || true
 npx prisma migrate deploy
 npx prisma generate
 echo '--- Building Backend ---'
