@@ -7,13 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Search, User, Shield, Trash2, AlertTriangle, FileText, Clock, Calendar } from 'lucide-react';
+import { Loader2, Search, User, Shield, Trash2, AlertTriangle, FileText, Clock, Calendar, Filter, X } from 'lucide-react';
 import api from '@/lib/api';
 import { cn, getUserDisplayName } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store';
 import { useChatStore } from '@/lib/chat-store';
 import { toast } from 'sonner';
 import { useTranslations, useFormatter } from 'next-intl';
+import { RoleBadge } from '@/components/RoleBadge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface RoomMember {
   id: string;
@@ -31,6 +34,10 @@ interface ActionLog {
   createdAt: string;
   admin: { id: string; name: string | null; email: string; username?: string | null } | null;
   target: { id: string; name: string | null; email: string; username?: string | null } | null;
+  ipAddress?: string;
+  userAgent?: string;
+  previousRole?: string;
+  newRole?: string;
 }
 
 interface RoomMembersResponse {
@@ -65,6 +72,13 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsPage, setLogsPage] = useState(1);
   const [logsHasMore, setLogsHasMore] = useState(true);
+  
+  // Logs Filters
+  const [logSearch, setLogSearch] = useState('');
+  const [logAction, setLogAction] = useState<string>('all');
+  const [logAdminId, setLogAdminId] = useState<string>('all');
+  const [logStartDate, setLogStartDate] = useState<string>('');
+  const [logEndDate, setLogEndDate] = useState<string>('');
 
   const { user: currentUser } = useAuthStore();
   const { socket } = useChatStore();
@@ -72,14 +86,23 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
   const [userToRemove, setUserToRemove] = useState<RoomMember | null>(null);
   const [removeReason, setRemoveReason] = useState('');
   const [removing, setRemoving] = useState(false);
+  const [changingRole, setChangingRole] = useState<string | null>(null);
+  const [roleToConfirm, setRoleToConfirm] = useState<{ userId: string; role: string } | null>(null);
+  const [isLogsLoading, setIsLogsLoading] = useState(false);
+  const [logPage, setLogPage] = useState(1);
+  const [logTotalPages, setLogTotalPages] = useState(1);
+  const [logLimit] = useState(50);
 
   // Debounced search reset
   useEffect(() => {
     if (view === 'members') {
         setPage(1);
         setMembers([]); // Clear current list on search change
+    } else {
+        setLogsPage(1);
+        setLogs([]);
     }
-  }, [search, view]);
+  }, [search, view, logSearch, logAction, logAdminId, logStartDate, logEndDate]);
 
   useEffect(() => {
     if (!socket) return;
@@ -112,8 +135,10 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
     if (isOpen) {
         if (view === 'members') {
             fetchMembers();
-        } else {
+        } else if (view === 'logs' && currentUser?.role === 'ADMIN') {
             fetchLogs();
+        } else if (view === 'logs' && currentUser?.role !== 'ADMIN') {
+            setView('members');
         }
     } else {
         // Reset state when closed
@@ -123,14 +148,46 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
         setLogs([]);
         setLogsPage(1);
         setView('members');
+        setLogSearch('');
+        setLogAction('all');
+        setLogAdminId('all');
+        setLogStartDate('');
+        setLogEndDate('');
     }
-  }, [isOpen, page, search, view, logsPage]);
+  }, [isOpen, page, search, view, logsPage, logSearch, logAction, logAdminId, logStartDate, logEndDate]);
 
   const handleRemoveClick = (member: RoomMember) => {
     setUserToRemove(member);
     setRemoveReason('');
     setConfirmOpen(true);
   };
+
+  const handleChangeRole = async (userId: string, newRole: string) => {
+        setRoleToConfirm({ userId, role: newRole });
+    };
+
+    const confirmRoleChange = async () => {
+        if (!roleToConfirm) return;
+        const { userId, role: newRole } = roleToConfirm;
+        
+        // Optimistic UI update
+        const previousMembers = [...members];
+        setMembers(prev => prev.map(m => m.id === userId ? { ...m, role: newRole } : m));
+        
+        setChangingRole(userId);
+        setRoleToConfirm(null);
+        try {
+            await api.patch(`/rooms/${roomId}/members/${userId}/role`, { role: newRole });
+            toast.success(t('roleChangedSuccess'));
+        } catch (error: any) {
+            console.error('Failed to change role', error);
+            toast.error(error.response?.data?.message || t('roleChangeFail'));
+            // Rollback on error
+            setMembers(previousMembers);
+        } finally {
+            setChangingRole(null);
+        }
+    };
 
   const confirmRemove = async () => {
     if (!userToRemove) return;
@@ -180,8 +237,19 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
   const fetchLogs = async () => {
     setLogsLoading(true);
     try {
+      const params: any = { 
+          page: logsPage, 
+          limit: 50 
+      };
+      
+      if (logSearch) params.search = logSearch;
+      if (logAction && logAction !== 'all') params.action = logAction;
+      if (logAdminId && logAdminId !== 'all') params.adminId = logAdminId;
+      if (logStartDate) params.startDate = logStartDate;
+      if (logEndDate) params.endDate = logEndDate;
+
       const res = await api.get<{ data: ActionLog[]; total: number; totalPages: number }>(`/rooms/${roomId}/logs`, {
-        params: { page: logsPage, limit: 20 }
+        params
       });
       if (logsPage === 1) {
         setLogs(res.data.data);
@@ -245,7 +313,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
           </div>
         </DialogHeader>
 
-        {view === 'members' && (
+        {view === 'members' ? (
             <div className="px-6 py-2">
             <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -256,6 +324,81 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                 onChange={(e) => setSearch(e.target.value)}
                 />
             </div>
+            </div>
+        ) : (
+            <div className="px-6 py-2 space-y-2">
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder={t('searchLogsPlaceholder')}
+                            className="pl-9 h-9 text-xs"
+                            value={logSearch}
+                            onChange={(e) => setLogSearch(e.target.value)}
+                        />
+                    </div>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-9 gap-2">
+                                <Filter className="h-4 w-4" />
+                                {t('filters')}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-4" align="end">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium">{t('filterAction')}</label>
+                                    <Select value={logAction} onValueChange={setLogAction}>
+                                        <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue placeholder={t('allActions')} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">{t('allActions')}</SelectItem>
+                                            <SelectItem value="REMOVE_USER">{t('actionRemove')}</SelectItem>
+                                            <SelectItem value="ADD_USER">{t('actionAdd')}</SelectItem>
+                                            <SelectItem value="ROLE_CHANGED">{t('actionRole')}</SelectItem>
+                                            <SelectItem value="CREATE_ROOM">{t('actionCreate')}</SelectItem>
+                                            <SelectItem value="UPDATE_SETTINGS">{t('actionUpdate')}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium">{t('startDate')}</label>
+                                        <Input 
+                                            type="date" 
+                                            className="h-8 text-xs" 
+                                            value={logStartDate}
+                                            onChange={(e) => setLogStartDate(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium">{t('endDate')}</label>
+                                        <Input 
+                                            type="date" 
+                                            className="h-8 text-xs" 
+                                            value={logEndDate}
+                                            onChange={(e) => setLogEndDate(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <Button 
+                                    variant="ghost" 
+                                    className="w-full h-8 text-xs"
+                                    onClick={() => {
+                                        setLogSearch('');
+                                        setLogAction('all');
+                                        setLogAdminId('all');
+                                        setLogStartDate('');
+                                        setLogEndDate('');
+                                    }}
+                                >
+                                    {t('resetFilters')}
+                                </Button>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                </div>
             </div>
         )}
 
@@ -287,7 +430,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold truncate">
                             {getUserDisplayName(member)}
                             </span>
@@ -295,7 +438,8 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                             <Shield className="h-3 w-3 text-primary fill-primary/20" />
                             )}
                         </div>
-                        <div className="text-xs text-muted-foreground truncate flex items-center gap-2">
+                        <RoleBadge role={member.role} className="w-fit p-1.5 gap-2" />
+                        <div className="text-xs text-muted-foreground truncate flex items-center gap-2 mt-1">
                             <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             {t('joined')} {format.dateTime(new Date(member.joinedAt), { year: 'numeric', month: 'short', day: 'numeric' })}
@@ -304,9 +448,42 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         </div>
 
                         <div className="flex items-center gap-2">
-                        <div className="text-xs text-muted-foreground">
-                            {member.role}
-                        </div>
+                        {currentUser?.role === 'ADMIN' && member.id !== currentUser.id && (
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 text-xs gap-1 text-muted-foreground hover:text-primary"
+                                        disabled={changingRole === member.id}
+                                    >
+                                        {changingRole === member.id ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                            <Shield className="h-3 w-3" />
+                                        )}
+                                        {t('changeRole')}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-56 p-2" align="end">
+                                    <div className="space-y-1">
+                                        {(['ADMIN', 'MANAGER', 'CLIENT'] as const).map((r) => (
+                                            <Button
+                                                key={r}
+                                                variant="ghost"
+                                                className={cn(
+                                                    "w-full justify-start text-xs h-8",
+                                                    member.role === r && "bg-accent"
+                                                )}
+                                                onClick={() => handleChangeRole(member.id, r)}
+                                            >
+                                                <RoleBadge role={r} className="border-none bg-transparent p-0 shadow-none hover:bg-transparent hover:shadow-none" />
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        )}
                         {currentUser?.role === 'ADMIN' && member.id !== currentUser.id && (
                             <Button
                             variant="ghost"
@@ -339,36 +516,64 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                   ) : (
                       <div className="space-y-3">
                           {logs.map((log) => (
-                              <div key={log.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card text-sm">
-                                  <div className="flex-1 text-sm">
-                                      <span className="font-medium">
-                                          {getUserDisplayName(log.admin)}
-                                      </span>{" "}
-                                      <span className="text-muted-foreground">
-                                          {log.action === "KICK" && t("kicked")}
-                                          {log.action === "BAN" && t("banned")}
-                                          {log.action === "UNBAN" && t("unbanned")}
-                                          {log.action === "MUTE" && t("muted")}
-                                          {log.action === "UNMUTE" && t("unmuted")}
-                                          {log.action === "CREATE_ROOM" && t("created")}
-                                          {log.action === "JOIN_ROOM" && t("joinedRoom")}
-                                          {log.action === "ADD_USER" && t("addedUser")}
-                                          {log.action === "UPDATE_SETTINGS" && t("updatedSettings")}
-                                          {log.action === "UPLOAD_FILE" && t("uploadedFile")}
-                                          {log.action === "REMOVE_USER" && t("removedUser")}
-                                      </span>
-                                      {log.target && log.target.id !== log.admin?.id && (
-                                        <>
-                                          {" "}
+                              <div key={log.id} className="flex flex-col gap-1 p-3 rounded-lg border bg-card text-sm">
+                                  <div className="flex items-center justify-between">
+                                      <div className="flex-1">
                                           <span className="font-medium">
-                                              {getUserDisplayName(log.target)}
+                                              {getUserDisplayName(log.admin)}
+                                          </span>{" "}
+                                          <span className="text-muted-foreground">
+                                              {log.action === "KICK" && t("kicked")}
+                                              {log.action === "BAN" && t("banned")}
+                                              {log.action === "UNBAN" && t("unbanned")}
+                                              {log.action === "MUTE" && t("muted")}
+                                              {log.action === "UNMUTE" && t("unmuted")}
+                                              {log.action === "CREATE_ROOM" && t("created")}
+                                              {log.action === "JOIN_ROOM" && t("joinedRoom")}
+                                              {log.action === "ADD_USER" && t("addedUser")}
+                                              {log.action === "UPDATE_SETTINGS" && t("updatedSettings")}
+                                              {log.action === "UPLOAD_FILE" && t("uploadedFile")}
+                                              {log.action === "REMOVE_USER" && t("removedUser")}
+                                              {log.action === "ROLE_CHANGED" && t("roleChanged")}
                                           </span>
-                                        </>
-                                      )}
+                                          {log.target && log.target.id !== log.admin?.id && (
+                                            <>
+                                              {" "}
+                                              <span className="font-medium">
+                                                  {getUserDisplayName(log.target)}
+                                              </span>
+                                            </>
+                                          )}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                          {format.dateTime(new Date(log.createdAt), { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
+                                      </div>
                                   </div>
-                                  <div className="text-xs text-muted-foreground whitespace-nowrap">
-                                      {format.dateTime(new Date(log.createdAt), { hour: '2-digit', minute: '2-digit' })}
-                                  </div>
+                                  
+                                  {log.action === 'ROLE_CHANGED' && log.previousRole && log.newRole && (
+                                      <div className="flex items-center gap-2 mt-1">
+                                          <RoleBadge role={log.previousRole} className="h-6 p-1 gap-1 text-[10px] border-none opacity-70" />
+                                          <span className="text-muted-foreground">→</span>
+                                          <RoleBadge role={log.newRole} className="h-6 p-1 gap-1 text-[10px] border-none" />
+                                      </div>
+                                  )}
+
+                                  {(log.ipAddress || log.userAgent) && (
+                                      <div className="flex items-center gap-3 mt-1 pt-1 border-t border-dashed">
+                                          {log.ipAddress && (
+                                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                  <Shield className="h-2.5 w-2.5" />
+                                                  {log.ipAddress}
+                                              </span>
+                                          )}
+                                          {log.userAgent && (
+                                              <span className="text-[10px] text-muted-foreground flex items-center gap-1 truncate max-w-[200px]" title={log.userAgent}>
+                                                  <Clock className="h-2.5 w-2.5" />
+                                                  {log.userAgent}
+                                              </span>
+                                          )}
+                                      </div>
+                                  )}
                               </div>
                           ))}
                       </div>
@@ -410,8 +615,30 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
             {t('remove')}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!roleToConfirm} onOpenChange={(open) => !open && setRoleToConfirm(null)}>
+            <DialogContent className="sm:max-w-[400px]">
+                <DialogHeader>
+                    <DialogTitle>{t('changeRole')}</DialogTitle>
+                    <DialogDescription>
+                        {t('changeRoleDesc', { 
+                            name: roleToConfirm ? getUserDisplayName(members.find(m => m.id === roleToConfirm.userId)) : '',
+                            role: roleToConfirm ? t(`Roles.${roleToConfirm.role.toLowerCase()}` as any) : ''
+                        })}
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="outline" onClick={() => setRoleToConfirm(null)}>
+                        {t('cancel')}
+                    </Button>
+                    <Button onClick={confirmRoleChange}>
+                        {t('confirm')}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </>
   );
 }
