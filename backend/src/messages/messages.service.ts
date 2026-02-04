@@ -41,6 +41,22 @@ export class MessagesService {
       },
     });
 
+    // Log file upload action
+    if (data.attachmentUrl) {
+      try {
+        await this.prisma.actionLog.create({
+          data: {
+            action: 'UPLOAD_FILE',
+            details: data.attachmentName || 'File uploaded',
+            adminId: data.senderId,
+            roomId: data.roomId,
+          },
+        });
+      } catch (error) {
+        console.error('Failed to log file upload action', error);
+      }
+    }
+
     // Update room's updatedAt timestamp
     await this.prisma.room.update({
       where: { id: data.roomId },

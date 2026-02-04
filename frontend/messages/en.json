@@ -190,7 +190,18 @@
       "removeFail": "Failed to remove user",
       "joined": "Joined",
       "unknown": "Unknown User",
-      "target": "target"
+      "target": "target",
+      "created": "created room",
+      "joinedRoom": "joined the room",
+      "addedUser": "added user",
+      "updatedSettings": "updated room settings",
+      "uploadedFile": "uploaded file",
+      "kicked": "kicked",
+      "banned": "banned",
+      "unbanned": "unbanned",
+      "muted": "muted",
+      "unmuted": "unmuted",
+      "removedUser": "removed user"
     },
     "privateSession": {
       "start": "Start Private Session",

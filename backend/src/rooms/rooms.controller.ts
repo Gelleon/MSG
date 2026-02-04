@@ -131,12 +131,14 @@ export class RoomsController {
   async addMembers(
     @Param('id') id: string,
     @Body('userIds') userIds: string[],
+    @Request() req: any,
   ) {
     try {
       if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
         throw new HttpException('No user IDs provided', HttpStatus.BAD_REQUEST);
       }
-      return await this.roomsService.addUsers(id, userIds);
+      const adminId = req.user.userId || req.user.sub;
+      return await this.roomsService.addUsers(id, userIds, adminId);
     } catch (e) {
       console.error('Add members error:', e);
       throw new HttpException(
@@ -165,9 +167,11 @@ export class RoomsController {
   async update(
     @Param('id') id: string,
     @Body() updateRoomDto: UpdateRoomDto,
+    @Request() req: any,
   ) {
     try {
-      return await this.roomsService.update(id, updateRoomDto);
+      const userId = req.user.userId || req.user.sub;
+      return await this.roomsService.update(id, updateRoomDto, userId);
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to update room',

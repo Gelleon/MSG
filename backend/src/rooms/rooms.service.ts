@@ -68,6 +68,15 @@ export class RoomsService {
           });
         }
 
+        await tx.actionLog.create({
+          data: {
+            action: 'CREATE_ROOM',
+            details: 'Room created',
+            adminId: creatorId,
+            roomId: room.id,
+          },
+        });
+
         return room;
       });
     } catch (error) {
@@ -298,11 +307,23 @@ export class RoomsService {
 
     if (!isUserInRoom) {
       console.log(`[RoomsService.addUser] Creating membership for user ${userId} in room ${roomId}`);
-      await this.prisma.roomMember.create({
-        data: {
-          roomId,
-          userId,
-        },
+      await this.prisma.$transaction(async (tx) => {
+        await tx.roomMember.create({
+          data: {
+            roomId,
+            userId,
+          },
+        });
+
+        await tx.actionLog.create({
+          data: {
+            action: 'JOIN_ROOM',
+            details: invitationCode ? 'Joined via invitation' : 'Joined room',
+            adminId: userId,
+            targetId: userId,
+            roomId,
+          },
+        });
       });
     } else {
       console.log(`[RoomsService.addUser] User ${userId} is already in room ${roomId}`);
@@ -323,7 +344,7 @@ export class RoomsService {
     });
   }
 
-  async addUsers(roomId: string, userIds: string[]) {
+  async addUsers(roomId: string, userIds: string[], adminId?: string) {
     const room = await this.prisma.room.findUnique({
       where: { id: roomId },
       include: { members: true },
@@ -355,11 +376,25 @@ export class RoomsService {
     }
 
     if (newMembers.length > 0) {
-      await this.prisma.roomMember.createMany({
-        data: newMembers.map((userId) => ({
-          roomId,
-          userId,
-        })),
+      await this.prisma.$transaction(async (tx) => {
+        await tx.roomMember.createMany({
+          data: newMembers.map((userId) => ({
+            roomId,
+            userId,
+          })),
+        });
+
+        if (adminId) {
+          await tx.actionLog.createMany({
+            data: newMembers.map((userId) => ({
+              action: 'ADD_USER',
+              details: 'Added by admin',
+              adminId: adminId,
+              targetId: userId,
+              roomId,
+            })),
+          });
+        }
       });
     }
 
@@ -409,15 +444,31 @@ export class RoomsService {
     };
   }
 
-  async update(id: string, data: Prisma.RoomUpdateInput) {
+  async update(id: string, data: Prisma.RoomUpdateInput, userId?: string) {
     if (typeof data.name === 'string') {
       data.name = await this.validateRoomName(data.name, id);
     }
 
     try {
-      return await this.prisma.room.update({
-        where: { id },
-        data,
+      return await this.prisma.$transaction(async (tx) => {
+        const result = await tx.room.update({
+          where: { id },
+          data,
+        });
+
+        if (userId) {
+          // Filter out sensitive or large fields if necessary, but RoomUpdateInput is usually small
+          const details = Object.keys(data).join(', ');
+          await tx.actionLog.create({
+            data: {
+              action: 'UPDATE_SETTINGS',
+              details: `Updated fields: ${details}`,
+              adminId: userId,
+              roomId: id,
+            },
+          });
+        }
+        return result;
       });
     } catch (error) {
       if (

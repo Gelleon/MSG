@@ -29,8 +29,8 @@ interface ActionLog {
   action: string;
   details: string | null;
   createdAt: string;
-  admin: { name: string | null; email: string };
-  target: { name: string | null; email: string } | null;
+  admin: { id: string; name: string | null; email: string; username?: string | null } | null;
+  target: { id: string; name: string | null; email: string; username?: string | null } | null;
 }
 
 interface RoomMembersResponse {
@@ -296,8 +296,6 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                             )}
                         </div>
                         <div className="text-xs text-muted-foreground truncate flex items-center gap-2">
-                            <span>{member.email}</span>
-                            <span className="text-muted-foreground/50">•</span>
                             <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             {t('joined')} {format.dateTime(new Date(member.joinedAt), { year: 'numeric', month: 'short', day: 'numeric' })}
@@ -352,10 +350,21 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                                           {log.action === "UNBAN" && t("unbanned")}
                                           {log.action === "MUTE" && t("muted")}
                                           {log.action === "UNMUTE" && t("unmuted")}
-                                      </span>{" "}
-                                      <span className="font-medium">
-                                          {log.target ? getUserDisplayName(log.target) : t('unknown')}
+                                          {log.action === "CREATE_ROOM" && t("created")}
+                                          {log.action === "JOIN_ROOM" && t("joinedRoom")}
+                                          {log.action === "ADD_USER" && t("addedUser")}
+                                          {log.action === "UPDATE_SETTINGS" && t("updatedSettings")}
+                                          {log.action === "UPLOAD_FILE" && t("uploadedFile")}
+                                          {log.action === "REMOVE_USER" && t("removedUser")}
                                       </span>
+                                      {log.target && log.target.id !== log.admin?.id && (
+                                        <>
+                                          {" "}
+                                          <span className="font-medium">
+                                              {getUserDisplayName(log.target)}
+                                          </span>
+                                        </>
+                                      )}
                                   </div>
                                   <div className="text-xs text-muted-foreground whitespace-nowrap">
                                       {format.dateTime(new Date(log.createdAt), { hour: '2-digit', minute: '2-digit' })}
