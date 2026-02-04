@@ -11,8 +11,11 @@ import {
   HttpStatus,
   Patch,
   Delete,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
+import { ChatGateway } from '../chat/chat.gateway';
 import { Prisma } from '@prisma/client';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/roles.decorator';
@@ -25,7 +28,7 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 export class RoomsController {
   constructor(
     private readonly roomsService: RoomsService,
-    private readonly chatGateway: ChatGateway,
+    @Inject(forwardRef(() => ChatGateway)) private readonly chatGateway: ChatGateway,
   ) {}
 
   @Post()
