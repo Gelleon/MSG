@@ -448,6 +448,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         </div>
 
                         <div className="flex items-center gap-2">
+                        {/* DEBUG: currentUser role: {currentUser?.role} */}
                         {currentUser?.role === 'ADMIN' && member.id !== currentUser.id && (
                             <Popover>
                                 <PopoverTrigger asChild>
@@ -488,7 +489,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                             <Button
                             variant="destructive"
                             size="icon"
-                            className="h-8 w-8 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm hover:shadow-md"
+                            className="h-8 w-8 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm hover:shadow-md relative z-30"
                             onClick={() => handleRemoveClick(member)}
                             title={t('remove')}
                             aria-label={t('remove')}
