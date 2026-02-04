@@ -449,7 +449,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0 ml-auto pl-2">
+                        <div className="flex items-center gap-2 ml-auto pl-2 min-w-0 flex-wrap justify-end">
                         {currentUser?.role?.toUpperCase() === 'ADMIN' && member.id !== currentUser.id && (
                             <>
                                 <Popover>
@@ -457,15 +457,15 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="h-8 text-xs gap-1 text-muted-foreground hover:text-primary shrink-0"
+                                            className="h-8 text-xs gap-1 text-muted-foreground hover:text-primary min-w-0 max-w-[160px]"
                                             disabled={changingRole === member.id}
                                         >
                                             {changingRole === member.id ? (
-                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                                <Loader2 className="h-3 w-3 animate-spin shrink-0" />
                                             ) : (
-                                                <Shield className="h-3 w-3" />
+                                                <Shield className="h-3 w-3 shrink-0" />
                                             )}
-                                            {t('changeRole')}
+                                            <span className="truncate">{t('changeRole')}</span>
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-56 p-2" align="end">
