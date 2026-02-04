@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Search, User, Shield, Trash2, AlertTriangle, FileText, Clock, Calendar } from 'lucide-react';
 import api from '@/lib/api';
-import { cn } from '@/lib/utils';
+import { cn, getUserDisplayName } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store';
 import { useChatStore } from '@/lib/chat-store';
 import { toast } from 'sonner';
