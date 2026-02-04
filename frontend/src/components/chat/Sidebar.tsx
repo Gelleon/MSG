@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 
-import { cn, stringToColor } from '@/lib/utils';
+import { cn, stringToColor, getUserDisplayName } from '@/lib/utils';
 import InviteMemberModal from './InviteMemberModal';
 import RoomMembersDialog from './RoomMembersDialog';
 import { Lock, CornerDownRight } from 'lucide-react';
@@ -393,11 +393,11 @@ export default function Sidebar({ className }: { className?: string }) {
               <div className="flex items-center gap-3 text-left w-full">
                 <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
                   <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                    {user?.username?.[0]?.toUpperCase() || 'U'}
+                    {getUserDisplayName(user)[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate text-foreground group-hover:text-foreground">{user?.username || tSidebar('guestUser')}</p>
+                  <p className="text-sm font-semibold truncate text-foreground group-hover:text-foreground">{getUserDisplayName(user)}</p>
                   <div className="flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                     <p className="text-xs text-muted-foreground truncate">{tSidebar('online')}</p>

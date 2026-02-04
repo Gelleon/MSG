@@ -19,3 +19,8 @@ export function stringToGradient(str: string): string {
   const color2 = stringToColor(str.split('').reverse().join(''), 70, 85);
   return `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`;
 }
+
+export function getUserDisplayName(user: { name?: string | null; email?: string | null; username?: string | null } | null | undefined): string {
+  if (!user) return 'Пользователь';
+  return user.name || user.email || user.username || 'Пользователь';
+}

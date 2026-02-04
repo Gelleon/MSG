@@ -14,7 +14,7 @@ jest.mock('@/navigation', () => ({
 
 jest.mock('@/lib/store', () => ({
   useAuthStore: () => ({
-    user: { id: '1', username: 'TestUser', role: 'ADMIN' },
+    user: { id: '1', username: 'TestUser', email: 'test@example.com', role: 'ADMIN' },
     logout: jest.fn(),
   }),
 }));

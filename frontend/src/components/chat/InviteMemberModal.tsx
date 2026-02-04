@@ -8,7 +8,7 @@ import api from '@/lib/api';
 import { Loader2, Search, Check, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+import { cn, getUserDisplayName } from '@/lib/utils';
 
 import { useTranslations } from 'next-intl';
 
@@ -130,12 +130,12 @@ export default function InviteMemberModal({ isOpen, onClose, roomId }: InviteMem
                         
                         <Avatar className="h-8 w-8">
                           <AvatarFallback>
-                            {user.name?.substring(0, 2).toUpperCase() || user.email.substring(0, 2).toUpperCase()}
+                            {getUserDisplayName(user).substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{user.name || tRoomMembers('unknown')}</p>
+                          <p className="text-sm font-medium truncate">{getUserDisplayName(user)}</p>
                           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                         </div>
                       </div>

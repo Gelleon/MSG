@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format, isSameDay } from 'date-fns';
 import { Languages, MessageSquare, Check, CheckCheck, FileText, Download, Eye, EyeOff, Trash2, Mic, Play, Pause, Lock } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getUserDisplayName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -383,7 +383,7 @@ export default function ChatArea() {
                  </div>
                  <span className="text-xs font-medium opacity-80">
                      {typingUsers[currentRoomId].filter(u => u.userId !== user?.id).length === 1 
-                         ? `${typingUsers[currentRoomId].filter(u => u.userId !== user?.id)[0].username} ${t('isTyping')}` 
+                         ? `${getUserDisplayName(typingUsers[currentRoomId].filter(u => u.userId !== user?.id)[0] as any)} ${t('isTyping')}` 
                          : t('multipleTyping')
                      }
                  </span>

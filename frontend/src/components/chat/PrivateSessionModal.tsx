@@ -10,6 +10,7 @@ import { useChatStore } from '@/lib/chat-store';
 import { useAuthStore } from '@/lib/store';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { getUserDisplayName } from '@/lib/utils';
 
 interface PrivateSessionModalProps {
   isOpen: boolean;
@@ -150,10 +151,10 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
                      <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 border border-border">
                           <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`} />
-                          <AvatarFallback>{user.name ? user.name[0] : 'U'}</AvatarFallback>
+                          <AvatarFallback>{getUserDisplayName(user)[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-sm leading-none">{user.name || user.email}</p>
+                          <p className="font-medium text-sm leading-none">{getUserDisplayName(user)}</p>
                           <p className="text-xs text-muted-foreground mt-1">{user.role}</p>
                         </div>
                      </div>

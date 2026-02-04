@@ -298,7 +298,7 @@ export default function AdminUsersPage() {
                             disabled={user.id === currentUser?.id}
                         />
                         </td>
-                        <td className="p-4 align-middle font-medium">{user.name || 'N/A'}</td>
+                        <td className="p-4 align-middle font-medium">{getUserDisplayName(user)}</td>
                         <td className="p-4 align-middle">{user.email}</td>
                         <td className="p-4 align-middle">
                             <Select 

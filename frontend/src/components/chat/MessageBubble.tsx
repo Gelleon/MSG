@@ -15,7 +15,7 @@ import {
   Loader2,
   CornerDownRight
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getUserDisplayName } from '@/lib/utils';
 import { useChatStore } from '@/lib/chat-store';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
@@ -135,7 +135,7 @@ export default memo(function MessageBubble({
                   {showAvatar ? (
                       <Avatar className="h-8 w-8 ring-1 ring-border shadow-sm cursor-pointer hover:ring-primary/30 transition-all">
                           <AvatarFallback className="text-[10px] font-bold bg-secondary text-secondary-foreground">
-                              {message.sender?.name?.[0]?.toUpperCase() || 'U'}
+                              {getUserDisplayName(message.sender).substring(0, 1).toUpperCase()}
                           </AvatarFallback>
                       </Avatar>
                   ) : <div className="w-8" />}
@@ -148,7 +148,7 @@ export default memo(function MessageBubble({
           )}>
               {showName && (
                   <span className="text-[11px] font-semibold text-muted-foreground ml-1 mb-1 px-1">
-                      {message.sender?.name}
+                      {getUserDisplayName(message.sender)}
                   </span>
               )}
 
@@ -185,7 +185,7 @@ export default memo(function MessageBubble({
                         )}>
                             <div className="flex items-center gap-1.5 mb-0.5">
                                 <CornerDownRight size={12} className="opacity-70" />
-                                <span className="text-xs font-semibold opacity-90">{message.replyTo.sender?.name}</span>
+                                <span className="text-xs font-semibold opacity-90">{getUserDisplayName(message.replyTo.sender)}</span>
                             </div>
                             <div className="text-xs opacity-80 line-clamp-1 truncate max-w-[200px] pl-4">
                                 {message.replyTo.content || t('attachment')}

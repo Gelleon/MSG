@@ -28,8 +28,8 @@ describe('ChatArea', () => {
   });
 
   const mockMessages = [
-    { id: '1', content: 'Hello', senderId: 'user1', createdAt: new Date().toISOString(), sender: { name: 'User 1' } },
-    { id: '2', content: 'Hi', senderId: 'user2', createdAt: new Date().toISOString(), sender: { name: 'User 2' } },
+    { id: '1', content: 'Hello', senderId: 'user1', createdAt: new Date().toISOString(), sender: { name: 'User 1', email: 'user1@example.com' } },
+    { id: '2', content: 'Hi', senderId: 'user2', createdAt: new Date().toISOString(), sender: { name: 'User 2', email: 'user2@example.com' } },
   ];
 
   it('renders messages correctly', () => {

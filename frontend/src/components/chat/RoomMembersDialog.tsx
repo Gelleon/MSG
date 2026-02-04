@@ -277,7 +277,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         <Avatar className="h-10 w-10">
                             <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.id}`} />
                             <AvatarFallback>
-                                {member.name?.substring(0, 2).toUpperCase() || member.email.substring(0, 2).toUpperCase()}
+                                {getUserDisplayName(member).substring(0, 2).toUpperCase()}
                             </AvatarFallback>
                         </Avatar>
                         <span className={cn(
@@ -289,7 +289,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <span className="font-semibold truncate">
-                            {member.name || t('unknown')}
+                            {getUserDisplayName(member)}
                             </span>
                             {member.role === 'ADMIN' && (
                             <Shield className="h-3 w-3 text-primary fill-primary/20" />
@@ -341,29 +341,25 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                   ) : (
                       <div className="space-y-3">
                           {logs.map((log) => (
-                              <div key={log.id} className="p-3 rounded-xl border bg-card text-sm">
-                                  <div className="flex items-center justify-between mb-1">
-                                      <span className="font-medium flex items-center gap-2">
-                                          <Shield className="h-3 w-3 text-primary" />
-                                          {log.admin.name || log.admin.email}
-                                      </span>
-                                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                          <Clock className="h-3 w-3" />
-                                          {format.dateTime(new Date(log.createdAt), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                      </span>
-                                  </div>
-                                  <div className="text-muted-foreground mb-1">
-                                      <span className="font-semibold text-destructive">{log.action}</span>
-                                      {' '}- {t('target')}:{' '}
-                                      <span className="font-medium text-foreground">
-                                          {log.target ? (log.target.name || log.target.email) : t('unknown')}
+                              <div key={log.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card text-sm">
+                                  <div className="flex-1 text-sm">
+                                      <span className="font-medium">
+                                          {getUserDisplayName(log.admin)}
+                                      </span>{" "}
+                                      <span className="text-muted-foreground">
+                                          {log.action === "KICK" && t("kicked")}
+                                          {log.action === "BAN" && t("banned")}
+                                          {log.action === "UNBAN" && t("unbanned")}
+                                          {log.action === "MUTE" && t("muted")}
+                                          {log.action === "UNMUTE" && t("unmuted")}
+                                      </span>{" "}
+                                      <span className="font-medium">
+                                          {log.target ? getUserDisplayName(log.target) : t('unknown')}
                                       </span>
                                   </div>
-                                  {log.details && (
-                                      <div className="bg-muted/50 p-2 rounded-lg text-xs italic">
-                                          "{log.details}"
-                                      </div>
-                                  )}
+                                  <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                      {format.dateTime(new Date(log.createdAt), { hour: '2-digit', minute: '2-digit' })}
+                                  </div>
                               </div>
                           ))}
                       </div>
@@ -387,7 +383,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
             {t('removeTitle')}
           </DialogTitle>
           <DialogDescription>
-            {t('removeDesc', { name: userToRemove?.name || userToRemove?.email || t('unknown') })}
+            {t('removeDesc', { name: getUserDisplayName(userToRemove) })}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">

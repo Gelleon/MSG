@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/store';
 import { toast } from 'sonner';
 import { MessageSquare } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { getUserDisplayName } from '@/lib/utils';
 
 const playBeep = () => {
   try {
@@ -59,7 +60,7 @@ export function PrivateChatNotifier() {
             if (room.members && Array.isArray(room.members)) {
                 const otherMember = room.members.find((m: any) => m.user?.id !== user.id);
                 if (otherMember && otherMember.user) {
-                    displayName = otherMember.user.name || otherMember.user.email;
+                    displayName = getUserDisplayName(otherMember.user);
                 }
             }
 
