@@ -449,7 +449,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0 ml-auto">
+                        <div className="flex items-center gap-2 shrink-0">
                         {currentUser?.role === 'ADMIN' && member.id !== currentUser.id && (
                             <>
                                 <Popover>
@@ -487,9 +487,9 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                                     </PopoverContent>
                                 </Popover>
                                 <Button
-                                    variant="destructive"
+                                    variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 transition-all duration-200 shadow-sm hover:shadow-md relative z-30 shrink-0"
+                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
                                     onClick={() => handleRemoveClick(member)}
                                     title={t('remove')}
                                     aria-label={t('remove')}
