@@ -160,7 +160,11 @@ export default function InviteMemberModal({ isOpen, onClose, roomId }: InviteMem
             disabled={selectedUsers.length === 0 || inviting}
             className="flex-1 sm:flex-none min-w-[100px]"
           >
-            {inviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {inviting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <UserPlus className="mr-2 h-4 w-4" />
+            )}
             {t('inviteBtn', {count: selectedUsers.length})}
           </Button>
         </DialogFooter>

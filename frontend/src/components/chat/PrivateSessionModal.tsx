@@ -182,7 +182,11 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
             disabled={selectedUsers.length === 0 || isSubmitting}
             className="flex-1 sm:flex-none min-w-[100px]"
           >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Lock className="mr-2 h-4 w-4" />
+            )}
             {t('start')}
           </Button>
         </DialogFooter>
