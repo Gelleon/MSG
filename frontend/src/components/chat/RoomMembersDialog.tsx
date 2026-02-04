@@ -429,72 +429,74 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         )} />
                         </div>
                         
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pr-2">
                         <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold truncate">
                             {getUserDisplayName(member)}
                             </span>
                             {member.role === 'ADMIN' && (
-                            <Shield className="h-3 w-3 text-primary fill-primary/20" />
+                            <Shield className="h-3 w-3 text-primary shrink-0 fill-primary/20" />
                             )}
                         </div>
                         <RoleBadge role={member.role} className="w-fit p-1.5 gap-2" />
                         <div className="text-xs text-muted-foreground truncate flex items-center gap-2 mt-1">
                             <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {t('joined')} {format.dateTime(new Date(member.joinedAt), { year: 'numeric', month: 'short', day: 'numeric' })}
+                            <Calendar className="h-3 w-3 shrink-0" />
+                            <span className="truncate">
+                                {t('joined')} {format.dateTime(new Date(member.joinedAt), { year: 'numeric', month: 'short', day: 'numeric' })}
+                            </span>
                             </span>
                         </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0 ml-auto">
                         {currentUser?.role === 'ADMIN' && member.id !== currentUser.id && (
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-8 text-xs gap-1 text-muted-foreground hover:text-primary"
-                                        disabled={changingRole === member.id}
-                                    >
-                                        {changingRole === member.id ? (
-                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                        ) : (
-                                            <Shield className="h-3 w-3" />
-                                        )}
-                                        {t('changeRole')}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-56 p-2" align="end">
-                                    <div className="space-y-1">
-                                        {(['ADMIN', 'MANAGER', 'CLIENT'] as const).map((r) => (
-                                            <Button
-                                                key={r}
-                                                variant="ghost"
-                                                className={cn(
-                                                    "w-full justify-start text-xs h-8",
-                                                    member.role === r && "bg-accent"
-                                                )}
-                                                onClick={() => handleChangeRole(member.id, r)}
-                                            >
-                                                <RoleBadge role={r} className="border-none bg-transparent p-0 shadow-none hover:bg-transparent hover:shadow-none" />
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                        )}
-                        {currentUser?.role === 'ADMIN' && member.id !== currentUser.id && (
-                            <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8 transition-all duration-200 shadow-sm hover:shadow-md relative z-30"
-                            onClick={() => handleRemoveClick(member)}
-                            title={t('remove')}
-                            aria-label={t('remove')}
-                            >
-                            <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 text-xs gap-1 text-muted-foreground hover:text-primary shrink-0"
+                                            disabled={changingRole === member.id}
+                                        >
+                                            {changingRole === member.id ? (
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                                <Shield className="h-3 w-3" />
+                                            )}
+                                            {t('changeRole')}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-56 p-2" align="end">
+                                        <div className="space-y-1">
+                                            {(['ADMIN', 'MANAGER', 'CLIENT'] as const).map((r) => (
+                                                <Button
+                                                    key={r}
+                                                    variant="ghost"
+                                                    className={cn(
+                                                        "w-full justify-start text-xs h-8",
+                                                        member.role === r && "bg-accent"
+                                                    )}
+                                                    onClick={() => handleChangeRole(member.id, r)}
+                                                >
+                                                    <RoleBadge role={r} className="border-none bg-transparent p-0 shadow-none hover:bg-transparent hover:shadow-none" />
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                                <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    className="h-8 w-8 transition-all duration-200 shadow-sm hover:shadow-md relative z-30 shrink-0"
+                                    onClick={() => handleRemoveClick(member)}
+                                    title={t('remove')}
+                                    aria-label={t('remove')}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </>
                         )}
                         </div>
                     </div>

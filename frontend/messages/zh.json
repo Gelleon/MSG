@@ -1,4 +1,12 @@
 {
+  "Roles": {
+    "admin": "管理员",
+    "manager": "经理",
+    "client": "客户",
+    "adminDesc": "完全管理访问权限",
+    "managerDesc": "管理成员和内容",
+    "clientDesc": "访问聊天和查看"
+  },
   "Common": {
     "switchLanguage": "切换语言",
     "cancel": "取消",
