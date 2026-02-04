@@ -486,9 +486,9 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         )}
                         {currentUser?.role === 'ADMIN' && member.id !== currentUser.id && (
                             <Button
-                            variant="ghost"
+                            variant="destructive"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="h-8 w-8 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={() => handleRemoveClick(member)}
                             title={t('remove')}
                             >
@@ -608,9 +608,9 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
             onChange={(e) => setRemoveReason(e.target.value)}
           />
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={removing}>{tCommon('cancel')}</Button>
-          <Button variant="destructive" onClick={confirmRemove} disabled={removing}>
+        <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={removing} className="w-full sm:w-auto">{tCommon('cancel')}</Button>
+          <Button variant="destructive" onClick={confirmRemove} disabled={removing} className="w-full sm:w-auto">
             {removing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t('remove')}
           </Button>
