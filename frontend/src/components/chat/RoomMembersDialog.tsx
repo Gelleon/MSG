@@ -449,7 +449,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         </div>
                         </div>
 
-                        <div className="flex items-center gap-2 ml-auto min-w-0 flex-wrap justify-end" style={{ marginRight: '1.5cm' }}>
+                        <div className="flex items-center gap-2 ml-auto min-w-0 flex-wrap justify-end" style={{ marginRight: '2.5cm' }}>
                         {currentUser?.role?.toUpperCase() === 'ADMIN' && member.id !== currentUser.id && (
                             <>
                                 <Popover>
