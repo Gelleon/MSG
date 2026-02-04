@@ -13,7 +13,7 @@ describe('RoomsService', () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let chatGateway: ChatGateway;
 
-  const mockPrismaService = {
+  const mockPrismaService: any = {
     room: {
       findFirst: jest.fn(),
       create: jest.fn(),
