@@ -49,31 +49,26 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, className, isCurrent
   return (
     <div
       className={cn(
-        'group flex items-center gap-3 p-2 rounded-lg border transition-all duration-200',
-        'hover:bg-[#F5F5F5] hover:shadow-md',
+        'group flex items-center gap-2 p-1.5 rounded-lg border transition-all duration-200',
+        'hover:bg-accent/50',
         currentConfig.borderColor,
         currentConfig.bgColor,
-        isCurrent && 'ring-2 ring-[#1890FF] ring-offset-1',
+        isCurrent && 'ring-2 ring-primary/20 ring-offset-1',
         className
       )}
     >
       <div className={cn(
-        'flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-sm transition-transform group-hover:scale-110',
+        'flex items-center justify-center w-6 h-6 rounded-full bg-white shadow-sm transition-transform group-hover:scale-110',
         currentConfig.color
       )}>
-        <Icon size={20} />
+        <Icon size={14} />
       </div>
       
-      <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-        <div className="flex items-center gap-2">
-          <span className={cn('font-semibold text-sm sm:text-base', currentConfig.color)}>
-            {currentConfig.label}
-          </span>
-          {isCurrent && <Check size={14} className="text-[#1890FF]" />}
-        </div>
-        <span className="text-[10px] sm:text-xs text-muted-foreground truncate">
-          {currentConfig.description}
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <span className={cn('font-semibold text-xs sm:text-sm truncate', currentConfig.color)}>
+          {currentConfig.label}
         </span>
+        {isCurrent && <Check size={12} className="text-primary shrink-0" />}
       </div>
     </div>
   );
