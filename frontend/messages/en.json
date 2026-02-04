@@ -273,6 +273,8 @@
     "noMembers": "No members found",
     "noLogs": "No audit logs found",
     "remove": "Remove",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
     "changeRole": "Change Role",
     "changeRoleDesc": "Are you sure you want to change {name}'s role to {role}?",
     "Roles": {

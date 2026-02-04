@@ -629,11 +629,18 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         })}
                     </DialogDescription>
                 </DialogHeader>
-                <DialogFooter className="gap-2 sm:gap-0">
-                    <Button variant="outline" onClick={() => setRoleToConfirm(null)}>
+                <DialogFooter className="gap-3 sm:gap-2 mt-2">
+                    <Button 
+                        variant="outline" 
+                        onClick={() => setRoleToConfirm(null)}
+                        className="flex-1 sm:flex-none min-w-[100px]"
+                    >
                         {t('cancel')}
                     </Button>
-                    <Button onClick={confirmRoleChange}>
+                    <Button 
+                        onClick={confirmRoleChange}
+                        className="flex-1 sm:flex-none min-w-[100px]"
+                    >
                         {t('confirm')}
                     </Button>
                 </DialogFooter>

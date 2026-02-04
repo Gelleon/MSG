@@ -168,9 +168,20 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
           </ScrollArea>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>{t('cancel')}</Button>
-          <Button onClick={handleStart} disabled={selectedUsers.length === 0 || isSubmitting}>
+        <DialogFooter className="gap-3 sm:gap-2 mt-2">
+          <Button 
+            variant="outline" 
+            onClick={onClose} 
+            disabled={isSubmitting}
+            className="flex-1 sm:flex-none min-w-[100px]"
+          >
+            {t('cancel')}
+          </Button>
+          <Button 
+            onClick={handleStart} 
+            disabled={selectedUsers.length === 0 || isSubmitting}
+            className="flex-1 sm:flex-none min-w-[100px]"
+          >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t('start')}
           </Button>

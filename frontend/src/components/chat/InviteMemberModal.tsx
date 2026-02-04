@@ -147,11 +147,19 @@ export default function InviteMemberModal({ isOpen, onClose, roomId }: InviteMem
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+        <DialogFooter className="gap-3 sm:gap-2 mt-2">
+          <Button 
+            variant="outline" 
+            onClick={onClose}
+            className="flex-1 sm:flex-none min-w-[100px]"
+          >
             {tCommon('cancel')}
           </Button>
-          <Button onClick={handleInvite} disabled={selectedUsers.length === 0 || inviting}>
+          <Button 
+            onClick={handleInvite} 
+            disabled={selectedUsers.length === 0 || inviting}
+            className="flex-1 sm:flex-none min-w-[100px]"
+          >
             {inviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t('inviteBtn', {count: selectedUsers.length})}
           </Button>

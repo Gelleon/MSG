@@ -19,10 +19,8 @@ export default function LanguageSwitcher() {
   const pathname = usePathname();
 
   const languages = [
-    { code: 'en', label: 'English', flag: '🇺🇸' },
     { code: 'ru', label: 'Русский', flag: '🇷🇺' },
-    { code: 'zh', label: '简体中文', flag: '🇨🇳' },
-    { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼' }
+    { code: 'zh', label: '简体中文', flag: '🇨🇳' }
   ];
 
   useEffect(() => {
