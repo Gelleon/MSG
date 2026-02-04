@@ -257,9 +257,10 @@ export default function ChatArea() {
       });
   }, [socket, currentRoomId, tCommon]);
 
-  const handleReply = useCallback((message: any) => {
+  const handleReply = useCallback((message: Message) => {
+      setReplyingTo(message.id);
       fetchReplyMessage(message.id);
-  }, [fetchReplyMessage]);
+  }, [setReplyingTo, fetchReplyMessage]);
 
   const scrollToMessage = useCallback((messageId: string) => {
       const element = document.getElementById(`message-${messageId}`);

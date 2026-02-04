@@ -4,7 +4,7 @@ import api, { getApiBaseUrl } from './api';
 import { useAuthStore } from './store';
 import { toast } from 'sonner';
 
-interface Message {
+export interface Message {
   id: string;
   content: string;
   senderId: string;
@@ -21,7 +21,7 @@ interface Message {
   isEdited?: boolean;
 }
 
-interface RoomMember {
+export interface RoomMember {
   userId: string;
   roomId: string;
   lastReadAt: string;
@@ -249,7 +249,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   deleteRoom: async (roomId: string) => {
     try {
         await api.delete(`/rooms/${roomId}`);
-        const { currentRoomId, rooms } = get();
+        const { currentRoomId } = get();
         if (currentRoomId === roomId) {
              set({ currentRoomId: null });
         }
@@ -349,9 +349,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       toast.success('Вы успешно вошли в комнату', { id: toastId });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('[joinRoom] Final failure:', error);
-        const errorMessage = error.response?.data?.message || 'Не удалось войти в комнату';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const errorMessage = (error as any).response?.data?.message || 'Не удалось войти в комнату';
         toast.error(errorMessage, { id: toastId });
     }
   },
@@ -464,7 +465,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             let translations: Record<string, string> = {};
             try {
                 translations = msg.translations ? JSON.parse(msg.translations) : {};
-            } catch (e) {}
+            } catch {}
             
             translations[targetLang] = translatedText;
             

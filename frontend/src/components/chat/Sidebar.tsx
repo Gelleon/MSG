@@ -11,7 +11,6 @@ import {
   Search, 
   Settings, 
   LogOut, 
-  MoreVertical,
   Pencil,
   Trash2,
   Copy,
