@@ -48,7 +48,7 @@ export class RoomsService {
     return trimmedName;
   }
 
-  async create(data: Prisma.RoomUncheckedCreateInput, creatorId?: string) {
+  async create(data: Prisma.RoomUncheckedCreateInput, creatorId?: string, metadata?: { ipAddress?: string; userAgent?: string }) {
     const validatedName = await this.validateRoomName(data.name);
     try {
       return await this.prisma.$transaction(async (tx) => {
@@ -74,6 +74,8 @@ export class RoomsService {
             details: 'Room created',
             adminId: creatorId,
             roomId: room.id,
+            ipAddress: metadata?.ipAddress,
+            userAgent: metadata?.userAgent,
           },
         });
 
@@ -259,7 +261,7 @@ export class RoomsService {
     });
   }
 
-  async addUser(roomId: string, userId: string, invitationCode?: string) {
+  async addUser(roomId: string, userId: string, invitationCode?: string, metadata?: { ipAddress?: string; userAgent?: string }) {
     console.log(`[RoomsService.addUser] Adding user ${userId} to room ${roomId} (code: ${invitationCode || 'none'})`);
 
     const room = await this.prisma.room.findUnique({
@@ -322,6 +324,8 @@ export class RoomsService {
             adminId: userId,
             targetId: userId,
             roomId,
+            ipAddress: metadata?.ipAddress,
+            userAgent: metadata?.userAgent,
           },
         });
       });
@@ -344,7 +348,7 @@ export class RoomsService {
     });
   }
 
-  async addUsers(roomId: string, userIds: string[], adminId?: string) {
+  async addUsers(roomId: string, userIds: string[], adminId?: string, metadata?: { ipAddress?: string; userAgent?: string }) {
     const room = await this.prisma.room.findUnique({
       where: { id: roomId },
       include: { members: true },
@@ -392,6 +396,8 @@ export class RoomsService {
               adminId: adminId,
               targetId: userId,
               roomId,
+              ipAddress: metadata?.ipAddress,
+              userAgent: metadata?.userAgent,
             })),
           });
         }
@@ -444,7 +450,7 @@ export class RoomsService {
     };
   }
 
-  async update(id: string, data: Prisma.RoomUpdateInput, userId?: string) {
+  async update(id: string, data: Prisma.RoomUpdateInput, userId?: string, metadata?: { ipAddress?: string; userAgent?: string }) {
     if (typeof data.name === 'string') {
       data.name = await this.validateRoomName(data.name, id);
     }
@@ -465,6 +471,8 @@ export class RoomsService {
               details: `Updated fields: ${details}`,
               adminId: userId,
               roomId: id,
+              ipAddress: metadata?.ipAddress,
+              userAgent: metadata?.userAgent,
             },
           });
         }
@@ -490,6 +498,7 @@ export class RoomsService {
     userId: string,
     adminId: string,
     reason?: string,
+    metadata?: { ipAddress?: string; userAgent?: string },
   ) {
     return this.prisma.$transaction(async (tx) => {
       const member = await tx.roomMember.findUnique({
@@ -512,6 +521,8 @@ export class RoomsService {
           adminId,
           targetId: userId,
           roomId,
+          ipAddress: metadata?.ipAddress,
+          userAgent: metadata?.userAgent,
         },
       });
 
@@ -528,12 +539,93 @@ export class RoomsService {
     });
   }
 
-  async getRoomLogs(roomId: string, page: number, limit: number) {
+  async changeUserRole(
+    roomId: string,
+    userId: string,
+    newRole: string,
+    adminId: string,
+    metadata?: { ipAddress?: string; userAgent?: string },
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const previousRole = user.role;
+
+      if (previousRole === newRole) {
+        return user;
+      }
+
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: { role: newRole },
+      });
+
+      await tx.actionLog.create({
+        data: {
+          action: 'ROLE_CHANGED',
+          details: `Role changed from ${previousRole} to ${newRole}`,
+          adminId,
+          targetId: userId,
+          roomId,
+          previousRole,
+          newRole,
+          ipAddress: metadata?.ipAddress,
+          userAgent: metadata?.userAgent,
+        },
+      });
+
+      return updatedUser;
+    });
+  }
+
+  async getRoomLogs(
+    roomId: string,
+    page: number,
+    limit: number,
+    filters?: {
+      search?: string;
+      action?: string[];
+      adminId?: string;
+      startDate?: Date;
+      endDate?: Date;
+    },
+  ) {
     const skip = (page - 1) * limit;
+    
+    const where: Prisma.ActionLogWhereInput = { roomId };
+    
+    if (filters?.search) {
+      where.OR = [
+        { admin: { name: { contains: filters.search } } },
+        { target: { name: { contains: filters.search } } },
+        { details: { contains: filters.search } },
+      ];
+    }
+    
+    if (filters?.action && filters.action.length > 0) {
+      where.action = { in: filters.action };
+    }
+    
+    if (filters?.adminId) {
+      where.adminId = filters.adminId;
+    }
+    
+    if (filters?.startDate || filters?.endDate) {
+      where.createdAt = {};
+      if (filters.startDate) where.createdAt.gte = filters.startDate;
+      if (filters.endDate) where.createdAt.lte = filters.endDate;
+    }
+
     const [total, logs] = await Promise.all([
-      this.prisma.actionLog.count({ where: { roomId } }),
+      this.prisma.actionLog.count({ where }),
       this.prisma.actionLog.findMany({
-        where: { roomId },
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },

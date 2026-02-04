@@ -135,5 +135,15 @@ model ActionLog {
   target    User?    @relation("TargetActions", fields: [targetId], references: [id], onDelete: SetNull)
   roomId    String?
   room      Room?    @relation(fields: [roomId], references: [id])
+  
+  ipAddress    String?
+  userAgent    String?
+  previousRole String?
+  newRole      String?
+  
   createdAt DateTime @default(now())
+
+  @@index([roomId, createdAt])
+  @@index([adminId, createdAt])
+  @@index([action, createdAt])
 }

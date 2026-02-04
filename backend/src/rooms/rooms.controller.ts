@@ -13,6 +13,8 @@ import {
   Delete,
   Inject,
   forwardRef,
+  Ip,
+  Headers,
 } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { ChatGateway } from '../chat/chat.gateway';
@@ -36,11 +38,13 @@ export class RoomsController {
   async create(
     @Body() createRoomDto: Prisma.RoomUncheckedCreateInput,
     @Request() req: any,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
   ) {
     try {
       console.log('Creating room:', createRoomDto);
       const userId = req.user?.userId || req.user?.sub;
-      return await this.roomsService.create(createRoomDto, userId);
+      return await this.roomsService.create(createRoomDto, userId, { ipAddress: ip, userAgent });
     } catch (error) {
       console.error('Error creating room:', error);
       // Pass the error message to the client
@@ -73,6 +77,8 @@ export class RoomsController {
     @Param('id') id: string,
     @Body() body: { userId?: string; invitationCode?: string },
     @Request() req: any,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
   ) {
     try {
       const uid = body.userId || req.user?.userId || req.user?.sub;
@@ -86,7 +92,7 @@ export class RoomsController {
       }
 
       console.log(`[RoomsController.joinRoom] Request: Room ${id}, User ${uid}, Code: ${body.invitationCode || 'none'}`);
-      return await this.roomsService.addUser(id, uid, body.invitationCode);
+      return await this.roomsService.addUser(id, uid, body.invitationCode, { ipAddress: ip, userAgent });
     } catch (e) {
       console.error(`[RoomsController.joinRoom] Error joining room ${id}:`, e);
       
@@ -132,13 +138,15 @@ export class RoomsController {
     @Param('id') id: string,
     @Body('userIds') userIds: string[],
     @Request() req: any,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
   ) {
     try {
       if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
         throw new HttpException('No user IDs provided', HttpStatus.BAD_REQUEST);
       }
       const adminId = req.user.userId || req.user.sub;
-      return await this.roomsService.addUsers(id, userIds, adminId);
+      return await this.roomsService.addUsers(id, userIds, adminId, { ipAddress: ip, userAgent });
     } catch (e) {
       console.error('Add members error:', e);
       throw new HttpException(
@@ -168,10 +176,12 @@ export class RoomsController {
     @Param('id') id: string,
     @Body() updateRoomDto: UpdateRoomDto,
     @Request() req: any,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
   ) {
     try {
       const userId = req.user.userId || req.user.sub;
-      return await this.roomsService.update(id, updateRoomDto, userId);
+      return await this.roomsService.update(id, updateRoomDto, userId, { ipAddress: ip, userAgent });
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to update room',
@@ -193,6 +203,8 @@ export class RoomsController {
     @Param('userId') userId: string,
     @Query('reason') reason: string,
     @Request() req: any,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
   ) {
     try {
       const adminId = req.user.userId || req.user.sub;
@@ -201,10 +213,38 @@ export class RoomsController {
         userId,
         adminId,
         reason,
+        { ipAddress: ip, userAgent },
       );
     } catch (e) {
       throw new HttpException(
         e.message || 'Failed to remove member',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Patch(':id/members/:userId/role')
+  @Roles('ADMIN')
+  async changeUserRole(
+    @Param('id') roomId: string,
+    @Param('userId') userId: string,
+    @Body('role') role: string,
+    @Request() req: any,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+  ) {
+    try {
+      const adminId = req.user.userId || req.user.sub;
+      return await this.roomsService.changeUserRole(
+        roomId,
+        userId,
+        role,
+        adminId,
+        { ipAddress: ip, userAgent },
+      );
+    } catch (e) {
+      throw new HttpException(
+        e.message || 'Failed to change user role',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -216,7 +256,18 @@ export class RoomsController {
     @Param('id') roomId: string,
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '20',
+    @Query('search') search?: string,
+    @Query('action') action?: string,
+    @Query('adminId') adminId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
-    return this.roomsService.getRoomLogs(roomId, Number(page), Number(limit));
+    return this.roomsService.getRoomLogs(roomId, Number(page), Number(limit), {
+      search,
+      action: action ? action.split(',') : undefined,
+      adminId,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+    });
   }
 }

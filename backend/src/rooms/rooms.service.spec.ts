@@ -559,4 +559,45 @@ describe('RoomsService', () => {
       expect(result.total).toBe(5);
     });
   });
+
+  describe('changeUserRole', () => {
+    it('should change user role and log action', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({ id: 'user-1', role: 'CLIENT' });
+      mockPrismaService.user.update.mockResolvedValue({ id: 'user-1', role: 'ADMIN' });
+
+      const result = await service.changeUserRole('room-1', 'user-1', 'ADMIN', 'admin-1', {
+        ipAddress: '127.0.0.1',
+        userAgent: 'test-agent',
+      });
+
+      expect(result.role).toBe('ADMIN');
+      expect(mockPrismaService.actionLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: 'ROLE_CHANGED',
+            previousRole: 'CLIENT',
+            newRole: 'ADMIN',
+            ipAddress: '127.0.0.1',
+            userAgent: 'test-agent',
+          }),
+        }),
+      );
+    });
+
+    it('should not update if role is same', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({ id: 'user-1', role: 'ADMIN' });
+
+      await service.changeUserRole('room-1', 'user-1', 'ADMIN', 'admin-1');
+
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw if user not found', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.changeUserRole('room-1', 'user-1', 'ADMIN', 'admin-1'),
+      ).rejects.toThrow('User not found');
+    });
+  });
 });
