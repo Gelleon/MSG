@@ -85,7 +85,9 @@
     "cancelEdit": "Отменить",
     "editHistory": "История изменений",
     "noHistory": "История изменений пуста",
-    "viewHistory": "Просмотреть историю"
+    "viewHistory": "Просмотреть историю",
+    "messageNotFoundInView": "Сообщение не найдено в текущем списке",
+    "newMessages": "Новые сообщения"
   },
   "Sidebar": {
     "channels": "Каналы",

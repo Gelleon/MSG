@@ -57,10 +57,17 @@ describe('MessagesService', () => {
 
       expect(result).toEqual(messages.reverse());
       expect(prismaService.message.findMany).toHaveBeenCalledWith({
-        where: { roomId },
+        where: { roomId, deletedAt: null },
         take: 50,
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        include: { sender: true },
+        include: {
+          sender: true,
+          replyTo: {
+            include: {
+              sender: true,
+            },
+          },
+        },
       });
     });
 
@@ -79,6 +86,7 @@ describe('MessagesService', () => {
         expect.objectContaining({
           where: {
             roomId,
+            deletedAt: null,
           },
           orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         }),
@@ -103,7 +111,7 @@ describe('MessagesService', () => {
       // Should query without createdAt constraint
       expect(prismaService.message.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { roomId },
+          where: { roomId, deletedAt: null },
         }),
       );
     });
@@ -126,6 +134,7 @@ describe('MessagesService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             roomId,
+            deletedAt: null,
             OR: [
               { createdAt: { lt: cursorMessage.createdAt } },
               {

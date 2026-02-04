@@ -11,7 +11,9 @@ import {
   Lock,
   Reply,
   Pencil,
-  History
+  History,
+  Loader2,
+  CornerDownRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChatStore } from '@/lib/chat-store';
@@ -54,6 +56,8 @@ interface MessageBubbleProps {
   onDelete: (id: string) => void;
   onInviteToPrivate: (userId: string) => void;
   onReply: (message: Message) => void;
+  onReplyClick?: (id: string, triggerId?: string) => void;
+  isHighlighted?: boolean;
   onEdit: (message: Message) => void;
   onViewHistory: (id: string) => void;
   onImageClick: (url: string) => void;
@@ -71,6 +75,8 @@ export default memo(function MessageBubble({
   onDelete,
   onInviteToPrivate,
   onReply,
+  onReplyClick,
+  isHighlighted,
   onEdit,
   onViewHistory,
   onImageClick,
@@ -78,6 +84,7 @@ export default memo(function MessageBubble({
 }: MessageBubbleProps) {
   const { user } = useAuthStore();
   const isReplyingToThis = useChatStore(state => state.replyingTo?.id === message.id);
+  const isResolvingReply = useChatStore(state => state.loadingReplyId === message.id);
   const t = useTranslations('Chat');
   const tCommon = useTranslations('Common');
 
@@ -105,7 +112,10 @@ export default memo(function MessageBubble({
   };
 
   return (
-    <div className="w-full">
+    <div id={`message-${message.id}`} className={cn(
+        "w-full transition-colors duration-1000",
+        isHighlighted && "bg-primary/10 rounded-lg -mx-2 px-2 py-1"
+    )}>
        {showDate && (
           <div className="flex justify-center my-6">
              <span className="text-[11px] font-medium text-muted-foreground/50 bg-secondary/30 px-3 py-1 rounded-full select-none">
@@ -153,12 +163,34 @@ export default memo(function MessageBubble({
             )}>
                 {/* Replied Message */}
                 {message.replyTo && (
-                    <div className={cn(
-                        "mb-2 pl-2 border-l-2 text-xs cursor-pointer opacity-80 hover:opacity-100 transition-opacity",
-                        isMe ? "border-white/50 text-white/90" : "border-primary/50 text-muted-foreground"
+                    <div 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (message.replyToId && onReplyClick) {
+                                onReplyClick(message.replyToId, message.id);
+                            }
+                        }}
+                        className={cn(
+                        "mb-2 relative group/reply cursor-pointer",
+                        isMe ? "text-white/90" : "text-muted-foreground"
                     )}>
-                        <div className="font-semibold">{message.replyTo.sender?.name}</div>
-                        <div className="line-clamp-1 truncate max-w-[200px]">{message.replyTo.content || t('attachment')}</div>
+                        <div className={cn(
+                            "absolute top-0 bottom-0 -left-2 w-[2px] rounded-full transition-colors",
+                            isMe ? "bg-white/30 group-hover/reply:bg-white/50" : "bg-primary/30 group-hover/reply:bg-primary/50"
+                        )} />
+                        
+                        <div className={cn(
+                            "ml-1 pl-2 py-1 rounded transition-colors",
+                             isMe ? "hover:bg-white/10" : "hover:bg-primary/5"
+                        )}>
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                                <CornerDownRight size={12} className="opacity-70" />
+                                <span className="text-xs font-semibold opacity-90">{message.replyTo.sender?.name}</span>
+                            </div>
+                            <div className="text-xs opacity-80 line-clamp-1 truncate max-w-[200px] pl-4">
+                                {message.replyTo.content || t('attachment')}
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -232,16 +264,24 @@ export default memo(function MessageBubble({
                        <button 
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onReply(message);
+                                if (!isResolvingReply) {
+                                    onReply(message);
+                                }
                             }}
+                            disabled={isResolvingReply}
                             className={cn(
                                 "opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide cursor-pointer",
-                                isMe ? "hover:text-white" : "hover:text-primary"
+                                isMe ? "hover:text-white" : "hover:text-primary",
+                                isResolvingReply && "opacity-100 cursor-wait"
                             )}
                             aria-label={t('reply')}
                             title={t('reply')}
                        >
-                           <Reply size={11} />
+                           {isResolvingReply ? (
+                               <Loader2 size={11} className="animate-spin" />
+                           ) : (
+                               <Reply size={11} />
+                           )}
                            {t('reply')}
                        </button>
 

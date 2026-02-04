@@ -7,6 +7,7 @@ import {
   UseGuards,
   Query,
   Request,
+  NotFoundException,
 } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { Prisma } from '@prisma/client';
@@ -44,6 +45,17 @@ export class MessagesController {
       );
       throw error;
     }
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    console.log(`[MessagesController] GET /messages/${id}`);
+    const message = await this.messagesService.findOne(id);
+    if (!message) {
+      console.warn(`[MessagesController] Message ${id} not found`);
+      throw new NotFoundException(`Message with ID ${id} not found`);
+    }
+    return message;
   }
 
   @Post(':id/translate')

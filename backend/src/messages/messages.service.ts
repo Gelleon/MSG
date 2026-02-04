@@ -33,6 +33,11 @@ export class MessagesService {
       data,
       include: {
         sender: true,
+        replyTo: {
+          include: {
+            sender: true,
+          },
+        },
       },
     });
 
@@ -128,6 +133,20 @@ export class MessagesService {
 
     console.log(`[MessagesService.findAll] Found ${messages.length} messages`);
     return messages.reverse();
+  }
+
+  async findOne(id: string): Promise<Message | null> {
+    return this.prisma.message.findUnique({
+      where: { id },
+      include: {
+        sender: true,
+        replyTo: {
+          include: {
+            sender: true,
+          },
+        },
+      },
+    });
   }
 
   async translateMessage(

@@ -25,7 +25,7 @@ import MessageBubble from './MessageBubble';
 import { MessageHistoryDialog } from './MessageHistoryDialog';
 
 export default function ChatArea() {
-  const { messages, currentRoomId, deleteMessage, socket, loadMoreMessages, isLoadingHistory, hasMoreMessages, setReplyingTo, setEditingMessage } = useChatStore();
+  const { messages, currentRoomId, deleteMessage, socket, loadMoreMessages, isLoadingHistory, hasMoreMessages, setReplyingTo, fetchReplyMessage, setEditingMessage, markRoomAsRead } = useChatStore();
   const { user } = useAuthStore();
   const currentRoom = useChatStore(state => state.rooms.find(r => r.id === state.currentRoomId));
   
@@ -43,8 +43,61 @@ export default function ChatArea() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [viewingHistoryId, setViewingHistoryId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [unreadBoundary, setUnreadBoundary] = useState<Date | null>(null);
+  const initializedRoomIdRef = useRef<string | null>(null);
   const t = useTranslations('Chat');
   const tCommon = useTranslations('Common');
+
+  // Set unread boundary when entering room
+  useEffect(() => {
+    if (currentRoomId && currentRoomId !== initializedRoomIdRef.current && currentRoom?.members && user?.id) {
+        const member = currentRoom.members.find((m: any) => m.userId === user.id);
+        if (member?.lastReadAt) {
+            setUnreadBoundary(new Date(member.lastReadAt));
+        } else {
+            setUnreadBoundary(null);
+        }
+        initializedRoomIdRef.current = currentRoomId;
+    } else if (currentRoomId !== initializedRoomIdRef.current) {
+        // Reset if room changed but data not ready (will retry when data arrives)
+        setUnreadBoundary(null);
+    }
+  }, [currentRoomId, currentRoom, user?.id]);
+
+  // Mark as read when window gains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (currentRoomId && document.visibilityState === 'visible') {
+        markRoomAsRead(currentRoomId);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    // Also check on mount/change if visible
+    if (document.visibilityState === 'visible' && currentRoomId) {
+       markRoomAsRead(currentRoomId);
+    }
+
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [currentRoomId, markRoomAsRead]);
+
+  // Mark as read when scrolling to bottom
+  useEffect(() => {
+    if (!bottomRef.current || !currentRoomId) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && document.visibilityState === 'visible') {
+          markRoomAsRead(currentRoomId);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(bottomRef.current);
+    return () => observer.disconnect();
+  }, [currentRoomId, markRoomAsRead, messages.length]); // Re-attach when messages change to ensure observer is correct
 
   // Reset scroll state when room changes
   useEffect(() => {
@@ -204,6 +257,21 @@ export default function ChatArea() {
       });
   }, [socket, currentRoomId, tCommon]);
 
+  const handleReply = useCallback((message: any) => {
+      fetchReplyMessage(message.id);
+  }, [fetchReplyMessage]);
+
+  const scrollToMessage = useCallback((messageId: string) => {
+      const element = document.getElementById(`message-${messageId}`);
+      if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setHighlightedMessageId(messageId);
+          setTimeout(() => setHighlightedMessageId(null), 2000);
+      } else {
+          toast.info(t('messageNotFoundInView'));
+      }
+  }, [t]);
+
   const handleDelete = useCallback(async (messageId: string) => {
     if (window.confirm(t('deleteMessageConfirm'))) {
       setDeletingId(messageId);
@@ -268,24 +336,40 @@ export default function ChatArea() {
             const showAvatar = !isMe && (!isSameSender || showDate);
             const showName = !isMe && (!isSameSender || showDate);
 
+            // Unread divider logic
+            const msgDate = new Date(msg.createdAt);
+            const isUnread = unreadBoundary && msgDate > unreadBoundary;
+            const prevMsgDate = prevMsg ? new Date(prevMsg.createdAt) : null;
+            const showUnreadDivider = isUnread && (!prevMsgDate || (unreadBoundary && prevMsgDate <= unreadBoundary));
+
             return (
-                <MessageBubble 
-                    key={msg.id}
-                    message={msg}
-                    isMe={isMe}
-                    isSameSender={isSameSender}
-                    showDate={showDate}
-                    showAvatar={showAvatar}
-                    showName={showName}
-                    showTranslations={showTranslations}
-                    onDelete={handleDelete}
-                    onInviteToPrivate={handleInviteToPrivate}
-                    onReply={setReplyingTo}
-                    onEdit={setEditingMessage}
-                    onViewHistory={setViewingHistoryId}
-                    onImageClick={setSelectedImage}
-                    deletingId={deletingId}
-                />
+                <div key={msg.id} className="flex flex-col w-full">
+                    {showUnreadDivider && (
+                        <div className="w-full flex items-center justify-center my-4 animate-in fade-in zoom-in duration-300">
+                             <div className="bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full shadow-sm border border-primary/20 backdrop-blur-sm select-none">
+                                 {t('newMessages')}
+                             </div>
+                        </div>
+                    )}
+                    <MessageBubble 
+                        message={msg}
+                        isMe={isMe}
+                        isSameSender={isSameSender}
+                        showDate={showDate}
+                        showAvatar={showAvatar}
+                        showName={showName}
+                        showTranslations={showTranslations}
+                        onDelete={handleDelete}
+                        onInviteToPrivate={handleInviteToPrivate}
+                        onReply={handleReply}
+                        onReplyClick={scrollToMessage}
+                        isHighlighted={highlightedMessageId === msg.id}
+                        onEdit={setEditingMessage}
+                        onViewHistory={setViewingHistoryId}
+                        onImageClick={setSelectedImage}
+                        deletingId={deletingId}
+                    />
+                </div>
             );
           })}
           <div ref={bottomRef} />

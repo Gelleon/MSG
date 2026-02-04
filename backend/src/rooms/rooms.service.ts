@@ -107,27 +107,38 @@ export class RoomsService {
 
     const roomsWithCounts = await Promise.all(
       rooms.map(async (room) => {
-        let unreadCount = 0;
-        if (user) {
-          const member = (room as any).members.find(
-            (m: any) => m.userId === user.userId,
-          );
-          if (member) {
-            unreadCount = await this.prisma.message.count({
-              where: {
-                roomId: room.id,
-                createdAt: { gt: member.lastReadAt },
-              },
-            });
-          }
-        }
         return {
           ...room,
           users: (room as any).members.map((m: any) => m.user),
-          unreadCount,
+          unreadCount: 0,
         };
       }),
     );
+
+    if (user) {
+      try {
+        const counts = await this.prisma.$queryRaw<Array<{ roomId: string; count: bigint }>>`
+          SELECT 
+            rm.roomId, 
+            COUNT(m.id) as count
+          FROM RoomMember rm
+          LEFT JOIN Message m ON m.roomId = rm.roomId AND m.createdAt > rm.lastReadAt AND m.deletedAt IS NULL
+          WHERE rm.userId = ${user.userId}
+          GROUP BY rm.roomId
+        `;
+        
+        const countMap = new Map<string, number>();
+        counts.forEach((row) => {
+          countMap.set(row.roomId, Number(row.count));
+        });
+
+        roomsWithCounts.forEach((room) => {
+          room.unreadCount = countMap.get(room.id) || 0;
+        });
+      } catch (error) {
+        console.error('Failed to fetch unread counts', error);
+      }
+    }
 
     return roomsWithCounts;
   }

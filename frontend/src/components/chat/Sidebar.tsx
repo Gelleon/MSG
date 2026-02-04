@@ -250,6 +250,7 @@ export default function Sidebar({ className }: { className?: string }) {
                 const isActive = currentRoomId === room.id;
                 const isPrivate = room.isPrivate;
                 const isChild = !!room.parentRoomId;
+                const hasUnread = (room.unreadCount || 0) > 0;
                 
                 return (
                  <ContextMenu key={room.id}>
@@ -276,7 +277,8 @@ export default function Sidebar({ className }: { className?: string }) {
                            <Avatar className={cn(
                                "h-10 w-10 border shadow-sm transition-transform duration-200 group-hover:scale-105", 
                                isPrivate ? "ring-2 ring-primary/5 border-primary/10" : "border-background",
-                               isActive ? "ring-2 ring-background" : ""
+                               isActive ? "ring-2 ring-background" : "",
+                               hasUnread ? "ring-2 ring-primary border-primary" : ""
                            )}>
                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room.id}`} />
                                <AvatarFallback 
@@ -294,15 +296,23 @@ export default function Sidebar({ className }: { className?: string }) {
                        
                        <div className="flex-1 min-w-0 flex flex-col gap-0.5 z-10">
                          <div className="flex justify-between items-center">
-                             <span className={cn("font-semibold text-[14px] truncate leading-tight tracking-tight", isActive ? "text-foreground" : "text-foreground")}>
+                             <span className={cn(
+                                 "text-[14px] truncate leading-tight tracking-tight transition-all", 
+                                 hasUnread ? "font-bold text-foreground" : "font-semibold",
+                                 isActive ? "text-foreground" : "text-foreground"
+                             )}>
                                  {room.name}
                              </span>
                          </div>
                          <div className="flex justify-between items-center gap-2">
-                             <p className={cn("text-[12px] truncate flex-1 transition-colors duration-200", isActive ? "text-muted-foreground font-medium" : "text-muted-foreground/70")}>
+                             <p className={cn(
+                                 "text-[12px] truncate flex-1 transition-colors duration-200", 
+                                 hasUnread ? "text-foreground font-medium" : "text-muted-foreground/70",
+                                 isActive ? "text-muted-foreground font-medium" : ""
+                             )}>
                                  {room.description || (isPrivate ? tSidebar('privateSession') : tSidebar('noDescription'))}
                              </p>
-                             {(room.unreadCount || 0) > 0 && (
+                             {hasUnread && (
                                 <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center h-4 flex items-center justify-center shadow-sm ring-2 ring-background animate-pulse">
                                     {room.unreadCount}
                                 </span>

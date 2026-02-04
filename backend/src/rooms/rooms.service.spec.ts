@@ -47,6 +47,7 @@ describe('RoomsService', () => {
       findMany: jest.fn(),
     },
     $transaction: jest.fn((callback) => callback(mockPrismaService)),
+    $queryRaw: jest.fn(),
   };
 
   const mockChatGateway = {
@@ -243,13 +244,16 @@ describe('RoomsService', () => {
         },
       ];
       mockPrismaService.room.findMany.mockResolvedValue(rooms);
-      mockPrismaService.message.count.mockResolvedValue(5);
+      mockPrismaService.$queryRaw.mockResolvedValue([
+        { roomId: 'room-1', count: BigInt(5) }
+      ]);
 
       const result = await service.findAll(undefined, user);
 
       expect(result).toHaveLength(1);
       expect(result[0].unreadCount).toBe(5);
       expect(mockPrismaService.room.findMany).toHaveBeenCalled();
+      expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
     });
 
     it('should filter by project if provided', async () => {

@@ -85,7 +85,9 @@
     "cancelEdit": "Cancel",
     "editHistory": "Edit History",
     "noHistory": "No edit history",
-    "viewHistory": "View History"
+    "viewHistory": "View History",
+    "messageNotFoundInView": "Message not found in current view",
+    "newMessages": "New Messages"
   },
   "Sidebar": {
     "channels": "Channels",

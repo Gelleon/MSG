@@ -89,6 +89,8 @@ model Message {
   isEdited  Boolean  @default(false)
   deletedAt DateTime?
   history   MessageHistory[]
+
+  @@index([roomId, createdAt])
 }
 
 model MessageHistory {

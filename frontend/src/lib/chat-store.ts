@@ -21,11 +21,19 @@ interface Message {
   isEdited?: boolean;
 }
 
+interface RoomMember {
+  userId: string;
+  roomId: string;
+  lastReadAt: string;
+  role?: string;
+}
+
 interface Room {
   id: string;
   name: string;
   description?: string;
   unreadCount?: number;
+  members?: RoomMember[];
   isPrivate?: boolean;
   parentRoomId?: string;
   parentRoom?: {
@@ -42,6 +50,7 @@ interface ChatState {
   isConnected: boolean;
   translationTargetLang: string;
   replyingTo: Message | null;
+  loadingReplyId: string | null;
   editingMessage: Message | null;
   
   isLoadingHistory: boolean;
@@ -64,6 +73,7 @@ interface ChatState {
   removeMessage: (messageId: string) => void;
   setTranslationTargetLang: (lang: string) => void;
   setReplyingTo: (message: Message | null) => void;
+  fetchReplyMessage: (messageId: string) => Promise<void>;
   setEditingMessage: (message: Message | null) => void;
   translateMessage: (messageId: string, targetLang: string) => Promise<void>;
   markRoomAsRead: (roomId: string) => Promise<void>;
@@ -77,12 +87,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isConnected: false,
   translationTargetLang: 'ru',
   replyingTo: null,
+  loadingReplyId: null,
   editingMessage: null,
   isLoadingHistory: false,
   hasMoreMessages: true,
 
   setTranslationTargetLang: (lang: string) => set({ translationTargetLang: lang }),
   setReplyingTo: (message: Message | null) => set({ replyingTo: message }),
+  fetchReplyMessage: async (messageId: string) => {
+    set({ loadingReplyId: messageId });
+    try {
+      // Fetch fresh message details
+      const response = await api.get(`/messages/${messageId}`);
+      if (response.data) {
+        set({ replyingTo: response.data, loadingReplyId: null });
+      } else {
+        throw new Error('Empty response');
+      }
+    } catch (error) {
+      console.error('Failed to fetch reply message', error);
+      // Fallback: try to find in local messages
+      const localMessage = get().messages.find(m => m.id === messageId);
+      if (localMessage) {
+        set({ replyingTo: localMessage, loadingReplyId: null });
+      } else {
+        set({ loadingReplyId: null });
+        toast.error('Не удалось загрузить сообщение для ответа');
+      }
+    }
+  },
   setEditingMessage: (message: Message | null) => set({ editingMessage: message }),
 
   connect: () => {
@@ -115,8 +148,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const { currentRoomId, rooms } = get();
       if (message.roomId === currentRoomId) {
         get().addMessage(message);
-        // Mark as read immediately if active
-        get().markRoomAsRead(message.roomId);
       } else {
         // Increment unread count
         const updatedRooms = rooms.map(room => {
@@ -131,9 +162,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     socket.on('roomRead', ({ roomId }: { roomId: string }) => {
         const { rooms } = get();
+        const userId = useAuthStore.getState().user?.id;
+        
         const updatedRooms = rooms.map(room => {
             if (room.id === roomId) {
-                return { ...room, unreadCount: 0 };
+                const updatedMembers = room.members?.map(member => {
+                    if (member.userId === userId) {
+                        return { ...member, lastReadAt: new Date().toISOString() };
+                    }
+                    return member;
+                });
+                return { ...room, unreadCount: 0, members: updatedMembers };
             }
             return room;
         });
@@ -452,7 +491,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
         // Optimistic update
         const { rooms } = get();
-        const updatedRooms = rooms.map(r => r.id === roomId ? { ...r, unreadCount: 0 } : r);
+        const userId = useAuthStore.getState().user?.id;
+        const updatedRooms = rooms.map(r => {
+            if (r.id === roomId) {
+                const updatedMembers = r.members?.map(member => {
+                    if (member.userId === userId) {
+                        return { ...member, lastReadAt: new Date().toISOString() };
+                    }
+                    return member;
+                });
+                return { ...r, unreadCount: 0, members: updatedMembers };
+            }
+            return r;
+        });
         set({ rooms: updatedRooms });
     } catch (error) {
         console.error('Failed to mark room as read', error);
