@@ -60,7 +60,7 @@ interface ChatState {
   disconnect: () => void;
   fetchRooms: () => Promise<void>;
   createRoom: (name: string, description?: string) => Promise<Room>;
-  renameRoom: (roomId: string, name: string) => Promise<void>;
+  updateRoom: (roomId: string, data: { name?: string; description?: string }) => Promise<void>;
   deleteRoom: (roomId: string) => Promise<void>;
   joinRoom: (roomId: string, invitationCode?: string) => void;
   loadMoreMessages: () => Promise<void>;
@@ -236,12 +236,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  renameRoom: async (roomId: string, name: string) => {
+  updateRoom: async (roomId: string, data: { name?: string; description?: string }) => {
     try {
-        await api.patch(`/rooms/${roomId}`, { name });
+        await api.patch(`/rooms/${roomId}`, data);
         get().fetchRooms();
     } catch (error) {
-        console.error('Failed to rename room', error);
+        console.error('Failed to update room', error);
         throw error;
     }
   },

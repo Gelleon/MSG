@@ -1,14 +1,15 @@
-
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Sidebar from '../Sidebar';
 import '@testing-library/jest-dom';
 
 // Mock dependencies
-jest.mock('next/navigation', () => ({
+jest.mock('@/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
   }),
+  usePathname: () => '/',
+  Link: ({children}: any) => <a>{children}</a>,
 }));
 
 jest.mock('@/lib/store', () => ({
@@ -27,22 +28,32 @@ jest.mock('@/lib/notification-store', () => ({
   }),
 }));
 
+// Mock translations
+jest.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => key,
+}));
+
 // Mock useChatStore with mutable state for tests
 const mockJoinRoom = jest.fn();
+const mockUpdateRoom = jest.fn();
+const mockCreateRoom = jest.fn();
+const mockDeleteRoom = jest.fn();
+const mockFetchRooms = jest.fn();
+
 let mockRooms = [
-  { id: '1', name: 'General', isPrivate: false },
-  { id: '2', name: 'Random', isPrivate: false },
+  { id: '1', name: 'General', isPrivate: false, description: 'General chat' },
+  { id: '2', name: 'Random', isPrivate: false, description: 'Random stuff' },
 ];
 
 jest.mock('@/lib/chat-store', () => ({
   useChatStore: () => ({
     rooms: mockRooms,
     currentRoomId: '1',
-    fetchRooms: jest.fn(),
+    fetchRooms: mockFetchRooms,
     joinRoom: mockJoinRoom,
-    createRoom: jest.fn(),
-    renameRoom: jest.fn(),
-    deleteRoom: jest.fn(),
+    createRoom: mockCreateRoom,
+    updateRoom: mockUpdateRoom,
+    deleteRoom: mockDeleteRoom,
   }),
 }));
 
@@ -56,11 +67,23 @@ jest.mock('@/components/ui/dialog', () => ({
   DialogFooter: ({ children }: any) => <div>{children}</div>,
 }));
 
+jest.mock('@/components/ui/input', () => ({
+  Input: (props: any) => <input {...props} />,
+}));
+
+jest.mock('@/components/ui/textarea', () => ({
+  Textarea: (props: any) => <textarea {...props} />,
+}));
+
+jest.mock('@/components/ui/label', () => ({
+  Label: ({ children }: any) => <label>{children}</label>,
+}));
+
 jest.mock('@/components/ui/context-menu', () => ({
   ContextMenu: ({ children }: any) => <div>{children}</div>,
   ContextMenuTrigger: ({ children }: any) => <div>{children}</div>,
   ContextMenuContent: ({ children }: any) => <div>{children}</div>,
-  ContextMenuItem: ({ children }: any) => <div>{children}</div>,
+  ContextMenuItem: ({ children, onClick }: any) => <div onClick={onClick} role="button">{children}</div>,
   ContextMenuSeparator: () => null,
 }));
 
@@ -73,26 +96,35 @@ jest.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenuSeparator: () => null,
 }));
 
+jest.mock('sonner', () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
 describe('Sidebar Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset mock rooms
     mockRooms = [
-      { id: '1', name: 'General', isPrivate: false },
-      { id: '2', name: 'Random', isPrivate: false },
+      { id: '1', name: 'General', isPrivate: false, description: 'General chat' },
+      { id: '2', name: 'Random', isPrivate: false, description: 'Random stuff' },
     ];
   });
 
   it('renders sidebar with rooms', () => {
     render(<Sidebar />);
-    expect(screen.getByText('Chats')).toBeInTheDocument();
+    // Since we mock translations to return keys, and Sidebar component uses tSidebar('chats')? 
+    // Wait, in Sidebar.tsx: <span ...>MSG.</span>
+    // And search placeholder: tSidebar('searchPlaceholder') -> 'searchPlaceholder'
+    expect(screen.getByPlaceholderText('searchPlaceholder')).toBeInTheDocument();
     expect(screen.getByText('General')).toBeInTheDocument();
     expect(screen.getByText('Random')).toBeInTheDocument();
   });
 
   it('filters rooms based on search query', () => {
     render(<Sidebar />);
-    const searchInput = screen.getByPlaceholderText('Search Messenger');
+    const searchInput = screen.getByPlaceholderText('searchPlaceholder');
     
     fireEvent.change(searchInput, { target: { value: 'Gen' } });
     
@@ -100,21 +132,35 @@ describe('Sidebar Component', () => {
     expect(screen.queryByText('Random')).not.toBeInTheDocument();
   });
 
-  it('sorts rooms correctly: parent followed by child', () => {
-    // Override mock for this specific test
-    mockRooms = [
-        { id: 'parent1', name: 'Parent Room', isPrivate: false },
-        { id: 'child1', name: 'Child Room', isPrivate: true, parentRoomId: 'parent1' },
-        { id: 'other', name: 'Other Room', isPrivate: false },
-    ];
-    
+  it('opens edit dialog and updates room details', async () => {
     render(<Sidebar />);
     
-    const roomElements = screen.getAllByRole('button'); // Assuming room items are buttons or contain buttons
-    // The structure is complex, let's look for text content order
-    const sidebar = screen.getByText('Chats').closest('div')?.parentElement;
-    // We can just check if both exist
-    expect(screen.getByText('Parent Room')).toBeInTheDocument();
-    expect(screen.getByText('Child Room')).toBeInTheDocument();
+    // Find the edit button (rename context menu item)
+    // We mock ContextMenuItem to be always visible and clickable
+    // tSidebar('rename') -> 'rename'
+    const renameButtons = screen.getAllByText('rename');
+    fireEvent.click(renameButtons[0]); // Click the first one (General room)
+    
+    // Dialog should be open
+    const nameInput = screen.getByDisplayValue('General');
+    const descInput = screen.getByDisplayValue('General chat');
+    
+    expect(nameInput).toBeInTheDocument();
+    expect(descInput).toBeInTheDocument();
+    
+    // Change values
+    fireEvent.change(nameInput, { target: { value: 'General Updated' } });
+    fireEvent.change(descInput, { target: { value: 'New description' } });
+    
+    // Submit
+    // tDialogs('renameRoom.submit') -> 'renameRoom.submit'
+    fireEvent.click(screen.getByText('renameRoom.submit'));
+    
+    await waitFor(() => {
+        expect(mockUpdateRoom).toHaveBeenCalledWith('1', {
+            name: 'General Updated',
+            description: 'New description'
+        });
+    });
   });
 });

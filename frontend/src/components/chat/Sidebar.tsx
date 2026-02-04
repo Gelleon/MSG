@@ -22,6 +22,7 @@ import { useRouter } from '@/navigation';
 import CreateRoomDialog from './CreateRoomDialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,13 +52,14 @@ import { cn, stringToColor } from '@/lib/utils';
 import InviteMemberModal from './InviteMemberModal';
 import RoomMembersDialog from './RoomMembersDialog';
 import { Lock, CornerDownRight } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { useNotificationStore } from '@/lib/notification-store';
 import { Label } from '@/components/ui/label';
 
 export default function Sidebar({ className }: { className?: string }) {
   const { user, logout } = useAuthStore();
-  const { rooms, fetchRooms, joinRoom, currentRoomId, createRoom, renameRoom, deleteRoom } = useChatStore();
+  const { rooms, fetchRooms, joinRoom, currentRoomId, createRoom, updateRoom, deleteRoom } = useChatStore();
   const { soundEnabled, visualEnabled, toggleSound, toggleVisual } = useNotificationStore();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,10 +69,11 @@ export default function Sidebar({ className }: { className?: string }) {
   const tDialogs = useTranslations('Dialogs');
   const tSettings = useTranslations('Settings');
 
-  // Rename Dialog State
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [roomToRename, setRoomToRename] = useState<{id: string, name: string} | null>(null);
-  const [newName, setNewName] = useState('');
+  // Edit Dialog State
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [roomToEdit, setRoomToEdit] = useState<{id: string, name: string, description?: string} | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
   // Delete Dialog State
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -100,10 +103,11 @@ export default function Sidebar({ className }: { className?: string }) {
     router.push('/login');
   };
 
-  const handleRenameClick = (id: string, name: string) => {
-    setRoomToRename({ id, name });
-    setNewName(name);
-    setRenameDialogOpen(true);
+  const handleEditClick = (room: {id: string, name: string, description?: string}) => {
+    setRoomToEdit(room);
+    setEditName(room.name);
+    setEditDescription(room.description || '');
+    setEditDialogOpen(true);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -132,12 +136,35 @@ export default function Sidebar({ className }: { className?: string }) {
     setMembersDialogOpen(true);
   };
 
-  const confirmRename = async () => {
-    if (roomToRename && newName.trim()) {
-      await renameRoom(roomToRename.id, newName);
-      setRenameDialogOpen(false);
-      setRoomToRename(null);
-      setNewName('');
+  const confirmEdit = async () => {
+    if (!roomToEdit) return;
+
+    const name = editName.trim();
+    if (!name) {
+      toast.error(tDialogs('renameRoom.errorEmptyName') || 'Room name cannot be empty');
+      return;
+    }
+
+    if (name.length > 100) {
+      toast.error('Room name is too long (max 100 characters)');
+      return;
+    }
+
+    if (editDescription && editDescription.length > 500) {
+      toast.error('Description is too long (max 500 characters)');
+      return;
+    }
+
+    try {
+      await updateRoom(roomToEdit.id, { name, description: editDescription });
+      setEditDialogOpen(false);
+      setRoomToEdit(null);
+      setEditName('');
+      setEditDescription('');
+      toast.success(tDialogs('renameRoom.success') || 'Room updated successfully');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update room';
+      toast.error(errorMessage);
     }
   };
 
@@ -333,7 +360,7 @@ export default function Sidebar({ className }: { className?: string }) {
                      )}
                      {user?.role === 'ADMIN' && (
                        <>
-                         <ContextMenuItem onClick={() => handleRenameClick(room.id, room.name)}>
+                         <ContextMenuItem onClick={() => handleEditClick(room)}>
                            <Pencil className="mr-2 h-4 w-4" />
                            {tSidebar('rename')}
                          </ContextMenuItem>
@@ -406,7 +433,7 @@ export default function Sidebar({ className }: { className?: string }) {
       </div>
 
       {/* Dialogs */}
-      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{tDialogs('renameRoom.title')}</DialogTitle>
@@ -414,18 +441,31 @@ export default function Sidebar({ className }: { className?: string }) {
               {tDialogs('renameRoom.description')}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Input 
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder={tDialogs('renameRoom.label')}
-              onKeyDown={(e) => e.key === 'Enter' && confirmRename()}
-              className="col-span-3"
-            />
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input 
+                id="name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder={tDialogs('renameRoom.label')}
+                maxLength={100}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Room description"
+                maxLength={500}
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>{tCommon('cancel')}</Button>
-            <Button onClick={confirmRename}>{tDialogs('renameRoom.submit')}</Button>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>{tCommon('cancel')}</Button>
+            <Button onClick={confirmEdit}>{tDialogs('renameRoom.submit')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
