@@ -232,6 +232,23 @@ describe('RoomsService', () => {
         'Комната с таким названием уже существует',
       );
     });
+
+    it('should update room description successfully', async () => {
+      const updateDto: Prisma.RoomUpdateInput = { description: 'New Description' };
+      mockPrismaService.room.update.mockResolvedValue({
+        id: 'room-id',
+        name: 'Existing Name',
+        description: 'New Description',
+      });
+
+      const result = await service.update('room-id', updateDto);
+      expect(result).toEqual({ id: 'room-id', name: 'Existing Name', description: 'New Description' });
+      expect(mockPrismaService.room.findFirst).not.toHaveBeenCalled();
+      expect(mockPrismaService.room.update).toHaveBeenCalledWith({
+        where: { id: 'room-id' },
+        data: updateDto,
+      });
+    });
   });
 
   describe('findAll', () => {

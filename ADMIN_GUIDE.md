@@ -44,3 +44,22 @@ The User Management Dashboard allows Administrators to view, search, create, and
 - **GET /users/export**
   - Returns: CSV file
   - Requires: `ADMIN` role
+
+## Room Management
+
+### Editing Rooms
+Administrators and Managers can edit room details including name and description.
+
+1. Navigate to the chat sidebar.
+2. Click the edit icon (pencil) next to a room name.
+3. Update the **Name** (max 100 chars) or **Description** (max 500 chars).
+4. Click "Update" to save changes.
+
+### Validation Rules
+- **Name**: Required, max 100 characters, must be unique.
+- **Description**: Optional, max 500 characters.
+
+### API Endpoints (For Developers)
+- **PATCH /rooms/:id**
+  - Body: `{ name?: string, description?: string }`
+  - Requires: `ADMIN` or `MANAGER` role

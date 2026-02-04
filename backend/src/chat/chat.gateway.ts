@@ -415,8 +415,44 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
       const hasAccess = await this.validateRoomAccess(client, payload.roomId);
       if (!hasAccess) {
-        throw new WsException('Forbidden');
-      }
-      return this.messagesService.getHistory(payload.messageId);
+      throw new WsException('Forbidden');
+    }
+    return this.messagesService.getHistory(payload.messageId);
+  }
+
+  @SubscribeMessage('typingStart')
+  async handleTypingStart(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { roomId: string },
+  ) {
+    const user = client.data.user;
+    if (!user) return;
+
+    const hasAccess = await this.validateRoomAccess(client, payload.roomId);
+    if (!hasAccess) return;
+
+    client.to(payload.roomId).emit('typingStart', {
+      roomId: payload.roomId,
+      userId: user.sub || user.userId,
+      username: user.username || user.name,
+    });
+  }
+
+  @SubscribeMessage('typingStop')
+  async handleTypingStop(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { roomId: string },
+  ) {
+    const user = client.data.user;
+    if (!user) return;
+
+    const hasAccess = await this.validateRoomAccess(client, payload.roomId);
+    if (!hasAccess) return;
+
+    client.to(payload.roomId).emit('typingStop', {
+      roomId: payload.roomId,
+      userId: user.sub || user.userId,
+      username: user.username || user.name,
+    });
   }
 }

@@ -18,10 +18,15 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 
+import { UpdateRoomDto } from './dto/update-room.dto';
+
 @Controller('rooms')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class RoomsController {
-  constructor(private readonly roomsService: RoomsService) {}
+  constructor(
+    private readonly roomsService: RoomsService,
+    private readonly chatGateway: ChatGateway,
+  ) {}
 
   @Post()
   @Roles('ADMIN')
@@ -93,6 +98,31 @@ export class RoomsController {
     }
   }
 
+  @Post(':id/typing')
+  async typing(
+    @Param('id') id: string,
+    @Body() body: { status: boolean },
+    @Request() req: any,
+  ) {
+    const userId = req.user.userId || req.user.sub;
+    const username = req.user.username || req.user.name;
+
+    // Use server.to() to broadcast to everyone (frontend filters out self)
+    // or exclude sender if we had their socket id, but via REST we don't have socket id.
+    const payload = {
+      roomId: id,
+      userId: userId,
+      username: username,
+    };
+
+    if (body.status) {
+      this.chatGateway.server.to(id).emit('typingStart', payload);
+    } else {
+      this.chatGateway.server.to(id).emit('typingStop', payload);
+    }
+    return { success: true };
+  }
+
   @Post(':id/members')
   @Roles('ADMIN')
   async addMembers(
@@ -128,10 +158,10 @@ export class RoomsController {
   }
 
   @Patch(':id')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'MANAGER')
   async update(
     @Param('id') id: string,
-    @Body() updateRoomDto: Prisma.RoomUpdateInput,
+    @Body() updateRoomDto: UpdateRoomDto,
   ) {
     try {
       return await this.roomsService.update(id, updateRoomDto);
