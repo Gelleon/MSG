@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { UIEvent, WheelEvent } from 'react';
-import { useChatStore } from '@/lib/chat-store';
+import { useChatStore, Message } from '@/lib/chat-store';
 import { useAuthStore } from '@/lib/store';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -258,7 +258,7 @@ export default function ChatArea() {
   }, [socket, currentRoomId, tCommon]);
 
   const handleReply = useCallback((message: Message) => {
-      setReplyingTo(message.id);
+      setReplyingTo(message);
       fetchReplyMessage(message.id);
   }, [setReplyingTo, fetchReplyMessage]);
 
