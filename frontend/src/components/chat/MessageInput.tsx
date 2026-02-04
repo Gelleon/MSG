@@ -40,16 +40,41 @@ export default function MessageInput() {
 
   const { theme } = useTheme();
   
-  const { sendMessage, editMessage, currentRoomId, replyingTo, setReplyingTo, editingMessage, setEditingMessage } = useChatStore();
+  const { sendMessage, editMessage, currentRoomId, replyingTo, setReplyingTo, editingMessage, setEditingMessage, startTyping, stopTyping } = useChatStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
     return () => {
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       if (timerRef.current) clearInterval(timerRef.current);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
   }, [audioUrl]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+
+    if (currentRoomId) {
+        if (!isTypingRef.current) {
+            isTypingRef.current = true;
+            startTyping(currentRoomId);
+        }
+
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+
+        typingTimeoutRef.current = setTimeout(() => {
+            isTypingRef.current = false;
+            stopTyping(currentRoomId);
+        }, 3000);
+    }
+  };
 
   useEffect(() => {
     if (editingMessage) {
@@ -421,11 +446,7 @@ export default function MessageInput() {
                <Textarea
                    ref={textareaRef}
                    value={content}
-                   onChange={(e) => {
-                       setContent(e.target.value);
-                       e.target.style.height = 'auto';
-                       e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
-                   }}
+                   onChange={handleInputChange}
                    onKeyDown={handleKeyDown}
                    placeholder={replyingTo ? `${t('replyTo')} ${replyingTo.sender?.name}...` : t('typeMessage')}
                    aria-label={replyingTo ? `${t('replyTo')} ${replyingTo.sender?.name}` : t('typeMessage')}

@@ -87,7 +87,9 @@
     "noHistory": "No edit history",
     "viewHistory": "View History",
     "messageNotFoundInView": "Message not found in current view",
-    "newMessages": "New Messages"
+    "newMessages": "New Messages",
+    "isTyping": "is typing...",
+    "multipleTyping": "Multiple people are typing..."
   },
   "Sidebar": {
     "channels": "Channels",

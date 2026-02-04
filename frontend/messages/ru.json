@@ -87,7 +87,9 @@
     "noHistory": "История изменений пуста",
     "viewHistory": "Просмотреть историю",
     "messageNotFoundInView": "Сообщение не найдено в текущем списке",
-    "newMessages": "Новые сообщения"
+    "newMessages": "Новые сообщения",
+    "isTyping": "печатает...",
+    "multipleTyping": "Несколько человек печатают..."
   },
   "Sidebar": {
     "channels": "Каналы",

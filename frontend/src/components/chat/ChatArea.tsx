@@ -25,7 +25,7 @@ import MessageBubble from './MessageBubble';
 import { MessageHistoryDialog } from './MessageHistoryDialog';
 
 export default function ChatArea() {
-  const { messages, currentRoomId, deleteMessage, socket, loadMoreMessages, isLoadingHistory, hasMoreMessages, setReplyingTo, fetchReplyMessage, setEditingMessage, markRoomAsRead } = useChatStore();
+  const { messages, currentRoomId, deleteMessage, socket, loadMoreMessages, isLoadingHistory, hasMoreMessages, setReplyingTo, fetchReplyMessage, setEditingMessage, markRoomAsRead, typingUsers } = useChatStore();
   const { user } = useAuthStore();
   const currentRoom = useChatStore(state => state.rooms.find(r => r.id === state.currentRoomId));
   
@@ -373,6 +373,23 @@ export default function ChatArea() {
                 </div>
             );
           })}
+          
+          {currentRoomId && typingUsers[currentRoomId] && typingUsers[currentRoomId].filter(u => u.userId !== user?.id).length > 0 && (
+             <div className="flex items-center gap-2 px-4 py-1 text-sm text-muted-foreground animate-in fade-in slide-in-from-bottom-2 ml-10">
+                 <div className="flex gap-1 items-center h-4">
+                     <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                     <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                     <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" />
+                 </div>
+                 <span className="text-xs font-medium opacity-80">
+                     {typingUsers[currentRoomId].filter(u => u.userId !== user?.id).length === 1 
+                         ? `${typingUsers[currentRoomId].filter(u => u.userId !== user?.id)[0].username} ${t('isTyping')}` 
+                         : t('multipleTyping')
+                     }
+                 </span>
+             </div>
+          )}
+          
           <div ref={bottomRef} />
         </div>
       </ScrollArea>

@@ -55,6 +55,7 @@ interface ChatState {
   
   isLoadingHistory: boolean;
   hasMoreMessages: boolean;
+  typingUsers: Record<string, { userId: string; username: string }[]>;
   
   connect: () => void;
   disconnect: () => void;
@@ -66,6 +67,8 @@ interface ChatState {
   loadMoreMessages: () => Promise<void>;
   leaveRoom: (roomId: string) => void;
   sendMessage: (content: string, attachmentUrl?: string, attachmentType?: string, attachmentName?: string) => void;
+  startTyping: (roomId: string) => void;
+  stopTyping: (roomId: string) => void;
   editMessage: (messageId: string, content: string) => void;
   deleteMessage: (messageId: string) => void;
   addMessage: (message: Message) => void;
@@ -91,6 +94,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   editingMessage: null,
   isLoadingHistory: false,
   hasMoreMessages: true,
+  typingUsers: {},
 
   setTranslationTargetLang: (lang: string) => set({ translationTargetLang: lang }),
   setReplyingTo: (message: Message | null) => set({ replyingTo: message }),
@@ -203,6 +207,33 @@ export const useChatStore = create<ChatState>((set, get) => ({
       } else {
          set({ rooms: updatedRooms });
       }
+    });
+
+    socket.on('typingStart', ({ roomId, userId, username }: { roomId: string, userId: string, username: string }) => {
+        set((state) => {
+            const roomTypingUsers = state.typingUsers[roomId] || [];
+            if (roomTypingUsers.some(u => u.userId === userId)) {
+                return state;
+            }
+            return {
+                typingUsers: {
+                    ...state.typingUsers,
+                    [roomId]: [...roomTypingUsers, { userId, username }]
+                }
+            };
+        });
+    });
+
+    socket.on('typingStop', ({ roomId, userId }: { roomId: string, userId: string }) => {
+        set((state) => {
+            const roomTypingUsers = state.typingUsers[roomId] || [];
+            return {
+                typingUsers: {
+                    ...state.typingUsers,
+                    [roomId]: roomTypingUsers.filter(u => u.userId !== userId)
+                }
+            };
+        });
     });
 
     set({ socket });
@@ -340,11 +371,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // 4. Mark as read
       api.post(`/rooms/${roomId}/read`).catch(e => console.error('[joinRoom] Failed to mark as read', e));
       
-      // 5. Reset unread count in local state
+      // 5. Reset unread count in local state and clear typing users
       set((state) => ({
         rooms: state.rooms.map(r => 
           r.id === roomId ? { ...r, unreadCount: 0 } : r
-        )
+        ),
+        typingUsers: {
+            ...state.typingUsers,
+            [roomId]: []
+        }
       }));
 
       toast.success('Вы успешно вошли в комнату', { id: toastId });
@@ -414,6 +449,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
         replyToId: replyingTo ? replyingTo.id : undefined
       });
       set({ replyingTo: null });
+    }
+  },
+
+  startTyping: (roomId: string) => {
+    const { socket, isConnected } = get();
+    if (socket && isConnected) {
+        socket.emit('typingStart', { roomId });
+    } else {
+        api.post(`/rooms/${roomId}/typing`, { status: true }).catch(console.error);
+    }
+  },
+
+  stopTyping: (roomId: string) => {
+    const { socket, isConnected } = get();
+    if (socket && isConnected) {
+        socket.emit('typingStop', { roomId });
+    } else {
+        api.post(`/rooms/${roomId}/typing`, { status: false }).catch(console.error);
     }
   },
 
