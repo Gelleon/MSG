@@ -488,9 +488,10 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                             <Button
                             variant="destructive"
                             size="icon"
-                            className="h-8 w-8 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="h-8 w-8 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm hover:shadow-md"
                             onClick={() => handleRemoveClick(member)}
                             title={t('remove')}
+                            aria-label={t('remove')}
                             >
                             <Trash2 className="h-4 w-4" />
                             </Button>
