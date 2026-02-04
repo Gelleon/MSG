@@ -449,8 +449,8 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
-                        {currentUser?.role === 'ADMIN' && member.id !== currentUser.id && (
+                        <div className="flex items-center gap-2 shrink-0 ml-auto pl-2">
+                        {currentUser?.role?.toUpperCase() === 'ADMIN' && member.id !== currentUser.id && (
                             <>
                                 <Popover>
                                     <PopoverTrigger asChild>
@@ -476,7 +476,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                                                     variant="ghost"
                                                     className={cn(
                                                         "w-full justify-start text-xs h-8",
-                                                        member.role === r && "bg-accent"
+                                                        member.role?.toUpperCase() === r && "bg-accent"
                                                     )}
                                                     onClick={() => handleChangeRole(member.id, r)}
                                                 >
@@ -487,9 +487,9 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                                     </PopoverContent>
                                 </Popover>
                                 <Button
-                                    variant="ghost"
+                                    variant="destructive"
                                     size="icon"
-                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                                    className="h-8 w-8 shrink-0 shadow-sm"
                                     onClick={() => handleRemoveClick(member)}
                                     title={t('remove')}
                                     aria-label={t('remove')}
