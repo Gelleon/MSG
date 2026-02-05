@@ -438,6 +438,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                             <Shield className="h-3 w-3 text-primary shrink-0 fill-primary/20" />
                             )}
                         </div>
+                        <RoleBadge role={member.role} className="w-fit p-1.5 gap-2" />
                         <div className="text-xs text-muted-foreground truncate flex items-center gap-2 mt-1">
                             <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3 shrink-0" />
@@ -448,16 +449,15 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         </div>
                         </div>
 
-                        <div className="flex items-center gap-4 ml-auto min-w-0 flex-nowrap justify-end">
+                        <div className="flex items-center gap-2 ml-auto min-w-0 flex-wrap justify-end" style={{ marginRight: '3.5cm', transform: 'translateX(-1cm)' }}>
                         {currentUser?.role?.toUpperCase() === 'ADMIN' && member.id !== currentUser.id && (
                             <>
-                                <RoleBadge role={member.role} className="w-fit h-8 px-2 gap-2" />
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="h-8 text-xs gap-1 text-muted-foreground hover:text-primary hover:bg-accent/50 min-w-0 max-w-[160px]"
+                                            className="h-8 text-xs gap-1 text-muted-foreground hover:text-primary min-w-0 max-w-[160px]"
                                             disabled={changingRole === member.id}
                                         >
                                             {changingRole === member.id ? (
@@ -489,7 +489,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                                 <Button
                                     variant="destructive"
                                     size="icon"
-                                    className="h-8 w-8 shrink-0 shadow-sm hover:shadow-md"
+                                    className="h-8 w-8 shrink-0 shadow-sm"
                                     onClick={() => handleRemoveClick(member)}
                                     title={t('remove')}
                                     aria-label={t('remove')}
