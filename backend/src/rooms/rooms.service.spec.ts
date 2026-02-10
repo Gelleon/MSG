@@ -29,6 +29,7 @@ describe('RoomsService', () => {
       createMany: jest.fn(),
       count: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       delete: jest.fn(),
     },
     message: {
@@ -45,6 +46,7 @@ describe('RoomsService', () => {
     user: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
+      update: jest.fn(),
     },
     $transaction: jest.fn((callback) => callback(mockPrismaService)),
     $queryRaw: jest.fn(),
@@ -520,6 +522,36 @@ describe('RoomsService', () => {
 
       expect(result.total).toBe(10);
       expect(result.data).toHaveLength(1);
+    });
+
+    it('should deny access to private room if user is not member', async () => {
+      mockPrismaService.room.findUnique.mockResolvedValue({ id: 'room-1', isPrivate: true });
+      mockPrismaService.roomMember.findFirst.mockResolvedValue(null); // Not a member
+
+      await expect(
+        service.getMembers(
+          'room-1',
+          { page: 1, limit: 10 },
+          { userId: 'user-2', role: 'USER' },
+        ),
+      ).rejects.toThrow('Access denied');
+    });
+
+    it('should allow access to private room if user is member', async () => {
+      mockPrismaService.room.findUnique.mockResolvedValue({ id: 'room-1', isPrivate: true });
+      mockPrismaService.roomMember.findFirst.mockResolvedValue({ userId: 'user-1' }); // Is member
+      mockPrismaService.roomMember.count.mockResolvedValue(10);
+      mockPrismaService.roomMember.findMany.mockResolvedValue([
+        { user: { id: 'user-1' }, joinedAt: new Date() },
+      ]);
+
+      const result = await service.getMembers(
+        'room-1',
+        { page: 1, limit: 10 },
+        { userId: 'user-1', role: 'USER' },
+      );
+
+      expect(result.total).toBe(10);
     });
   });
 

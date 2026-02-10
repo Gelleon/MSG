@@ -215,7 +215,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return users.map((user: any) => ({
       id: user.id,
       name: user.name,
-      email: user.email,
       role: user.role,
     }));
   }

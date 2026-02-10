@@ -39,7 +39,6 @@ export class UsersController {
       ...(search
         ? {
             OR: [
-              { email: { contains: search } },
               { name: { contains: search } },
             ],
           }
@@ -54,7 +53,6 @@ export class UsersController {
       });
       return users.data.map((u) => ({
         id: u.id,
-        email: u.email,
         name: u.name,
         role: u.role,
       }));

@@ -410,7 +410,35 @@ export class RoomsService {
   async getMembers(
     roomId: string,
     params: { page: number; limit: number; search?: string },
+    requestingUser?: any,
   ) {
+    // Check access rights if user is provided
+    if (requestingUser) {
+      const room = await this.prisma.room.findUnique({
+        where: { id: roomId },
+        select: { isPrivate: true },
+      });
+
+      if (!room) {
+        throw new Error('Room not found');
+      }
+
+      // If room is private, only members or admins/managers can view members
+      if (room.isPrivate && requestingUser.role !== 'ADMIN' && requestingUser.role !== 'MANAGER') {
+        const userId = requestingUser.userId || requestingUser.sub;
+        const isMember = await this.prisma.roomMember.findFirst({
+          where: {
+            roomId,
+            userId,
+          },
+        });
+
+        if (!isMember) {
+          throw new Error('Access denied: You are not a member of this private room');
+        }
+      }
+    }
+
     const { page, limit, search } = params;
     const skip = (page - 1) * limit;
 
@@ -419,8 +447,9 @@ export class RoomsService {
     };
 
     if (search) {
+      // Removed email search to prevent privacy leaks
       where.user = {
-        OR: [{ name: { contains: search } }, { email: { contains: search } }],
+        OR: [{ name: { contains: search } }],
       };
     }
 
@@ -431,7 +460,13 @@ export class RoomsService {
         skip,
         take: limit,
         include: {
-          user: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              role: true,
+            },
+          },
         },
         orderBy: {
           joinedAt: 'desc',

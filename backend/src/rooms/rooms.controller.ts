@@ -162,12 +162,13 @@ export class RoomsController {
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '20',
     @Query('search') search: string = '',
+    @Request() req: any,
   ) {
     return this.roomsService.getMembers(id, {
       page: Number(page),
       limit: Number(limit),
       search,
-    });
+    }, req.user);
   }
 
   @Patch(':id')

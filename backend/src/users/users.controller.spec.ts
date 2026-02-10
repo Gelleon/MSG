@@ -43,6 +43,24 @@ describe('UsersController', () => {
     });
   });
 
+  describe('searchUsers', () => {
+    it('should return users without email', async () => {
+      const users = [
+        { id: '1', email: 'user1@example.com', name: 'User 1', role: 'USER' },
+        { id: '2', email: 'user2@example.com', name: 'User 2', role: 'ADMIN' },
+      ];
+      mockUsersService.findAll.mockResolvedValue({ data: users, total: 2 });
+
+      const req = { user: { userId: 'current-user-id' } };
+      const result = await controller.searchUsers('User', req);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).not.toHaveProperty('email');
+      expect(result[1]).not.toHaveProperty('email');
+      expect(result[0]).toEqual({ id: '1', name: 'User 1', role: 'USER' });
+    });
+  });
+
   describe('create', () => {
     it('should create a user if email is unique', async () => {
       const dto = {
