@@ -178,19 +178,6 @@ export default memo(function MessageBubble({
               "flex flex-col max-w-[85%] md:max-w-[75%] lg:max-w-[65%]",
               isMe ? "items-end" : "items-start"
           )}>
-              {showName && (
-                  <span 
-                     className="text-[11px] font-bold ml-1 mb-1 px-1 transition-colors duration-300"
-                     style={{ 
-                         color: (isMe && customColorIndex !== null) 
-                             ? getColorByIndex(customColorIndex, resolvedTheme) 
-                             : getUserColor(message.senderId, getUserDisplayName(message.sender), resolvedTheme) 
-                     }}
-                   >
-                      {getUserDisplayName(message.sender)}
-                  </span>
-              )}
-
               <ContextMenu>
               <ContextMenuTrigger>
               <div className={cn(
@@ -200,6 +187,21 @@ export default memo(function MessageBubble({
                     : "bg-white dark:bg-zinc-900 text-foreground rounded-2xl rounded-tl-sm border-border hover:border-primary/20 shadow-sm",
                 isReplyingToThis && "ring-2 ring-primary ring-offset-2 ring-offset-background"
             )}>
+                {/* Username */}
+                {!isMe && showName && (
+                    <div 
+                       className="text-xs font-bold mb-1 truncate select-none cursor-pointer hover:opacity-80 transition-opacity"
+                       style={{ 
+                           color: getUserColor(message.senderId, getUserDisplayName(message.sender), resolvedTheme) 
+                       }}
+                       onClick={(e) => {
+                           e.stopPropagation();
+                           // Future: Open profile or mention
+                       }}
+                     >
+                        {getUserDisplayName(message.sender)}
+                    </div>
+                )}
                 {/* Replied Message */}
                 {message.replyTo && (
                     <div 
