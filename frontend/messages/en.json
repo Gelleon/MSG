@@ -137,7 +137,9 @@
     "soundTitle": "Sound Notifications",
     "soundDesc": "Play a sound when a private session starts.",
     "visualTitle": "Visual Notifications",
-    "visualDesc": "Show a popup when a private session starts."
+    "visualDesc": "Show a popup when a private session starts.",
+    "colorTitle": "Name Color",
+    "colorDesc": "Choose how your name appears in chat"
   },
   "Dialogs": {
     "createRoom": {

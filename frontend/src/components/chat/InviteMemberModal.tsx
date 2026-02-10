@@ -9,6 +9,10 @@ import { Loader2, Search, Check, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn, getUserDisplayName } from '@/lib/utils';
+import { useTheme } from 'next-themes';
+import { getUserColor, getColorByIndex } from '@/lib/color-utils';
+import { useAuthStore } from '@/lib/store';
+import { useAppearanceStore } from '@/lib/appearance-store';
 
 import { useTranslations } from 'next-intl';
 
@@ -28,6 +32,10 @@ export default function InviteMemberModal({ isOpen, onClose, roomId }: InviteMem
   const t = useTranslations('Dialogs.invite');
   const tCommon = useTranslations('Common');
   const tRoomMembers = useTranslations('RoomMembers');
+
+  const { theme, resolvedTheme } = useTheme();
+  const { user: currentUser } = useAuthStore();
+  const { customColorIndex } = useAppearanceStore();
 
   // Debounced search
   useEffect(() => {
@@ -135,7 +143,16 @@ export default function InviteMemberModal({ isOpen, onClose, roomId }: InviteMem
                         </Avatar>
                         
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{getUserDisplayName(user)}</p>
+                          <p 
+                              className="text-sm font-medium truncate"
+                              style={{ 
+                                  color: (currentUser?.id === user.id && customColorIndex !== null) 
+                                      ? getColorByIndex(customColorIndex, resolvedTheme) 
+                                      : getUserColor(user.id, getUserDisplayName(user), resolvedTheme) 
+                              }}
+                          >
+                              {getUserDisplayName(user)}
+                          </p>
                           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                         </div>
                       </div>

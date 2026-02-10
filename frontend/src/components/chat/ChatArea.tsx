@@ -14,6 +14,9 @@ import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { useTheme } from 'next-themes';
+import { getUserColor, getColorByIndex } from '@/lib/color-utils';
+import { useAppearanceStore } from '@/lib/appearance-store';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -49,6 +52,8 @@ export default function ChatArea() {
   const initializedRoomIdRef = useRef<string | null>(null);
   const t = useTranslations('Chat');
   const tCommon = useTranslations('Common');
+  const { customColorIndex } = useAppearanceStore();
+  const { resolvedTheme } = useTheme();
 
   const hasScrolledToBottomRef = useRef<boolean>(false);
 
@@ -418,7 +423,20 @@ export default function ChatArea() {
                  </div>
                  <span className="text-xs font-medium opacity-80">
                      {typingUsers[currentRoomId].filter(u => u.userId !== user?.id).length === 1 
-                         ? `${getUserDisplayName(typingUsers[currentRoomId].filter(u => u.userId !== user?.id)[0] as any)} ${t('isTyping')}` 
+                         ? (
+                            <>
+                                <span style={{ 
+                                    color: getUserColor(
+                                        typingUsers[currentRoomId].filter(u => u.userId !== user?.id)[0].userId, 
+                                        typingUsers[currentRoomId].filter(u => u.userId !== user?.id)[0].username, 
+                                        resolvedTheme
+                                    ) 
+                                }}>
+                                    {getUserDisplayName(typingUsers[currentRoomId].filter(u => u.userId !== user?.id)[0] as any)}
+                                </span>
+                                {` ${t('isTyping')}`}
+                            </>
+                         )
                          : t('multipleTyping')
                      }
                  </span>

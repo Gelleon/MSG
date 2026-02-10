@@ -5,6 +5,9 @@ import { useAuthStore } from '@/lib/store';
 import { getApiBaseUrl } from '@/lib/api';
 import { logger } from '@/lib/logger';
 import { format } from 'date-fns';
+import { useTheme } from 'next-themes';
+import { getUserColor, getColorByIndex } from '@/lib/color-utils';
+import { useAppearanceStore } from '@/lib/appearance-store';
 import { 
   FileText, 
   Download, 
@@ -72,6 +75,8 @@ export default memo(function MessageBubble({
   deletingId
 }: MessageBubbleProps) {
   const { user } = useAuthStore();
+  const { customColorIndex } = useAppearanceStore();
+  const { resolvedTheme } = useTheme();
   const isReplyingToThis = useChatStore(state => state.replyingTo?.id === message.id);
   const isResolvingReply = useChatStore(state => state.loadingReplyId === message.id);
   const t = useTranslations('Chat');
@@ -174,7 +179,14 @@ export default memo(function MessageBubble({
               isMe ? "items-end" : "items-start"
           )}>
               {showName && (
-                  <span className="text-[11px] font-semibold text-muted-foreground ml-1 mb-1 px-1">
+                  <span 
+                     className="text-[11px] font-bold ml-1 mb-1 px-1 transition-colors duration-300"
+                     style={{ 
+                         color: (isMe && customColorIndex !== null) 
+                             ? getColorByIndex(customColorIndex, resolvedTheme) 
+                             : getUserColor(message.senderId, getUserDisplayName(message.sender), resolvedTheme) 
+                     }}
+                   >
                       {getUserDisplayName(message.sender)}
                   </span>
               )}

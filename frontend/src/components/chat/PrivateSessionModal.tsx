@@ -11,6 +11,9 @@ import { useAuthStore } from '@/lib/store';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { getUserDisplayName } from '@/lib/utils';
+import { useTheme } from 'next-themes';
+import { getUserColor, getColorByIndex } from '@/lib/color-utils';
+import { useAppearanceStore } from '@/lib/appearance-store';
 
 interface PrivateSessionModalProps {
   isOpen: boolean;
@@ -29,6 +32,8 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
   const t = useTranslations('Dialogs.privateSession');
   const { socket } = useChatStore();
   const { user: currentUser } = useAuthStore();
+  const { customColorIndex } = useAppearanceStore();
+  const { resolvedTheme } = useTheme();
   const [users, setUsers] = useState<ConnectedUser[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -154,7 +159,16 @@ export default function PrivateSessionModal({ isOpen, onClose, roomId }: Private
                           <AvatarFallback>{getUserDisplayName(user)[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-sm leading-none">{getUserDisplayName(user)}</p>
+                          <p 
+                            className="font-medium text-sm leading-none"
+                            style={{ 
+                                color: (currentUser?.id === user.id && customColorIndex !== null) 
+                                    ? getColorByIndex(customColorIndex, resolvedTheme) 
+                                    : getUserColor(user.id, getUserDisplayName(user), resolvedTheme) 
+                            }}
+                          >
+                            {getUserDisplayName(user)}
+                          </p>
                           <p className="text-xs text-muted-foreground mt-1">{user.role}</p>
                         </div>
                      </div>

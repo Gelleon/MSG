@@ -49,6 +49,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 
 import { cn, stringToColor, getUserDisplayName } from '@/lib/utils';
+import { getAllUserColors, getUserColor } from '@/lib/color-utils';
+import { useAppearanceStore } from '@/lib/appearance-store';
+import { useTheme } from 'next-themes';
 import InviteMemberModal from './InviteMemberModal';
 import RoomMembersDialog from './RoomMembersDialog';
 import { Lock, CornerDownRight } from 'lucide-react';
@@ -61,6 +64,8 @@ export default function Sidebar({ className }: { className?: string }) {
   const { user, logout } = useAuthStore();
   const { rooms, fetchRooms, joinRoom, currentRoomId, createRoom, updateRoom, deleteRoom } = useChatStore();
   const { soundEnabled, visualEnabled, toggleSound, toggleVisual } = useNotificationStore();
+  const { customColorIndex, setCustomColorIndex } = useAppearanceStore();
+  const { resolvedTheme } = useTheme();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -397,7 +402,16 @@ export default function Sidebar({ className }: { className?: string }) {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate text-foreground group-hover:text-foreground">{getUserDisplayName(user)}</p>
+                  <p 
+                    className="text-sm font-semibold truncate text-foreground group-hover:text-foreground"
+                    style={{ 
+                        color: (customColorIndex !== null) 
+                            ? getColorByIndex(customColorIndex, resolvedTheme) 
+                            : getUserColor(user?.id || '', getUserDisplayName(user), resolvedTheme) 
+                    }}
+                  >
+                    {getUserDisplayName(user)}
+                  </p>
                   <div className="flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                     <p className="text-xs text-muted-foreground truncate">{tSidebar('online')}</p>
@@ -540,6 +554,39 @@ export default function Sidebar({ className }: { className?: string }) {
                 checked={visualEnabled}
                 onCheckedChange={toggleVisual}
               />
+            </div>
+            
+            {/* Color Preference */}
+            <div className="flex flex-col space-y-3 pt-4 border-t">
+                <div className="flex flex-col space-y-1">
+                    <Label>{tSettings('colorTitle') || 'Name Color'}</Label>
+                    <span className="text-xs text-muted-foreground">{tSettings('colorDesc') || 'Choose how your name appears to you'}</span>
+                </div>
+                <div className="grid grid-cols-7 gap-2">
+                     <button
+                        onClick={() => setCustomColorIndex(null)}
+                        className={cn(
+                            "h-8 w-8 rounded-full border-2 flex items-center justify-center transition-all",
+                            customColorIndex === null ? "border-primary" : "border-transparent opacity-50 hover:opacity-100"
+                        )}
+                        title="Default"
+                     >
+                        <span className="text-[10px] font-bold">A</span>
+                     </button>
+                     
+                     {getAllUserColors(resolvedTheme).map(({ color, index }) => (
+                        <button
+                            key={index}
+                            onClick={() => setCustomColorIndex(index)}
+                            className={cn(
+                                "h-8 w-8 rounded-full border-2 transition-all",
+                                customColorIndex === index ? "border-primary scale-110" : "border-transparent hover:scale-105"
+                            )}
+                            style={{ backgroundColor: color }}
+                            title={`Color ${index + 1}`}
+                        />
+                     ))}
+                </div>
             </div>
           </div>
         </DialogContent>

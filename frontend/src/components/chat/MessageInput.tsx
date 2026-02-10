@@ -12,6 +12,9 @@ import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn, getUserDisplayName } from '@/lib/utils';
+import { useAuthStore } from '@/lib/store';
+import { getUserColor, getColorByIndex } from '@/lib/color-utils';
+import { useAppearanceStore } from '@/lib/appearance-store';
 
 interface Attachment {
   file: File;
@@ -56,7 +59,9 @@ export default function MessageInput() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const { theme } = useTheme();
+  const { theme, resolvedTheme } = useTheme();
+  const { user: currentUser } = useAuthStore();
+  const { customColorIndex } = useAppearanceStore();
   
   const { sendMessage, editMessage, currentRoomId, replyingTo, setReplyingTo, editingMessage, setEditingMessage, startTyping, stopTyping } = useChatStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -454,7 +459,16 @@ export default function MessageInput() {
                                            </AvatarFallback>
                                        </Avatar>
                                        <div className="flex flex-col min-w-0 flex-1">
-                                           <span className="font-medium truncate text-xs">{getUserDisplayName(user)}</span>
+                                           <span 
+                                               className="font-medium truncate text-xs"
+                                               style={{ 
+                                                   color: (currentUser?.id === user.id && customColorIndex !== null) 
+                                                       ? getColorByIndex(customColorIndex, resolvedTheme) 
+                                                       : getUserColor(user.id, getUserDisplayName(user), resolvedTheme) 
+                                               }}
+                                           >
+                                               {getUserDisplayName(user)}
+                                           </span>
                                            <span className="text-[10px] text-muted-foreground truncate">{user.email}</span>
                                        </div>
                                        {index === mentionIndex && <CornerDownRight className="h-3 w-3 opacity-50" />}
@@ -494,7 +508,15 @@ export default function MessageInput() {
                    <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 rounded-lg border border-border shadow-lg p-2 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 max-w-xl">
                        <div className="w-1 self-stretch bg-primary rounded-full" />
                        <div className="flex-1 min-w-0">
-                           <div id="reply-preview-label" className="text-xs font-semibold text-primary mb-0.5">
+                           <div 
+                               id="reply-preview-label" 
+                               className="text-xs font-semibold mb-0.5"
+                               style={{ 
+                                   color: (currentUser?.id === replyingTo.senderId && customColorIndex !== null) 
+                                       ? getColorByIndex(customColorIndex, resolvedTheme) 
+                                       : getUserColor(replyingTo.senderId, replyingTo.sender?.name || '', resolvedTheme) 
+                               }}
+                           >
                                {t('replyTo')} {replyingTo.sender?.name}
                            </div>
                            <div className="text-xs text-muted-foreground truncate">

@@ -17,6 +17,9 @@ import { useTranslations, useFormatter } from 'next-intl';
 import { RoleBadge } from '@/components/RoleBadge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useTheme } from 'next-themes';
+import { getUserColor, getColorByIndex } from '@/lib/color-utils';
+import { useAppearanceStore } from '@/lib/appearance-store';
 
 interface RoomMember {
   id: string;
@@ -92,6 +95,9 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
   const [logPage, setLogPage] = useState(1);
   const [logTotalPages, setLogTotalPages] = useState(1);
   const [logLimit] = useState(50);
+
+  const { customColorIndex } = useAppearanceStore();
+  const { resolvedTheme } = useTheme();
 
   // Debounced search reset
   useEffect(() => {
@@ -431,7 +437,14 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                         
                         <div className="flex-1 min-w-0 pr-2">
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold truncate">
+                            <span 
+                                className="font-semibold truncate"
+                                style={{ 
+                                    color: (currentUser?.id === member.id && customColorIndex !== null) 
+                                        ? getColorByIndex(customColorIndex, resolvedTheme) 
+                                        : getUserColor(member.id, getUserDisplayName(member), resolvedTheme) 
+                                }}
+                            >
                             {getUserDisplayName(member)}
                             </span>
                             {member.role === 'ADMIN' && (
