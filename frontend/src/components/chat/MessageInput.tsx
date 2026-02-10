@@ -5,16 +5,26 @@ import { useChatStore } from '@/lib/chat-store';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Paperclip, X, File, Loader2, Smile, Mic, StopCircle, Trash2, Play, Pause, Wand2, Pencil } from 'lucide-react';
+import { Send, Paperclip, X, File, Loader2, Smile, Mic, StopCircle, Trash2, Play, Pause, Wand2, Pencil, CornerDownRight } from 'lucide-react';
 import api from '@/lib/api';
 import EmojiPicker, { EmojiClickData, Theme, EmojiStyle } from 'emoji-picker-react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn, getUserDisplayName } from '@/lib/utils';
 
 interface Attachment {
   file: File;
   preview?: string;
   type: 'image' | 'file';
+}
+
+interface MentionUser {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  status?: 'online' | 'offline';
 }
 
 export default function MessageInput() {
@@ -25,6 +35,14 @@ export default function MessageInput() {
   const [isUploading, setIsUploading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
+  // Mention states
+  const [showMentionPopup, setShowMentionPopup] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionResults, setMentionResults] = useState<MentionUser[]>([]);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const [isMentionLoading, setIsMentionLoading] = useState(false);
+  const [mentionTotal, setMentionTotal] = useState(0);
+
   // Recording states
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -54,10 +72,87 @@ export default function MessageInput() {
     };
   }, [audioUrl]);
 
+  useEffect(() => {
+    if (!showMentionPopup || !currentRoomId) {
+        setMentionResults([]);
+        return;
+    }
+
+    const timer = setTimeout(async () => {
+        setIsMentionLoading(true);
+        try {
+            const res = await api.get(`/rooms/${currentRoomId}/members`, {
+                params: { search: mentionQuery, limit: 5 }
+            });
+            setMentionResults(res.data.data);
+            setMentionTotal(res.data.total);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsMentionLoading(false);
+        }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [mentionQuery, currentRoomId, showMentionPopup]);
+
+  const selectMention = (user: MentionUser) => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      
+      const caretPos = textarea.selectionStart;
+      const text = content;
+      const textBeforeCaret = text.slice(0, caretPos);
+      const lastAtPos = textBeforeCaret.lastIndexOf('@');
+      
+      if (lastAtPos !== -1) {
+          const prefix = text.slice(0, lastAtPos);
+          const suffix = text.slice(caretPos);
+          const displayName = getUserDisplayName(user);
+          const newContent = `${prefix}@${displayName} ${suffix}`;
+          
+          setContent(newContent);
+          setShowMentionPopup(false);
+          
+          setTimeout(() => {
+              if (textareaRef.current) {
+                  const newCursorPos = lastAtPos + displayName.length + 2;
+                  textareaRef.current.focus();
+                  textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+              }
+          }, 0);
+      }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
+    const newValue = e.target.value;
+    setContent(newValue);
     e.target.style.height = 'auto';
     e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+
+    // Mention logic
+    const caretPos = e.target.selectionStart;
+    const textBeforeCaret = newValue.slice(0, caretPos);
+    const lastAtPos = textBeforeCaret.lastIndexOf('@');
+    
+    let showPopup = false;
+    if (lastAtPos !== -1) {
+        // Check if @ is start of line or preceded by space
+        if (lastAtPos === 0 || /\s/.test(textBeforeCaret[lastAtPos - 1])) {
+            const query = textBeforeCaret.slice(lastAtPos + 1);
+            // Only allow if no spaces in query (simple username/name search)
+            if (!/\s/.test(query)) {
+                setMentionQuery(query);
+                setShowMentionPopup(true);
+                setMentionIndex(0);
+                showPopup = true;
+            }
+        }
+    }
+    
+    if (!showPopup) {
+        setShowMentionPopup(false);
+    }
 
     if (currentRoomId) {
         if (!isTypingRef.current) {
@@ -241,6 +336,29 @@ export default function MessageInput() {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showMentionPopup && (mentionResults.length > 0 || isMentionLoading)) {
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setMentionIndex(prev => (prev > 0 ? prev - 1 : mentionResults.length - 1));
+            return;
+        }
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setMentionIndex(prev => (prev < mentionResults.length - 1 ? prev + 1 : 0));
+            return;
+        }
+        if ((e.key === 'Enter' || e.key === 'Tab') && mentionResults.length > 0) {
+            e.preventDefault();
+            selectMention(mentionResults[mentionIndex]);
+            return;
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            setShowMentionPopup(false);
+            return;
+        }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -301,6 +419,52 @@ export default function MessageInput() {
 
            {/* Previews Container */}
            <div className="absolute bottom-full left-0 w-full flex flex-col gap-2 pb-2 px-1">
+               {/* Mention Popup */}
+               {showMentionPopup && (
+                   <div className="bg-popover border border-border shadow-lg rounded-xl overflow-hidden mb-2 w-64 animate-in fade-in slide-in-from-bottom-2 z-50">
+                       <div className="p-2 border-b border-border/50 bg-muted/30 flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{tCommon('members')}</span>
+                            {mentionTotal > 0 && <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full text-[10px] font-medium">{mentionTotal}</span>}
+                       </div>
+                       <div className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 p-1">
+                           {isMentionLoading ? (
+                               <div className="flex items-center justify-center p-4 text-muted-foreground">
+                                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                   <span className="text-xs">{tCommon('loading')}...</span>
+                               </div>
+                           ) : mentionResults.length === 0 ? (
+                               <div className="p-3 text-center text-xs text-muted-foreground">
+                                   {tCommon('noResults')}
+                               </div>
+                           ) : (
+                               mentionResults.map((user, index) => (
+                                   <button
+                                       key={user.id}
+                                       className={cn(
+                                           "w-full flex items-center gap-2 p-2 rounded-lg text-left text-sm transition-colors",
+                                           index === mentionIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/50"
+                                       )}
+                                       onClick={() => selectMention(user)}
+                                       onMouseEnter={() => setMentionIndex(index)}
+                                   >
+                                       <Avatar className="h-6 w-6">
+                                           <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`} />
+                                           <AvatarFallback className="text-[10px]">
+                                               {getUserDisplayName(user).substring(0, 2).toUpperCase()}
+                                           </AvatarFallback>
+                                       </Avatar>
+                                       <div className="flex flex-col min-w-0 flex-1">
+                                           <span className="font-medium truncate text-xs">{getUserDisplayName(user)}</span>
+                                           <span className="text-[10px] text-muted-foreground truncate">{user.email}</span>
+                                       </div>
+                                       {index === mentionIndex && <CornerDownRight className="h-3 w-3 opacity-50" />}
+                                   </button>
+                               ))
+                           )}
+                       </div>
+                   </div>
+               )}
+
                {/* Edit Preview */}
                {editingMessage && (
                    <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 rounded-lg border border-border shadow-lg p-2 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 max-w-xl">
