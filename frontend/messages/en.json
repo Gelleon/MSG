@@ -63,6 +63,10 @@
     "newPassword": "New Password",
     "resetSuccess": "Password reset successfully. You can now login."
   },
+  "Dashboard": {
+    "selectRoom": "Select a room",
+    "selectRoomDesc": "Choose a room from the sidebar to start chatting."
+  },
   "Chat": {
     "typeMessage": "Type a message...",
     "send": "Send",

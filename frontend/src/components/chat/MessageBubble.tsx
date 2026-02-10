@@ -1,8 +1,9 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/lib/store';
 import { getApiBaseUrl } from '@/lib/api';
+import { logger } from '@/lib/logger';
 import { format } from 'date-fns';
 import { 
   FileText, 
@@ -75,6 +76,31 @@ export default memo(function MessageBubble({
   const isResolvingReply = useChatStore(state => state.loadingReplyId === message.id);
   const t = useTranslations('Chat');
   const tCommon = useTranslations('Common');
+  
+  const replyBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Monitoring for disappearing reply button
+  useEffect(() => {
+    // Check after mount to ensure styles are applied
+    const timer = setTimeout(() => {
+      if (replyBtnRef.current) {
+        const style = window.getComputedStyle(replyBtnRef.current);
+        // It should always be visible now
+        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+           logger.logVisibilityIssue('MessageBubble', `ReplyButton-${message.id}`, {
+             messageId: message.id,
+             isMe,
+             styles: {
+               display: style.display,
+               visibility: style.visibility,
+               opacity: style.opacity
+             }
+           });
+        }
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [message.id, isMe]);
 
   const handleCopy = () => {
     const selection = window.getSelection();
@@ -263,6 +289,7 @@ export default memo(function MessageBubble({
                        isMe ? "text-white/70" : "text-muted-foreground/70"
                    )}>
                        <button 
+                            ref={replyBtnRef}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 if (!isResolvingReply) {
@@ -271,17 +298,28 @@ export default memo(function MessageBubble({
                             }}
                             disabled={isResolvingReply}
                             className={cn(
-                                "opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity flex items-center mr-2",
-                                isMe ? "hover:text-white" : "hover:text-primary",
+                                // Layout & Visibility
+                                "flex items-center justify-center transition-all duration-200 relative z-10",
+                                "opacity-100 focus:opacity-100", // Always visible to fix disappearing issues on touch devices/tablets
+                                
+                                // Size & Touch Target (min 32x32 for mobile, adjust margins to fit)
+                                "h-8 w-8 -my-1.5 mr-1 rounded-full",
+                                "active:scale-95 hover:bg-black/5 dark:hover:bg-white/10",
+                                
+                                // Colors
+                                isMe 
+                                    ? "text-white/90 hover:text-white hover:bg-white/10" 
+                                    : "text-primary/90 hover:text-primary hover:bg-primary/10",
+                                
                                 isResolvingReply && "opacity-100 cursor-wait"
                             )}
                             aria-label={t('reply')}
                             title={t('reply')}
                        >
                            {isResolvingReply ? (
-                               <Loader2 size={12} className="animate-spin" />
+                               <Loader2 size={14} className="animate-spin" />
                            ) : (
-                               <Reply size={12} />
+                               <Reply size={14} strokeWidth={2} />
                            )}
                        </button>
 
@@ -358,6 +396,15 @@ export default memo(function MessageBubble({
                        <Lock className="w-4 h-4 mr-2" />
                        {t('inviteToPrivate')}
                    </ContextMenuItem>
+                   {isMe && (
+                       <ContextMenuItem 
+                           onClick={() => onDelete(message.id)}
+                           className="text-destructive focus:text-destructive"
+                       >
+                           <Trash2 className="w-4 h-4 mr-2" />
+                           {tCommon('delete')}
+                       </ContextMenuItem>
+                   )}
               </ContextMenuContent>
               </ContextMenu>
           </div>

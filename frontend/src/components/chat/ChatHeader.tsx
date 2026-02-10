@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useChatStore } from '@/lib/chat-store';
 import { useAuthStore } from '@/lib/store';
 import { cn, stringToColor } from '@/lib/utils';
-import { RotateCw, Lock, MoreVertical, Search, Phone, Video, Languages, UserPlus, Hash, Shield, AlertTriangle, XCircle } from 'lucide-react';
+import { RotateCw, Lock, MoreVertical, Search, Phone, Video, Languages, UserPlus, Hash, Shield, AlertTriangle, XCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import PrivateSessionModal from './PrivateSessionModal';
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function ChatHeader() {
-  const { rooms, currentRoomId, socket } = useChatStore();
+  const { rooms, currentRoomId, socket, leaveRoom } = useChatStore();
   const { user } = useAuthStore();
   const [isPrivateModalOpen, setIsPrivateModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -81,6 +81,10 @@ export default function ChatHeader() {
     setIsCloseAlertOpen(false);
   };
 
+  const handleBack = () => {
+    if (currentRoomId) leaveRoom(currentRoomId);
+  };
+
   return (
     <>
       <div className={cn("h-[72px] flex items-center justify-between px-6 backdrop-blur sticky top-0 z-20 w-full shadow-sm transition-colors duration-300", 
@@ -89,6 +93,14 @@ export default function ChatHeader() {
         : "bg-background/95 supports-[backdrop-filter]:bg-background/60"
       )}>
         <div className="flex items-center gap-3">
+           <Button 
+             variant="ghost" 
+             size="icon" 
+             className="md:hidden -ml-2 mr-1 h-8 w-8 text-muted-foreground hover:text-foreground"
+             onClick={handleBack}
+           >
+             <ArrowLeft className="h-5 w-5" />
+           </Button>
            <Avatar className={cn("h-10 w-10 border shadow-sm cursor-pointer hover:opacity-90 transition-opacity", isPrivate ? "border-primary/20" : "border-border/50")}>
               <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentRoom.id}`} />
               <AvatarFallback 

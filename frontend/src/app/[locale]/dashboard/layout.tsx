@@ -17,7 +17,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const { isAuthenticated, token } = useAuthStore();
-  const { connect, disconnect } = useChatStore();
+  const { connect, disconnect, currentRoomId } = useChatStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -51,8 +51,8 @@ export default function DashboardLayout({
     <div className="h-screen flex flex-col bg-background overflow-hidden font-sans">
       <PrivateChatNotifier />
       
-      {/* Mobile Header - Visible only on mobile */}
-      <header className="md:hidden h-14 border-b flex items-center justify-between px-4 shrink-0 bg-sidebar/95 backdrop-blur z-50">
+      {/* Mobile Header - Visible only on mobile and when no room is selected */}
+      <header className={`md:hidden h-14 border-b flex items-center justify-between px-4 shrink-0 bg-sidebar/95 backdrop-blur z-50 ${currentRoomId ? 'hidden' : ''}`}>
          <div className="flex items-center gap-3">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>

@@ -1,16 +1,73 @@
 'use client';
 
+import { useEffect } from 'react';
 import ChatArea from '@/components/chat/ChatArea';
 import MessageInput from '@/components/chat/MessageInput';
 import ChatHeader from '@/components/chat/ChatHeader';
+import Sidebar from '@/components/chat/Sidebar';
 import { useChatStore } from '@/lib/chat-store';
 import { cn, stringToColor } from '@/lib/utils';
 import { Lock, CornerDownRight, ShieldCheck, Grid } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function DashboardPage() {
-  const { rooms, currentRoomId } = useChatStore();
+  const { rooms, currentRoomId, leaveRoom, joinRoom } = useChatStore();
   const currentRoom = rooms.find(r => r.id === currentRoomId);
   const parentRoom = currentRoom?.parentRoom;
+  const t = useTranslations('Dashboard');
+
+  // History management for back button support
+  useEffect(() => {
+    if (currentRoomId) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('room') !== currentRoomId) {
+          url.searchParams.set('room', currentRoomId);
+          window.history.pushState({ roomId: currentRoomId }, '', url.toString());
+      }
+    } else {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('room')) {
+            url.searchParams.delete('room');
+            window.history.replaceState(null, '', url.toString());
+        }
+    }
+  }, [currentRoomId]);
+
+  useEffect(() => {
+      const handlePopState = (event: PopStateEvent) => {
+          const url = new URL(window.location.href);
+          const roomId = url.searchParams.get('room');
+          
+          if (!roomId && currentRoomId) {
+              leaveRoom(currentRoomId);
+          } else if (roomId && roomId !== currentRoomId) {
+              joinRoom(roomId);
+          }
+      };
+      
+      window.addEventListener('popstate', handlePopState);
+      return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentRoomId, leaveRoom, joinRoom]);
+
+  // If no room is selected
+  if (!currentRoomId) {
+      return (
+          <div className="flex-1 flex flex-col h-full bg-background relative">
+             {/* Mobile: Show Sidebar when no room selected */}
+             <div className="md:hidden w-full h-full">
+                <Sidebar className="w-full h-full border-r-0" />
+             </div>
+             
+             {/* Desktop: Show Placeholder */}
+             <div className="hidden md:flex flex-1 flex-col items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <h3 className="font-semibold text-lg">{t('selectRoom')}</h3>
+                  <p>{t('selectRoomDesc')}</p>
+                </div>
+             </div>
+          </div>
+      );
+  }
 
   if (parentRoom) {
     const parentColor = stringToColor(parentRoom.name, 70, 95);
