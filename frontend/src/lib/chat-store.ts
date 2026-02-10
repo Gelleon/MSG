@@ -19,6 +19,7 @@ export interface Message {
   replyTo?: Message;
   updatedAt?: string;
   isEdited?: boolean;
+  status?: 'pending' | 'sent' | 'delivered' | 'read';
 }
 
 export interface RoomMember {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useLayoutEffect } from 'react';
 import type { UIEvent, WheelEvent } from 'react';
 import { useChatStore, Message } from '@/lib/chat-store';
 import { useAuthStore } from '@/lib/store';
@@ -33,6 +33,7 @@ export default function ChatArea() {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const lastMessageIdRef = useRef<string | null>(null);
   const prevScrollHeightRef = useRef<number>(0);
@@ -48,6 +49,8 @@ export default function ChatArea() {
   const initializedRoomIdRef = useRef<string | null>(null);
   const t = useTranslations('Chat');
   const tCommon = useTranslations('Common');
+
+  const hasScrolledToBottomRef = useRef<boolean>(false);
 
   // Set unread boundary when entering room
   useEffect(() => {
@@ -104,6 +107,7 @@ export default function ChatArea() {
     lastMessageIdRef.current = null;
     prevScrollHeightRef.current = 0;
     isLoadingMoreRef.current = false;
+    hasScrolledToBottomRef.current = false;
   }, [currentRoomId]);
 
   const getScrollContainer = useCallback(() => {
@@ -126,43 +130,50 @@ export default function ChatArea() {
     }
   }, [messages, getScrollContainer]);
 
-  useEffect(() => {
-    if (!bottomRef.current) return;
+  useLayoutEffect(() => {
+    if (!bottomRef.current || messages.length === 0) return;
 
     const lastMessage = messages[messages.length - 1];
-    const lastMessageId = lastMessage?.id;
+    const lastMessageId = lastMessage.id;
     const prevLastMessageId = lastMessageIdRef.current;
     
-    const isFirstLoad = !prevLastMessageId && messages.length > 0;
-    const isNewMessage = lastMessageId && lastMessageId !== prevLastMessageId;
+    // Initial scroll for this room
+    if (!hasScrolledToBottomRef.current) {
+        bottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+        hasScrolledToBottomRef.current = true;
+        lastMessageIdRef.current = lastMessageId;
+        return;
+    }
     
-    lastMessageIdRef.current = lastMessageId || null;
+    // New message handling
+    if (lastMessageId !== prevLastMessageId) {
+        lastMessageIdRef.current = lastMessageId;
 
-    // Don't auto-scroll if we just loaded history
-    if (isLoadingMoreRef.current) return;
+        // Don't auto-scroll if we just loaded history
+        if (isLoadingMoreRef.current) return;
 
-    const scrollToBottom = () => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        setTimeout(() => {
-            bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }, 100);
-    };
-
-    if (isFirstLoad) {
-        scrollToBottom();
-    } else if (isNewMessage) {
         const isMe = lastMessage?.senderId === user?.id;
         if (isMe) {
-            scrollToBottom();
+            bottomRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
         } else {
-            const rect = bottomRef.current.getBoundingClientRect();
-            const isNearBottom = rect.top < window.innerHeight + 100;
-            if (isNearBottom) {
-                scrollToBottom();
+            const scrollContainer = getScrollContainer();
+            if (scrollContainer) {
+                const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+                const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+                if (isNearBottom) {
+                    bottomRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }
+            } else {
+                 // Fallback if scroll container not found (e.g. strict mode init)
+                 const rect = bottomRef.current.getBoundingClientRect();
+                 const isNearBottom = rect.top < window.innerHeight + 100;
+                 if (isNearBottom) {
+                     bottomRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                 }
             }
         }
     }
-  }, [messages, user?.id]);
+  }, [messages, currentRoomId, user?.id, getScrollContainer]);
 
   useEffect(() => {
     const scrollContainer = getScrollContainer();
@@ -195,6 +206,30 @@ export default function ChatArea() {
 
     return () => observer.disconnect();
   }, [hasMoreMessages, isLoadingHistory, loadMoreMessages, getScrollContainer]);
+
+  // Keep view at bottom if content resizes (e.g. images load) and we were at bottom
+  useEffect(() => {
+    const contentElement = contentRef.current;
+    if (!contentElement) return;
+
+    const observer = new ResizeObserver(() => {
+       if (!hasScrolledToBottomRef.current) return;
+       
+       const scrollContainer = getScrollContainer();
+       if (!scrollContainer) return;
+
+       const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+       const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+       
+       // If close to bottom (e.g. within 250px), maintain bottom position
+       if (distanceFromBottom < 250) {
+           bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+       }
+    });
+
+    observer.observe(contentElement);
+    return () => observer.disconnect();
+  }, [getScrollContainer]);
 
   const handleManualLoadMore = () => {
     const scrollContainer = getScrollContainer();
@@ -307,7 +342,7 @@ export default function ChatArea() {
         onScrollCapture={handleScrollCapture}
         onWheelCapture={handleWheelCapture}
       >
-        <div className="space-y-6 pb-4 max-w-4xl mx-auto w-full pt-6">
+        <div ref={contentRef} className="space-y-6 pb-4 max-w-4xl mx-auto w-full pt-6">
           <div ref={topRef} className="h-px w-full" />
           
           {hasMoreMessages && !isLoadingHistory && (

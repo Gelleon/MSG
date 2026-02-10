@@ -14,7 +14,10 @@ import {
   History,
   Loader2,
   CornerDownRight,
-  Copy
+  Copy,
+  Check,
+  CheckCheck,
+  Clock
 } from 'lucide-react';
 import { cn, getUserDisplayName } from '@/lib/utils';
 import { useChatStore } from '@/lib/chat-store';
@@ -132,8 +135,8 @@ export default memo(function MessageBubble({
         isHighlighted && "bg-primary/10 rounded-lg -mx-2 px-2 py-1"
     )}>
        {showDate && (
-          <div className="flex justify-center my-6">
-             <span className="text-[11px] font-medium text-muted-foreground/50 bg-secondary/30 px-3 py-1 rounded-full select-none">
+          <div className="flex justify-center my-6 sticky top-2 z-10">
+             <span className="text-[11px] font-medium text-muted-foreground/80 bg-background/80 backdrop-blur-sm border border-border/50 px-3 py-1 rounded-full shadow-sm select-none">
                 {format(new Date(message.createdAt), 'MMMM d, yyyy')}
              </span>
           </div>
@@ -172,8 +175,8 @@ export default memo(function MessageBubble({
               <div className={cn(
                   "relative px-4 py-2.5 text-[15px] shadow-sm transition-all duration-200 max-w-full border hover:shadow-md",
                 isMe 
-                    ? "bg-primary text-primary-foreground rounded-xl rounded-tr-sm border-primary/20" 
-                    : "bg-white dark:bg-zinc-900 text-foreground rounded-xl rounded-tl-sm border-border hover:border-primary/20",
+                    ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm border-primary/20 shadow-md" 
+                    : "bg-white dark:bg-zinc-900 text-foreground rounded-2xl rounded-tl-sm border-border hover:border-primary/20 shadow-sm",
                 isReplyingToThis && "ring-2 ring-primary ring-offset-2 ring-offset-background"
             )}>
                 {/* Replied Message */}
@@ -273,8 +276,8 @@ export default memo(function MessageBubble({
 
                    {/* Time Inside Bubble & Reply Button */}
                    <div className={cn(
-                       "flex justify-end items-center mt-1 select-none gap-3",
-                       isMe ? "text-white/60" : "text-muted-foreground/60"
+                       "flex justify-end items-center mt-1 select-none gap-1.5",
+                       isMe ? "text-white/70" : "text-muted-foreground/70"
                    )}>
                        <button 
                             onClick={(e) => {
@@ -285,7 +288,7 @@ export default memo(function MessageBubble({
                             }}
                             disabled={isResolvingReply}
                             className={cn(
-                                "opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide cursor-pointer",
+                                "opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity flex items-center mr-2",
                                 isMe ? "hover:text-white" : "hover:text-primary",
                                 isResolvingReply && "opacity-100 cursor-wait"
                             )}
@@ -293,15 +296,14 @@ export default memo(function MessageBubble({
                             title={t('reply')}
                        >
                            {isResolvingReply ? (
-                               <Loader2 size={11} className="animate-spin" />
+                               <Loader2 size={12} className="animate-spin" />
                            ) : (
-                               <Reply size={11} />
+                               <Reply size={12} />
                            )}
-                           {t('reply')}
                        </button>
 
                        {message.isEdited && (
-                           <span className="text-[10px] italic opacity-80" title={message.updatedAt ? format(new Date(message.updatedAt), 'PPpp') : undefined}>
+                           <span className="text-[10px] italic opacity-80 mr-1" title={message.updatedAt ? format(new Date(message.updatedAt), 'PPpp') : undefined}>
                                {t('edited')}
                            </span>
                        )}
@@ -309,6 +311,20 @@ export default memo(function MessageBubble({
                        <span className="text-[10px] font-medium">
                           {format(new Date(message.createdAt), 'HH:mm')}
                        </span>
+                       
+                       {isMe && (
+                           <span className="ml-0.5" title={message.status || 'sent'}>
+                                {message.status === 'read' ? (
+                                    <CheckCheck size={14} className="text-blue-200" /> 
+                                ) : message.status === 'delivered' ? (
+                                    <CheckCheck size={14} />
+                                ) : message.status === 'pending' ? (
+                                    <Clock size={12} />
+                                ) : (
+                                    <Check size={14} />
+                                )}
+                           </span>
+                       )}
                    </div>
 
                    {/* Delete Action (Hover) */}
