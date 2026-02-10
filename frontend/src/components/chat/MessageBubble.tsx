@@ -13,12 +13,14 @@ import {
   Pencil,
   History,
   Loader2,
-  CornerDownRight
+  CornerDownRight,
+  Copy
 } from 'lucide-react';
 import { cn, getUserDisplayName } from '@/lib/utils';
 import { useChatStore } from '@/lib/chat-store';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
+import { toast } from "sonner";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -333,6 +335,10 @@ export default memo(function MessageBubble({
                    <ContextMenuItem onClick={() => onReply(message)}>
                        <Reply className="w-4 h-4 mr-2" />
                        {t('reply')}
+                   </ContextMenuItem>
+                   <ContextMenuItem onClick={handleCopy}>
+                       <Copy className="w-4 h-4 mr-2" />
+                       {t('copy')}
                    </ContextMenuItem>
                    {isMe && message.content && (
                        <ContextMenuItem onClick={() => onEdit(message)}>
