@@ -201,7 +201,7 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
       await api.delete(`/rooms/${roomId}/members/${userToRemove.id}`, {
         params: { reason: removeReason }
       });
-      toast.success(t('removedSuccess', { name: userToRemove.name || userToRemove.email }));
+      toast.success(t('removedSuccess', { name: getUserDisplayName(userToRemove) }));
       setConfirmOpen(false);
       setUserToRemove(null);
       // Logs will be updated via socket or manual refresh if needed
