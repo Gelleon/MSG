@@ -297,7 +297,7 @@ export default memo(function MessageBubble({
                                                   : "bg-primary/10 text-primary hover:bg-primary/20 shadow-sm"
                                           )}
                                       >
-                                          {part}
+                                          {part.slice(1)}
                                       </span>
                                   );
                               }

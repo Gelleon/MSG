@@ -56,7 +56,7 @@ describe('MessageBubble sender name', () => {
     expect(screen.queryByText('@Alice')).not.toBeInTheDocument();
   });
 
-  it('keeps mention text with @ in message content', () => {
+  it('displays mention text without @ in message content', () => {
     render(
       <MessageBubble
         message={baseMessage}
@@ -76,7 +76,7 @@ describe('MessageBubble sender name', () => {
       />
     );
 
-    const mention = screen.getByText('@Bob');
+    const mention = screen.getByText('Bob');
     expect(mention).toBeInTheDocument();
     expect(mention).toHaveClass('text-primary');
   });
