@@ -49,7 +49,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 
 import { cn, stringToColor, getUserDisplayName } from '@/lib/utils';
-import { getAllUserColors, getUserColor } from '@/lib/color-utils';
+import { getAllUserColors, getUserColor, getColorByIndex } from '@/lib/color-utils';
 import { useAppearanceStore } from '@/lib/appearance-store';
 import { useTheme } from 'next-themes';
 import InviteMemberModal from './InviteMemberModal';
