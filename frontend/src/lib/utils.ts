@@ -20,7 +20,10 @@ export function stringToGradient(str: string): string {
   return `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`;
 }
 
-export function getUserDisplayName(user: { name?: string | null; email?: string | null; username?: string | null } | null | undefined): string {
+export function getUserDisplayName(user: { id?: string; name?: string | null; email?: string | null; username?: string | null } | null | undefined): string {
   if (!user) return 'Пользователь';
-  return user.name || user.email || user.username || 'Пользователь';
+  if (user.name) return user.name;
+  if (user.username) return user.username;
+  if (user.id) return `User ${user.id.slice(0, 8)}`; // Use ID segment as identifier if name is missing
+  return 'Пользователь';
 }

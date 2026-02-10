@@ -25,7 +25,6 @@ interface Attachment {
 interface MentionUser {
   id: string;
   name: string | null;
-  email: string;
   role: string;
   status?: 'online' | 'offline';
 }
@@ -477,7 +476,6 @@ export default function MessageInput() {
                                            >
                                                {getUserDisplayName(user)}
                                            </span>
-                                           <span className="text-[10px] text-muted-foreground truncate">{user.email}</span>
                                        </div>
                                        {index === mentionIndex && <CornerDownRight className="h-3 w-3 opacity-50" />}
                                    </button>

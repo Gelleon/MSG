@@ -24,7 +24,6 @@ interface PrivateSessionModalProps {
 interface ConnectedUser {
   id: string;
   name: string;
-  email: string;
   role: string;
 }
 

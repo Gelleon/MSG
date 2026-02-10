@@ -24,7 +24,6 @@ import { useAppearanceStore } from '@/lib/appearance-store';
 interface RoomMember {
   id: string;
   name: string | null;
-  email: string;
   role: string;
   joinedAt: string;
   status: 'online' | 'offline'; // This will be mocked for now as per backend
@@ -35,8 +34,8 @@ interface ActionLog {
   action: string;
   details: string | null;
   createdAt: string;
-  admin: { id: string; name: string | null; email: string; username?: string | null } | null;
-  target: { id: string; name: string | null; email: string; username?: string | null } | null;
+  admin: { id: string; name: string | null; username?: string | null } | null;
+  target: { id: string; name: string | null; username?: string | null } | null;
   ipAddress?: string;
   userAgent?: string;
   previousRole?: string;

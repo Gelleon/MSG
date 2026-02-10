@@ -153,7 +153,6 @@ export default function InviteMemberModal({ isOpen, onClose, roomId }: InviteMem
                           >
                               {getUserDisplayName(user)}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                         </div>
                       </div>
                     );
