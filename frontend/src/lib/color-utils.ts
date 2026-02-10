@@ -18,6 +18,85 @@ const USER_COLOR_PALETTE = [
   [340, 75],  // Rose
 ];
 
+const LIGHT_BG = { r: 255, g: 255, b: 255 };
+const DARK_BG = { r: 15, g: 23, b: 42 };
+
+function hslToRgb(h: number, s: number, l: number) {
+  const sNorm = s / 100;
+  const lNorm = l / 100;
+  const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = lNorm - c / 2;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
+  if (h >= 0 && h < 60) {
+    r = c;
+    g = x;
+  } else if (h >= 60 && h < 120) {
+    r = x;
+    g = c;
+  } else if (h >= 120 && h < 180) {
+    g = c;
+    b = x;
+  } else if (h >= 180 && h < 240) {
+    g = x;
+    b = c;
+  } else if (h >= 240 && h < 300) {
+    r = x;
+    b = c;
+  } else if (h >= 300 && h < 360) {
+    r = c;
+    b = x;
+  }
+
+  return {
+    r: Math.round((r + m) * 255),
+    g: Math.round((g + m) * 255),
+    b: Math.round((b + m) * 255)
+  };
+}
+
+function srgbToLinear(value: number) {
+  const v = value / 255;
+  return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+}
+
+function luminance(rgb: { r: number; g: number; b: number }) {
+  const r = srgbToLinear(rgb.r);
+  const g = srgbToLinear(rgb.g);
+  const b = srgbToLinear(rgb.b);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrastRatio(foreground: { r: number; g: number; b: number }, background: { r: number; g: number; b: number }) {
+  const l1 = luminance(foreground);
+  const l2 = luminance(background);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function getAccessibleLightness(h: number, s: number, theme: string | undefined) {
+  const bg = theme === 'dark' ? DARK_BG : LIGHT_BG;
+  const targetRatio = 4.5;
+  const start = theme === 'dark' ? 72 : 36;
+  if (theme === 'dark') {
+    for (let l = start; l <= 90; l += 1) {
+      const ratio = contrastRatio(hslToRgb(h, s, l), bg);
+      if (ratio >= targetRatio) return l;
+    }
+    return 90;
+  }
+
+  for (let l = start; l >= 15; l -= 1) {
+    const ratio = contrastRatio(hslToRgb(h, s, l), bg);
+    if (ratio >= targetRatio) return l;
+  }
+  return 15;
+}
+
 export function getUserColor(userId: string, userName: string, theme: string | undefined = 'light'): string {
   // Use userId for stability, fallback to name
   const seed = userId || userName || 'unknown';
@@ -37,16 +116,8 @@ export function getColorByIndex(index: number, theme: string | undefined = 'ligh
     if (index < 0 || index >= USER_COLOR_PALETTE.length) return 'inherit';
     
     const [h, s] = USER_COLOR_PALETTE[index];
-    
-    // Accessibility adjustments based on theme
-    // Light mode: darker colors for contrast against white
-    // Dark mode: lighter colors for contrast against dark
-    const lightness = theme === 'dark' ? 70 : 40;
-    
-    // Special case for yellow/lime in light mode to ensure contrast
-    const finalLightness = (theme !== 'dark' && (h > 40 && h < 100)) ? 35 : lightness;
-  
-    return `hsl(${h}, ${s}%, ${finalLightness}%)`;
+    const lightness = getAccessibleLightness(h, s, theme);
+    return `hsl(${h}, ${s}%, ${lightness}%)`;
 }
 
 // Generate all available colors for the picker

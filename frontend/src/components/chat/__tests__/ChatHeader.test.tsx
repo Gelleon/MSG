@@ -12,6 +12,7 @@ jest.mock('@/navigation', () => ({
 }));
 jest.mock('next-intl', () => ({
   useLocale: () => 'en',
+  useTranslations: () => (key: string) => key,
 }));
 
 describe('ChatHeader', () => {
@@ -23,7 +24,8 @@ describe('ChatHeader', () => {
     (useChatStore as unknown as jest.Mock).mockReturnValue({
       rooms: [{ id: '1', name: 'Private Room', isPrivate: true }],
       currentRoomId: '1',
-      socket: {},
+      socket: { on: jest.fn(), off: jest.fn() },
+      leaveRoom: jest.fn(),
     });
     (useAuthStore as unknown as jest.Mock).mockReturnValue({
       user: { role: 'ADMIN' },
@@ -32,15 +34,16 @@ describe('ChatHeader', () => {
     render(<ChatHeader />);
     
     // Check for button by text content or title
-    expect(screen.queryByText('Private')).toBeNull();
-    expect(screen.queryByTitle('Private Session')).toBeNull();
+    expect(screen.queryByText('privateSession')).toBeNull();
+    expect(screen.queryByTitle('privateSession')).toBeNull();
   });
 
   it('should render "Private" button when room is public and user is ADMIN', () => {
     (useChatStore as unknown as jest.Mock).mockReturnValue({
       rooms: [{ id: '1', name: 'Public Room', isPrivate: false }],
       currentRoomId: '1',
-      socket: {},
+      socket: { on: jest.fn(), off: jest.fn() },
+      leaveRoom: jest.fn(),
     });
     (useAuthStore as unknown as jest.Mock).mockReturnValue({
       user: { role: 'ADMIN' },
@@ -48,14 +51,15 @@ describe('ChatHeader', () => {
 
     render(<ChatHeader />);
     
-    expect(screen.getByText('Private')).toBeInTheDocument();
+    expect(screen.getByText('privateSession')).toBeInTheDocument();
   });
 
   it('should not render "Private" button when user is CLIENT', () => {
     (useChatStore as unknown as jest.Mock).mockReturnValue({
       rooms: [{ id: '1', name: 'Public Room', isPrivate: false }],
       currentRoomId: '1',
-      socket: {},
+      socket: { on: jest.fn(), off: jest.fn() },
+      leaveRoom: jest.fn(),
     });
     (useAuthStore as unknown as jest.Mock).mockReturnValue({
       user: { role: 'CLIENT' },
@@ -63,6 +67,6 @@ describe('ChatHeader', () => {
 
     render(<ChatHeader />);
     
-    expect(screen.queryByText('Private')).toBeNull();
+    expect(screen.queryByText('privateSession')).toBeNull();
   });
 });

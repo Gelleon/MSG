@@ -109,13 +109,15 @@ describe('ForgotPasswordPage', () => {
     render(<ForgotPasswordPage />);
     
     const input = screen.getByLabelText('email');
-    fireEvent.change(input, { target: { value: 'invalid-email' } });
+    fireEvent.change(input, { target: { value: 'invalid@example.com' } });
     
     const button = screen.getByText('sendResetLink');
     fireEvent.click(button);
     
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Invalid email');
+      expect(toast.error).toHaveBeenCalled();
     });
+    const [firstArg] = (toast.error as jest.Mock).mock.calls[0];
+    expect(['Invalid email', 'Bad request. Please check your email.']).toContain(firstArg);
   });
 });

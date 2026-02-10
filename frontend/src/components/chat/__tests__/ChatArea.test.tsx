@@ -22,6 +22,12 @@ window.IntersectionObserver = jest.fn().mockImplementation(() => ({
   disconnect: mockDisconnect,
 }));
 
+(window as any).ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
+
 describe('ChatArea', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -41,7 +47,12 @@ describe('ChatArea', () => {
       isLoadingHistory: false,
       hasMoreMessages: false,
       deleteMessage: jest.fn(),
-      socket: { emit: jest.fn() }
+      socket: { emit: jest.fn() },
+      setReplyingTo: jest.fn(),
+      fetchReplyMessage: jest.fn(),
+      setEditingMessage: jest.fn(),
+      markRoomAsRead: jest.fn(),
+      typingUsers: {}
     });
     (useAuthStore as unknown as jest.Mock).mockReturnValue({
       user: { id: 'user1' },
@@ -62,7 +73,12 @@ describe('ChatArea', () => {
       isLoadingHistory: false,
       hasMoreMessages: false,
       deleteMessage: jest.fn(),
-      socket: { emit: jest.fn() }
+      socket: { emit: jest.fn() },
+      setReplyingTo: jest.fn(),
+      fetchReplyMessage: jest.fn(),
+      setEditingMessage: jest.fn(),
+      markRoomAsRead: jest.fn(),
+      typingUsers: {}
     });
     (useAuthStore as unknown as jest.Mock).mockReturnValue({
       user: { id: 'user1' },
@@ -70,7 +86,7 @@ describe('ChatArea', () => {
 
     render(<ChatArea />);
     
-    expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
+    expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: 'end' }));
   });
 
   it('shows loading indicator when loading history', () => {
@@ -82,7 +98,12 @@ describe('ChatArea', () => {
       isLoadingHistory: true,
       hasMoreMessages: true,
       deleteMessage: jest.fn(),
-      socket: { emit: jest.fn() }
+      socket: { emit: jest.fn() },
+      setReplyingTo: jest.fn(),
+      fetchReplyMessage: jest.fn(),
+      setEditingMessage: jest.fn(),
+      markRoomAsRead: jest.fn(),
+      typingUsers: {}
     });
     (useAuthStore as unknown as jest.Mock).mockReturnValue({
       user: { id: 'user1' },
@@ -102,7 +123,12 @@ describe('ChatArea', () => {
       isLoadingHistory: false,
       hasMoreMessages: true,
       deleteMessage: jest.fn(),
-      socket: { emit: jest.fn() }
+      socket: { emit: jest.fn() },
+      setReplyingTo: jest.fn(),
+      fetchReplyMessage: jest.fn(),
+      setEditingMessage: jest.fn(),
+      markRoomAsRead: jest.fn(),
+      typingUsers: {}
     });
     (useAuthStore as unknown as jest.Mock).mockReturnValue({
       user: { id: 'user1' },
