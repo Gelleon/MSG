@@ -88,6 +88,19 @@ export default memo(function MessageBubble({
   const t = useTranslations('Chat');
   const tCommon = useTranslations('Common');
 
+  const handleCopy = () => {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString();
+
+    if (selectedText && selectedText.length > 0) {
+        navigator.clipboard.writeText(selectedText);
+        toast.success(t('copied'));
+    } else if (message.content) {
+        navigator.clipboard.writeText(message.content);
+        toast.success(t('copied'));
+    }
+  };
+
   const getAttachmentUrl = (url: string) => {
     if (url.startsWith('http')) return url;
     return `${getApiBaseUrl()}${url}`;

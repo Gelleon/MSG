@@ -97,7 +97,10 @@
     "messageNotFoundInView": "Message not found in current view",
     "newMessages": "New Messages",
     "isTyping": "is typing...",
-    "multipleTyping": "Multiple people are typing..."
+    "multipleTyping": "Multiple people are typing...",
+    "copy": "Copy text",
+    "copySelection": "Copy selection",
+    "copied": "Copied to clipboard"
   },
   "Sidebar": {
     "channels": "Channels",
