@@ -20,7 +20,7 @@ import {
   Clock
 } from 'lucide-react';
 import { cn, getUserDisplayName } from '@/lib/utils';
-import { useChatStore } from '@/lib/chat-store';
+import { useChatStore, Message } from '@/lib/chat-store';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { toast } from "sonner";
@@ -32,23 +32,6 @@ import {
 } from "@/components/ui/context-menu";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AudioPlayer } from './AudioPlayer';
-
-interface Message {
-  id: string;
-  content: string;
-  senderId: string;
-  sender: { name: string; email: string; role?: string };
-  createdAt: string;
-  roomId: string;
-  attachmentUrl?: string;
-  attachmentType?: string;
-  attachmentName?: string;
-  translations?: string;
-  replyToId?: string;
-  replyTo?: Message;
-  updatedAt?: string;
-  isEdited?: boolean;
-}
 
 interface MessageBubbleProps {
   message: Message;
