@@ -111,17 +111,25 @@ export default function MessageInput() {
       const lastAtPos = textBeforeCaret.lastIndexOf('@');
       
       if (lastAtPos !== -1) {
+          // Remove the query part from the original text position
           const prefix = text.slice(0, lastAtPos);
           const suffix = text.slice(caretPos);
+          const textWithoutMention = (prefix + suffix).trim(); // Clean up potential double spaces
+          
           const displayName = getUserDisplayName(user);
-          const newContent = `${prefix}@${displayName} ${suffix}`;
+          const mentionText = `@${displayName} `;
+          
+          // Prepend the mention to the start of the message
+          // If there are existing mentions or text, this puts the new mention first
+          const newContent = mentionText + textWithoutMention;
           
           setContent(newContent);
           setShowMentionPopup(false);
           
           setTimeout(() => {
               if (textareaRef.current) {
-                  const newCursorPos = lastAtPos + displayName.length + 2;
+                  // Position cursor immediately after the inserted mention
+                  const newCursorPos = mentionText.length;
                   textareaRef.current.focus();
                   textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
               }

@@ -281,7 +281,18 @@ export default memo(function MessageBubble({
                    {/* Message Content */}
                   {message.content && (
                       <div className="whitespace-pre-wrap break-words leading-relaxed tracking-wide">
-                          {message.content}
+                          {message.content.split(/(@[\w\u0400-\u04FF]+)(?=\s|$|[.,!?;:])/g).map((part, index) => {
+                              // Simple heuristic: if part starts with @ and is not just @, highlight it
+                              // We excludes spaces to avoid matching the whole message if it contains spaces
+                              if (part.startsWith('@') && part.length > 1) {
+                                  return (
+                                      <span key={index} className="text-primary font-semibold hover:underline cursor-pointer">
+                                          {part}
+                                      </span>
+                                  );
+                              }
+                              return part;
+                          })}
                       </div>
                   )}
 
