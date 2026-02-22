@@ -1,4 +1,4 @@
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { AvatarUpload } from '@/components/ui/avatar-upload';
 import { User } from '@/lib/store';
@@ -9,13 +9,11 @@ interface UserProfileCardProps {
 }
 
 export function UserProfileCard({ user, onAvatarUpload }: UserProfileCardProps) {
-  const t = useTranslations('Profile');
-  const tCommon = useTranslations('Common');
   const locale = useLocale();
 
   return (
-    <Card className="overflow-hidden border-none shadow-md bg-gradient-to-br from-background to-muted/20">
-      <div className="h-24 bg-primary/10 w-full relative">
+    <Card className="overflow-hidden border-none shadow-md bg-gradient-to-br from-background to-muted/20 profile-card">
+      <div className="h-24 bg-primary/10 w-full relative profile-avatar-container">
         <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
           <AvatarUpload 
             user={{ name: user.name, avatarUrl: user.avatarUrl }} 

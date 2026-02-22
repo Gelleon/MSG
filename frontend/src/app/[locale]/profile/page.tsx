@@ -66,7 +66,7 @@ export default function ProfilePage() {
       </div>
 
       <Tabs defaultValue={defaultTab} className="flex flex-col lg:flex-row gap-6 lg:gap-8 w-full">
-        <aside className="lg:w-80 w-full flex-shrink-0 space-y-4 lg:space-y-6 profile-sidebar-sticky">
+        <aside className="lg:w-80 w-full flex-shrink-0 space-y-4 lg:space-y-6 profile-sidebar-sticky profile-sidebar">
             <UserProfileCard user={user} onAvatarUpload={handleAvatarUpload} />
 
             <TabsList className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible h-auto w-full justify-start gap-1 bg-muted/50 p-1 rounded-lg lg:bg-transparent lg:p-0 scrollbar-none profile-tabs-list">
