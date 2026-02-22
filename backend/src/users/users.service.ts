@@ -42,7 +42,7 @@ export class UsersService {
     });
   }
 
-  async createUser(data: Prisma.UserCreateInput): Promise<User> {
+  async createUser(data: Prisma.UserUncheckedCreateInput): Promise<User> {
     try {
       const hashedPassword = await bcrypt.hash(data.password, 10);
       return await this.prisma.user.create({
@@ -95,14 +95,15 @@ export class UsersService {
       cursor?: Prisma.UserWhereUniqueInput;
       where?: Prisma.UserWhereInput;
       orderBy?: Prisma.UserOrderByWithRelationInput;
+      include?: Prisma.UserInclude;
     } = {},
   ): Promise<{ data: User[]; total: number }> {
-    const { skip, take, cursor, where, orderBy } = params;
+    const { skip, take, cursor, where, orderBy, include } = params;
 
     // Add logging for debugging
     console.log(
       'UsersService.findAll query:',
-      JSON.stringify({ skip, take, where, orderBy }),
+      JSON.stringify({ skip, take, where, orderBy, include }),
     );
 
     const [data, total] = await Promise.all([
@@ -112,6 +113,7 @@ export class UsersService {
         cursor,
         where,
         orderBy,
+        include,
       }),
       this.prisma.user.count({ where }),
     ]);

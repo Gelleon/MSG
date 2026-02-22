@@ -50,6 +50,7 @@ export class UsersController {
         where,
         skip: 0,
         take: 50,
+        include: { position: true },
       });
       return users.data.map((u) => ({
         id: u.id,
@@ -57,6 +58,7 @@ export class UsersController {
         email: u.email,
         role: u.role,
         positionId: u.positionId,
+        position: (u as any).position,
       }));
     } catch (error) {
       this.logger.error(`Error searching users: ${error.message}`);
@@ -99,6 +101,7 @@ export class UsersController {
         take,
         where,
         orderBy,
+        include: { position: true },
       });
       this.logger.log(
         `Found ${result.total} users. Returning ${result.data.length} records.`,
@@ -144,7 +147,7 @@ export class UsersController {
   @Post()
   @Roles('ADMIN')
   async create(
-    @Body() createUserDto: Prisma.UserCreateInput,
+    @Body() createUserDto: Prisma.UserUncheckedCreateInput,
     @Request() req: any,
   ) {
     this.logger.log(
