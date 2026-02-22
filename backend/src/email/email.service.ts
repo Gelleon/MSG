@@ -89,4 +89,21 @@ export class EmailService {
       throw error;
     }
   }
+
+  async sendEmail(to: string, subject: string, html: string) {
+    try {
+      const info = await this.transporter.sendMail({
+        from: `"${this.configService.get('SMTP_FROM_NAME') || 'MSG App'}" <${this.configService.get('SMTP_FROM') || 'noreply@msg.app'}>`,
+        to,
+        subject,
+        html,
+      });
+      
+      this.logger.log(`Generic email sent to ${to}: ${info.messageId}`);
+      return info;
+    } catch (error) {
+      this.logger.error(`Failed to send generic email to ${to}`, error.stack);
+      throw error;
+    }
+  }
 }
