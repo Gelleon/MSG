@@ -31,6 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -68,6 +69,7 @@ export default function Sidebar({ className }: { className?: string }) {
   const { resolvedTheme } = useTheme();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const isMobile = useIsMobile();
   
   const tSidebar = useTranslations('Sidebar');
   const tCommon = useTranslations('Common');
@@ -421,7 +423,11 @@ export default function Sidebar({ className }: { className?: string }) {
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 mb-2" side="right">
+          <DropdownMenuContent 
+            align="end" 
+            className="w-56 mb-2 max-w-[calc(100vw-2rem)] overflow-x-hidden" 
+            side={isMobile ? "top" : "right"}
+          >
             <DropdownMenuLabel>{tSidebar('myAccount')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {isSuperAdmin && (
