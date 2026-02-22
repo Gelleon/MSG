@@ -96,7 +96,7 @@ export default function ChatHeader() {
            <Button 
              variant="ghost" 
              size="icon" 
-             className="md:hidden -ml-2 mr-1 h-8 w-8 text-muted-foreground hover:text-foreground"
+             className="md:hidden -ml-2 mr-1 h-11 w-11 text-muted-foreground hover:text-foreground"
              onClick={handleBack}
            >
              <ArrowLeft className="h-5 w-5" />

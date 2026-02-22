@@ -573,20 +573,20 @@ export default function MessageInput() {
                                <span className="text-sm font-medium tabular-nums min-w-[40px]">{formatTime(recordingDuration)}</span>
                                <span className="text-xs text-muted-foreground">Recording...</span>
                            </div>
-                           <Button variant="ghost" size="icon" onClick={cancelRecording} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-9 w-9">
+                           <Button variant="ghost" size="icon" onClick={cancelRecording} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-11 w-11 md:h-9 md:w-9">
                                <X size={20} />
                            </Button>
-                           <Button size="icon" onClick={stopRecording} className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 h-9 w-9 shadow-sm">
+                           <Button size="icon" onClick={stopRecording} className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 h-11 w-11 md:h-9 md:w-9 shadow-sm">
                                <StopCircle size={20} />
                            </Button>
                        </>
                    ) : (
                        <>
-                           <Button variant="ghost" size="icon" onClick={cancelRecording} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-9 w-9">
+                           <Button variant="ghost" size="icon" onClick={cancelRecording} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-11 w-11 md:h-9 md:w-9">
                                <Trash2 size={20} />
                            </Button>
                            
-                           <Button variant="ghost" size="icon" onClick={togglePlayback} className={`rounded-full h-9 w-9 ${isPlaying ? "text-primary bg-primary/10" : "text-foreground hover:bg-muted"}`}>
+                           <Button variant="ghost" size="icon" onClick={togglePlayback} className={`rounded-full h-11 w-11 md:h-9 md:w-9 ${isPlaying ? "text-primary bg-primary/10" : "text-foreground hover:bg-muted"}`}>
                                {isPlaying ? <Pause size={20} /> : <Play size={20} />}
                            </Button>
                            
@@ -602,13 +602,13 @@ export default function MessageInput() {
                              size="icon" 
                              onClick={handleTranscribe} 
                              disabled={isTranscribing}
-                             className={`text-muted-foreground hover:text-primary rounded-full h-9 w-9 ${isTranscribing ? 'bg-primary/10 text-primary' : ''}`}
+                             className={`text-muted-foreground hover:text-primary rounded-full h-11 w-11 md:h-9 md:w-9 ${isTranscribing ? 'bg-primary/10 text-primary' : ''}`}
                              title="Transcribe to text"
                            >
                               {isTranscribing ? <Loader2 size={18} className="animate-spin" /> : <Wand2 size={18} />}
                            </Button>
 
-                           <Button onClick={() => handleSubmit()} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-9 w-9 shadow-sm">
+                           <Button onClick={() => handleSubmit()} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-11 w-11 md:h-9 md:w-9 shadow-sm">
                               <Send size={18} className="ml-0.5" />
                            </Button>
                        </>
@@ -628,7 +628,7 @@ export default function MessageInput() {
                <Button 
                    variant="ghost" 
                    size="icon" 
-                   className="h-10 w-10 rounded-full text-muted-foreground hover:text-primary hover:bg-background shrink-0"
+                   className="h-11 w-11 md:h-10 md:w-10 rounded-full text-muted-foreground hover:text-primary hover:bg-background shrink-0"
                    onClick={handleFileClick}
                    disabled={isUploading}
                >
@@ -643,7 +643,7 @@ export default function MessageInput() {
                    placeholder={replyingTo ? `${t('replyTo')} ${replyingTo.sender?.name}...` : t('typeMessage')}
                    aria-label={replyingTo ? `${t('replyTo')} ${replyingTo.sender?.name}` : t('typeMessage')}
                    aria-describedby={replyingTo ? "reply-preview-label" : undefined}
-                   className="min-h-[40px] max-h-[150px] py-2.5 px-2 bg-transparent border-none focus-visible:ring-0 resize-none shadow-none text-[15px] leading-relaxed scrollbar-thin scrollbar-thumb-muted-foreground/20"
+                   className="min-h-[40px] max-h-[150px] py-2.5 px-2 bg-transparent border-none focus-visible:ring-0 resize-none shadow-none text-base md:text-[15px] leading-relaxed scrollbar-thin scrollbar-thumb-muted-foreground/20"
                    rows={1}
                />
 
@@ -651,7 +651,7 @@ export default function MessageInput() {
                    <Button 
                         variant="ghost" 
                         size="icon" 
-                        className={`h-9 w-9 rounded-full text-muted-foreground hover:text-primary hover:bg-background transition-colors ${showEmojiPicker ? 'text-primary bg-background shadow-sm' : ''}`}
+                        className={`h-11 w-11 md:h-9 md:w-9 rounded-full text-muted-foreground hover:text-primary hover:bg-background transition-colors ${showEmojiPicker ? 'text-primary bg-background shadow-sm' : ''}`}
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                    >
                         <Smile size={20} />
@@ -661,7 +661,7 @@ export default function MessageInput() {
                         <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-9 w-9 rounded-full text-muted-foreground hover:text-primary hover:bg-background"
+                            className="h-11 w-11 md:h-9 md:w-9 rounded-full text-muted-foreground hover:text-primary hover:bg-background"
                             onClick={startRecording}
                         >
                             <Mic size={20} />
@@ -673,7 +673,7 @@ export default function MessageInput() {
                            onClick={() => handleSubmit()} 
                            disabled={isUploading || (!content.trim() && !attachment)}
                            size="icon"
-                           className="h-9 w-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all animate-in zoom-in-50 duration-200"
+                           className="h-11 w-11 md:h-9 md:w-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all animate-in zoom-in-50 duration-200"
                        >
                            {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className="ml-0.5" />}
                        </Button>
@@ -682,7 +682,7 @@ export default function MessageInput() {
            </div>
            )}
            
-           <div className="mt-2 text-center">
+           <div className="mt-2 text-center hidden md:block">
                <p className="text-[10px] text-muted-foreground/60">
                    Press <kbd className="font-sans px-1 py-0.5 bg-muted rounded border border-border/50 text-foreground/70">Enter</kbd> to send, <kbd className="font-sans px-1 py-0.5 bg-muted rounded border border-border/50 text-foreground/70">Shift + Enter</kbd> for new line
                </p>

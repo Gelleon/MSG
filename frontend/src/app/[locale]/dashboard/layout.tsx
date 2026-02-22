@@ -56,7 +56,7 @@ export default function DashboardLayout({
          <div className="flex items-center gap-3">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="-ml-2">
+                <Button variant="ghost" size="icon" className="-ml-2 h-11 w-11">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>

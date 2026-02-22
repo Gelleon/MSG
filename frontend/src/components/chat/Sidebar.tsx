@@ -244,7 +244,7 @@ export default function Sidebar({ className }: { className?: string }) {
              <span className="font-bold text-xl tracking-tight text-foreground">MSG.</span>
            </div>
            <CreateRoomDialog>
-             <Button variant="ghost" size="icon" className="h-9 w-9 bg-background/50 hover:bg-accent text-muted-foreground hover:text-accent-foreground rounded-xl transition-all duration-200 border border-border/40">
+             <Button variant="ghost" size="icon" className="h-11 w-11 md:h-9 md:w-9 bg-background/50 hover:bg-accent text-muted-foreground hover:text-accent-foreground rounded-xl transition-all duration-200 border border-border/40">
                <Plus className="h-5 w-5" />
              </Button>
            </CreateRoomDialog>
@@ -254,11 +254,11 @@ export default function Sidebar({ className }: { className?: string }) {
         <div className="relative group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-focus-within:text-primary transition-colors duration-200" />
           <Input 
-            placeholder={tSidebar('searchPlaceholder')}
-            className="pl-9 h-10 rounded-xl bg-secondary/30 border-transparent focus:bg-background focus:border-primary/20 transition-all placeholder:text-muted-foreground/50" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+                  placeholder={tSidebar('searchPlaceholder')}
+                  className="pl-9 h-11 md:h-10 rounded-xl bg-secondary/30 border-transparent focus:bg-background focus:border-primary/20 transition-all placeholder:text-muted-foreground/50" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
         </div>
       </div>
 
@@ -311,7 +311,7 @@ export default function Sidebar({ className }: { className?: string }) {
                                isActive ? "ring-2 ring-background" : "",
                                hasUnread ? "ring-2 ring-primary border-primary" : ""
                            )}>
-                               <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room.id}`} />
+                               <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room.id}`} loading="lazy" decoding="async" />
                                <AvatarFallback 
                                 style={{ backgroundColor: isPrivate ? undefined : stringToColor(room.name, 70, 95), color: isPrivate ? undefined : stringToColor(room.name, 80, 40) }}
                                 className={cn("text-xs font-bold", isPrivate ? "bg-secondary text-secondary-foreground" : "")}>
@@ -327,17 +327,17 @@ export default function Sidebar({ className }: { className?: string }) {
                        
                        <div className="flex-1 min-w-0 flex flex-col gap-0.5 z-10">
                          <div className="flex justify-between items-center">
-                             <span className={cn(
-                                 "text-[14px] truncate leading-tight tracking-tight transition-all", 
-                                 hasUnread ? "font-bold text-foreground" : "font-semibold",
-                                 isActive ? "text-foreground" : "text-foreground"
-                             )}>
-                                 {room.name}
-                             </span>
-                         </div>
+                           <span className={cn(
+                               "text-base md:text-[14px] truncate leading-tight tracking-tight transition-all", 
+                               hasUnread ? "font-bold text-foreground" : "font-semibold",
+                               isActive ? "text-foreground" : "text-foreground"
+                           )}>
+                               {room.name}
+                           </span>
+                       </div>
                          <div className="flex justify-between items-center gap-2">
                              <p className={cn(
-                                 "text-[12px] truncate flex-1 transition-colors duration-200", 
+                                 "text-sm md:text-[13px] truncate flex-1 transition-colors duration-200", 
                                  hasUnread ? "text-foreground font-medium" : "text-muted-foreground/70",
                                  isActive ? "text-muted-foreground font-medium" : ""
                              )}>

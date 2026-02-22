@@ -175,7 +175,7 @@ export default memo(function MessageBubble({
           )}
 
           <div className={cn(
-              "flex flex-col max-w-[85%] md:max-w-[75%] lg:max-w-[65%]",
+              "flex flex-col max-w-[80%] md:max-w-[75%] lg:max-w-[65%]",
               isMe ? "items-end" : "items-start"
           )}>
               <ContextMenu>
@@ -245,6 +245,7 @@ export default memo(function MessageBubble({
                                     alt="Attachment" 
                                     className="w-auto h-auto max-w-full max-h-[240px] object-contain rounded-lg transition-transform duration-300 hover:scale-[1.01]" 
                                     loading="lazy"
+                                    decoding="async"
                                     onClick={() => onImageClick(getAttachmentUrl(message.attachmentUrl || ''))}
                                  />
                             </div>
@@ -282,7 +283,7 @@ export default memo(function MessageBubble({
 
                    {/* Message Content */}
                   {message.content && (
-                      <div className="whitespace-pre-wrap break-words leading-relaxed tracking-wide">
+                      <div className="whitespace-pre-wrap break-words leading-relaxed tracking-wide text-[15px] md:text-sm">
                           {message.content.split(/(@[\w\u0400-\u04FF]+)(?=\s|$|[.,!?;:])/g).map((part, index) => {
                               if (part.startsWith('@') && part.length > 1) {
                                   return (
@@ -291,7 +292,7 @@ export default memo(function MessageBubble({
                                           className={cn(
                                               "font-semibold hover:underline cursor-pointer inline-flex items-center",
                                               "px-1.5 py-0.5 mx-0.5 rounded transition-all duration-200",
-                                              "text-xs sm:text-sm",
+                                              "text-sm md:text-xs sm:text-sm",
                                               isMe 
                                                   ? "bg-white/20 text-white hover:bg-white/30 shadow-sm" 
                                                   : "bg-primary/10 text-primary hover:bg-primary/20 shadow-sm"
@@ -335,8 +336,8 @@ export default memo(function MessageBubble({
                                 "flex items-center justify-center transition-all duration-200 relative z-10",
                                 "opacity-100 focus:opacity-100", // Always visible to fix disappearing issues on touch devices/tablets
                                 
-                                // Size & Touch Target (min 32x32 for mobile, adjust margins to fit)
-                                "h-8 w-8 -my-1.5 mr-1 rounded-full",
+                                // Size & Touch Target (min 44x44 for mobile, adjust margins to fit)
+                                "h-11 w-11 md:h-8 md:w-8 -my-2.5 md:-my-1.5 mr-1 rounded-full",
                                 "active:scale-95 hover:bg-black/5 dark:hover:bg-white/10",
                                 
                                 // Colors
@@ -357,12 +358,12 @@ export default memo(function MessageBubble({
                        </button>
 
                        {message.isEdited && (
-                           <span className="text-[10px] italic opacity-80 mr-1" title={message.updatedAt ? format(new Date(message.updatedAt), 'PPpp') : undefined}>
+                           <span className="text-xs md:text-[10px] italic opacity-80 mr-1" title={message.updatedAt ? format(new Date(message.updatedAt), 'PPpp') : undefined}>
                                {t('edited')}
                            </span>
                        )}
 
-                       <span className="text-[10px] font-medium">
+                       <span className="text-xs md:text-[10px] font-medium">
                           {format(new Date(message.createdAt), 'HH:mm')}
                        </span>
                        
