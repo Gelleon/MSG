@@ -69,7 +69,7 @@ export default function AdminUsersPage() {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      await adminService.updateUserRole(userId, newRole);
+      await adminService.updateUser(userId, { role: newRole });
       toast.success('Role updated successfully');
       setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
     } catch (error) {
@@ -82,14 +82,11 @@ export default function AdminUsersPage() {
     setLoading(true);
     try {
       const res = await adminService.getUsers({
-        page,
-        limit,
         search,
-        sortBy,
-        sortOrder
+        limit
       });
       setUsers(res.data);
-      setTotal(res.total);
+      // setTotal(res.total);
     } catch (error) {
       console.error(error);
       toast.error('Failed to fetch users');
