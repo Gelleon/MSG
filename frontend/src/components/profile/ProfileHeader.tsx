@@ -40,10 +40,10 @@ export function ProfileHeader({ user, onAvatarUpload, onEditProfile }: ProfileHe
           <div className="relative z-10 profile-header__avatar-frame rounded-full p-1 bg-background shadow-xl">
             <div className="h-32 w-32 md:h-40 md:w-40 rounded-full overflow-hidden bg-background">
                <AvatarUpload 
-                url={user.avatarUrl} 
-                onUpload={onAvatarUpload} 
-                size={160}
+                user={user}
+                onUploadSuccess={onAvatarUpload} 
                 className="h-full w-full object-cover"
+                avatarClassName="w-full h-full"
               />
             </div>
           </div>

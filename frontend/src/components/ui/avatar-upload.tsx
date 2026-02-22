@@ -16,9 +16,11 @@ interface AvatarUploadProps {
   };
   onUploadSuccess: (url: string) => void;
   className?: string;
+  size?: number;
+  avatarClassName?: string;
 }
 
-export function AvatarUpload({ user, onUploadSuccess, className }: AvatarUploadProps) {
+export function AvatarUpload({ user, onUploadSuccess, className, size, avatarClassName }: AvatarUploadProps) {
   const t = useTranslations('Profile');
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -184,13 +186,23 @@ export function AvatarUpload({ user, onUploadSuccess, className }: AvatarUploadP
         onDrop={handleDrop}
         onClick={triggerFileInput}
       >
-        <Avatar className="h-32 w-32 border-4 border-background shadow-xl">
+        <Avatar 
+          className={cn(
+            "border-4 border-background shadow-xl",
+            !size && "h-32 w-32",
+            avatarClassName
+          )}
+          style={size ? { width: size, height: size } : undefined}
+        >
           <AvatarImage 
             src={previewUrl || user.avatarUrl} 
             alt={user.name || 'User avatar'} 
             className="object-cover"
           />
-          <AvatarFallback className="text-4xl bg-primary/10 text-primary font-semibold">
+          <AvatarFallback 
+            className={cn("bg-primary/10 text-primary font-semibold", !size && "text-4xl")}
+            style={size ? { fontSize: Math.max(size * 0.4, 16) } : undefined}
+          >
             {user.name?.charAt(0).toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
