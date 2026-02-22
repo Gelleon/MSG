@@ -16,6 +16,11 @@ export const adminService = {
     // Response is array of users directly
     return { data: response.data };
   },
+
+  async searchUsers(query: string) {
+    const response = await api.get<User[]>('/users/search', { params: { search: query } });
+    return response.data;
+  },
   
   async updateUser(id: string, data: Partial<User>) {
     const response = await api.patch<User>(`/users/${id}`, data);
