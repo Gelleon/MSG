@@ -16,10 +16,9 @@ export interface User {
 
 export const adminService = {
   // Use search endpoint which is accessible to authenticated users
-  async getUsers(params?: { search?: string; limit?: number }) {
-    const response = await api.get<User[]>('/users/search', { params });
-    // Response is array of users directly
-    return { data: response.data };
+  async getUsers(params?: { search?: string; page?: number; limit?: number }) {
+    const response = await api.get<{ data: User[], total: number }>('/users/search', { params });
+    return response.data;
   },
 
   async searchUsers(query: string) {

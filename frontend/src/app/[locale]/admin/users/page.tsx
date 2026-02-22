@@ -111,10 +111,11 @@ export default function AdminUsersPage() {
     try {
       const res = await adminService.getUsers({
         search,
+        page,
         limit
       });
       setUsers(res.data);
-      // setTotal(res.total);
+      setTotal(res.total);
     } catch (error) {
       console.error(error);
       toast.error('Failed to fetch users');

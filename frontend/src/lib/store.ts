@@ -3,13 +3,19 @@ import { persist } from 'zustand/middleware';
 import { jwtDecode } from 'jwt-decode';
 import api from './api';
 
-interface User {
+export interface User {
   id: string;
   username: string;
   email?: string;
   name?: string;
   role: string;
   emailNotificationsEnabled?: boolean;
+  avatarUrl?: string;
+  position?: {
+    id: string;
+    nameRu: string;
+    nameZh: string;
+  };
 }
 
 interface AuthState {

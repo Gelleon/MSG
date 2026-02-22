@@ -40,7 +40,7 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
     email: '',
     password: '',
     role: 'CLIENT',
-    positionId: '',
+    positionId: 'none',
   });
 
   useEffect(() => {
@@ -67,14 +67,14 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
       // Clean up empty positionId before sending
       const dataToSend = {
         ...formData,
-        positionId: formData.positionId || undefined,
+        positionId: formData.positionId === 'none' ? undefined : formData.positionId,
       };
       
       await adminService.createUser(dataToSend);
       toast.success(t('addSuccess'));
       onSuccess();
       onOpenChange(false);
-      setFormData({ name: '', email: '', password: '', role: 'CLIENT', positionId: '' });
+      setFormData({ name: '', email: '', password: '', role: 'CLIENT', positionId: 'none' });
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errorCreate'));
     } finally {
@@ -91,7 +91,7 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
             {t('createUserDesc')}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+        <form id="create-user-form" onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
               {t('name')}
