@@ -44,5 +44,15 @@ export const adminService = {
     ].join('\n');
 
     return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  },
+
+  async deleteUsers(ids: string[]) {
+    // Ideally this should be a bulk delete endpoint
+    // For now we'll delete one by one
+    await Promise.all(ids.map(id => api.delete(`/users/${id}`)));
+  },
+
+  async deleteUser(id: string) {
+    await api.delete(`/users/${id}`);
   }
 };
