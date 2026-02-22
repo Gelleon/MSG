@@ -249,7 +249,24 @@
      "invalidFileType": "Неверный тип файла. Пожалуйста, загрузите JPG, PNG, GIF или WebP.",
      "fileTooLarge": "Файл слишком большой. Максимальный размер 5МБ.",
      "uploadSuccess": "Аватар успешно обновлен",
-     "uploadError": "Не удалось загрузить аватар"
+     "uploadError": "Не удалось загрузить аватар",
+     "tasksCompleted": "Выполненные задачи",
+     "hoursLogged": "Затрачено часов",
+     "productivity": "Продуктивность",
+     "skills": "Навыки",
+     "projects": "Проекты",
+     "progress": "Прогресс",
+     "tasks": "Задачи",
+     "rating": "Рейтинг",
+     "joined": "Присоединился",
+     "noPosition": "Без должности",
+     "editProfile": "Редактировать профиль",
+     "contactInfo": "Контактная информация",
+     "phone": "Телефон",
+     "department": "Отдел",
+     "location": "Локация",
+     "timezone": "Часовой пояс",
+     "statistics": "Статистика"
    },
   "Dialogs": {
     "createRoom": {

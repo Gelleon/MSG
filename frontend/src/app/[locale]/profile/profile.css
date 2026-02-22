@@ -1,102 +1,108 @@
-/* Profile page specific styles for better layout control */
+/* Profile page specific styles following BEM methodology */
 
-/* Prevent horizontal overflow on mobile */
-.profile-container {
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-delay-100 { animation-delay: 0.1s; }
+.animate-delay-200 { animation-delay: 0.2s; }
+.animate-delay-300 { animation-delay: 0.3s; }
+
+/* Profile Dashboard Block */
+.profile-dashboard {
   overflow-x: hidden;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-/* Ensure tabs don't cause horizontal scroll on mobile */
-.profile-tabs-list {
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+/* Card Element */
+.profile-dashboard__card {
+  /* Base card styles handled by Tailwind classes usually, but specific overrides here */
 }
 
-.profile-tabs-list::-webkit-scrollbar {
-  display: none;
+/* Card Modifiers */
+.profile-dashboard__card--glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* Improve touch targets on mobile */
-.profile-tab-trigger {
-  min-height: 44px;
-  min-width: 44px;
+.dark .profile-dashboard__card--glass {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Ensure content doesn't overflow cards */
-.profile-card-content {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+.profile-dashboard__card--hoverable {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Better spacing for mobile */
-@media (max-width: 640px) {
-  .profile-container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  
-  .profile-card {
-    margin-bottom: 1rem;
-  }
-  
-  .profile-tabs-list {
-    gap: 0.25rem;
-  }
-  
-  .profile-tab-trigger {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.75rem;
-  }
+.profile-dashboard__card--hoverable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-/* Better layout for tablets */
-@media (min-width: 641px) and (max-width: 1024px) {
-  .profile-sidebar {
-    width: 280px;
-  }
+/* Skill Tag Element */
+.profile-dashboard__skill-tag {
+  transition: all 0.2s ease;
 }
 
-/* Ensure sticky positioning works correctly */
-.profile-sidebar-sticky {
-  position: sticky;
-  top: 5rem;
-  align-self: flex-start;
+.profile-dashboard__skill-tag:hover {
+  transform: scale(1.05);
 }
 
-/* Prevent avatar overlap */
-.profile-avatar-container {
+/* Project Card Element */
+.profile-dashboard__project-card {
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.profile-dashboard__project-card:hover {
+  border-left-color: hsl(var(--primary));
+  background-color: hsl(var(--muted) / 0.3);
+}
+
+/* Header Block & Avatar Frame Element */
+.profile-header__avatar-frame {
+  position: relative;
   z-index: 10;
 }
 
-/* Better form spacing */
-.profile-form-grid {
-  gap: 1rem;
+.profile-header__avatar-frame::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+  z-index: -1;
+  opacity: 0.8;
 }
 
-@media (min-width: 1024px) {
-  .profile-form-grid {
-    gap: 1.5rem;
-  }
-}
-
-/* Ensure buttons don't overflow */
-.profile-button {
-  white-space: nowrap;
+/* Stats Block & Card Element */
+.profile-stats__card {
+  position: relative;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
 }
 
-/* Better switch alignment */
-.profile-switch-container {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+.profile-stats__card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform: skewX(-20deg) translateX(-150%);
+  transition: transform 0.5s;
 }
 
-@media (max-width: 640px) {
-  .profile-switch-container {
-    justify-content: flex-start;
-    margin-top: 0.5rem;
-  }
+/* Additional BEM-compliant utilities */
+.profile-dashboard__section {
+  /* Section styles */
 }

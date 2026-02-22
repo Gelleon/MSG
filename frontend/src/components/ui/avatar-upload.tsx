@@ -106,15 +106,16 @@ export function AvatarUpload({ user, onUploadSuccess, className }: AvatarUploadP
         canvas.toBlob((blob) => {
             URL.revokeObjectURL(img.src);
             if (blob) {
-                const resizedFile = new File([blob], file.name, {
-                    type: file.type,
+                const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+                const resizedFile = new File([blob], newName, {
+                    type: 'image/webp',
                     lastModified: Date.now(),
                 });
                 resolve(resizedFile);
             } else {
                 reject(new Error('Canvas to Blob failed'));
             }
-        }, file.type, 0.9); // 0.9 quality
+        }, 'image/webp', 0.8); // Convert to WebP, 0.8 quality
       };
       img.onerror = (error) => {
           URL.revokeObjectURL(img.src);
@@ -165,8 +166,16 @@ export function AvatarUpload({ user, onUploadSuccess, className }: AvatarUploadP
   return (
     <div className={cn("flex flex-col items-center gap-4", className)}>
       <div 
+        role="button"
+        tabIndex={0}
+        aria-label={t('uploadDesc') || "Upload avatar"}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            triggerFileInput();
+          }
+        }}
         className={cn(
-          "relative group cursor-pointer rounded-full transition-all duration-200",
+          "relative group cursor-pointer rounded-full transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary/50",
           isDragging && "ring-4 ring-primary/50 scale-105",
           isUploading && "opacity-70 pointer-events-none"
         )}

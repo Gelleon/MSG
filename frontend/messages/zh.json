@@ -287,7 +287,24 @@
      "invalidFileType": "文件类型无效。请上传 JPG, PNG, GIF 或 WebP。",
      "fileTooLarge": "文件太大。最大大小为 5MB。",
      "uploadSuccess": "头像更新成功",
-     "uploadError": "头像上传失败"
+     "uploadError": "头像上传失败",
+     "tasksCompleted": "已完成任务",
+     "hoursLogged": "记录时长",
+     "productivity": "效率",
+     "skills": "技能",
+     "projects": "项目",
+     "progress": "进度",
+     "tasks": "任务",
+     "rating": "评分",
+     "joined": "加入时间",
+     "noPosition": "无职位",
+     "editProfile": "编辑资料",
+     "contactInfo": "联系信息",
+     "phone": "电话",
+     "department": "部门",
+     "location": "地点",
+     "timezone": "时区",
+     "statistics": "统计"
    },
   "Dialogs": {
     "createRoom": {
