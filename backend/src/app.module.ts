@@ -18,6 +18,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TasksModule } from './tasks/tasks.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { PositionsModule } from './positions/positions.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { APP_GUARD } from '@nestjs/core';
     CleanupModule,
     NotificationsModule,
     TasksModule,
+    PositionsModule,
   ],
   controllers: [AppController],
   providers: [

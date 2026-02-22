@@ -2,59 +2,23 @@ import api from './api';
 
 export interface User {
   id: string;
-  email?: string;
-  name?: string;
+  name: string;
+  email: string;
   role: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface UsersResponse {
-  data: User[];
-  total: number;
-}
-
-export interface UserParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  positionId?: string;
+  createdAt?: string;
 }
 
 export const adminService = {
-  getUsers: async (params: UserParams) => {
-    const response = await api.get<UsersResponse>('/users', { params });
-    return response.data;
+  // Use search endpoint which is accessible to authenticated users
+  async getUsers(params?: { search?: string; limit?: number }) {
+    const response = await api.get<User[]>('/users/search', { params });
+    // Response is array of users directly
+    return { data: response.data };
   },
-
-  searchUsers: async (search: string = ''): Promise<User[]> => {
-    const response = await api.get<User[]>('/users/search', { params: { search } });
-    return response.data;
-  },
-
-  createUser: async (userData: any) => {
-    const response = await api.post('/users', userData);
-    return response.data;
-  },
-
-  exportUsers: async () => {
-    const response = await api.get('/users/export', { responseType: 'blob' });
-    return response.data;
-  },
-
-  deleteUser: async (id: string) => {
-    const response = await api.delete(`/users/${id}`);
-    return response.data;
-  },
-
-  deleteUsers: async (ids: string[]) => {
-    const response = await api.delete('/users', { data: { ids } });
-    return response.data;
-  },
-
-  updateUserRole: async (id: string, role: string) => {
-    const response = await api.patch(`/users/${id}/role`, { role });
+  
+  async updateUser(id: string, data: Partial<User>) {
+    const response = await api.patch<User>(`/users/${id}`, data);
     return response.data;
   }
 };

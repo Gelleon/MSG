@@ -54,7 +54,9 @@ export class UsersController {
       return users.data.map((u) => ({
         id: u.id,
         name: u.name,
+        email: u.email,
         role: u.role,
+        positionId: u.positionId,
       }));
     } catch (error) {
       this.logger.error(`Error searching users: ${error.message}`);

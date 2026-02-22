@@ -9,14 +9,16 @@ interface User {
   email?: string;
   name?: string;
   role: string;
+  emailNotificationsEnabled?: boolean;
 }
 
 interface AuthState {
   token: string | null;
   user: User | null;
-  login: (token: string) => void;
+  login: (token: string, userData?: Partial<User>) => void;
   register: (username: string, email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
   isAuthenticated: () => boolean;
 }
 
@@ -25,7 +27,7 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       token: null,
       user: null,
-      login: (token: string) => {
+      login: (token: string, userData?: Partial<User>) => {
         try {
           const decoded: any = jwtDecode(token);
           // Map backend payload to User interface if needed
@@ -35,7 +37,8 @@ export const useAuthStore = create<AuthState>()(
              username: decoded.username,
              email: decoded.username, // username in token payload IS the email
              name: decoded.name,
-             role: decoded.role
+             role: decoded.role,
+             ...userData // Merge additional user data if provided
           };
           
           localStorage.setItem('token', token);
@@ -50,6 +53,12 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         localStorage.removeItem('token');
         set({ token: null, user: null });
+      },
+      updateUser: (updates: Partial<User>) => {
+        const currentUser = get().user;
+        if (currentUser) {
+          set({ user: { ...currentUser, ...updates } });
+        }
       },
       isAuthenticated: () => !!get().token,
     }),

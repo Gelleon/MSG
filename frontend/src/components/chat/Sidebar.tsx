@@ -61,13 +61,17 @@ import { toast } from 'sonner';
 import { useNotificationStore } from '@/lib/notification-store';
 import { Label } from '@/components/ui/label';
 
+import { useSearchParams } from 'next/navigation';
+import api from '@/lib/api';
+
 export default function Sidebar({ className }: { className?: string }) {
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUser } = useAuthStore();
   const { rooms, fetchRooms, joinRoom, currentRoomId, createRoom, updateRoom, deleteRoom } = useChatStore();
   const { soundEnabled, visualEnabled, toggleSound, toggleVisual } = useNotificationStore();
   const { customColorIndex, setCustomColorIndex } = useAppearanceStore();
   const { resolvedTheme } = useTheme();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const isMobile = useIsMobile();
   
@@ -96,6 +100,7 @@ export default function Sidebar({ className }: { className?: string }) {
 
   // Settings Dialog State
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(user?.emailNotificationsEnabled ?? true);
 
   const allowedEmails = ['svzelenin@yandex.ru', 'pallermo72@gmail.com'];
   const userEmail = user?.email || user?.username;
@@ -104,6 +109,48 @@ export default function Sidebar({ className }: { className?: string }) {
   useEffect(() => {
     fetchRooms();
   }, [fetchRooms]);
+
+  useEffect(() => {
+    // Check for 'tab=notifications' in URL to open settings
+    const tab = searchParams.get('tab');
+    if (tab === 'notifications') {
+      setSettingsDialogOpen(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    // Sync local state with user store
+    if (user?.emailNotificationsEnabled !== undefined) {
+      setEmailNotificationsEnabled(user.emailNotificationsEnabled);
+    } else {
+        // If not in store, fetch from API
+        if (user?.id) {
+            api.get(`/users/${user.id}`).then(res => {
+                const isEnabled = res.data.emailNotificationsEnabled ?? true;
+                setEmailNotificationsEnabled(isEnabled);
+                updateUser({ emailNotificationsEnabled: isEnabled });
+            }).catch(console.error);
+        }
+    }
+  }, [user?.emailNotificationsEnabled, user?.id, updateUser]);
+
+  const handleToggleEmailNotifications = async (checked: boolean) => {
+    setEmailNotificationsEnabled(checked);
+    updateUser({ emailNotificationsEnabled: checked }); // Optimistic update
+    
+    if (user?.id) {
+        try {
+            await api.patch(`/users/${user.id}`, { emailNotificationsEnabled: checked });
+            toast.success('Email settings updated');
+        } catch (error) {
+            console.error('Failed to update email settings', error);
+            toast.error('Failed to update email settings');
+            // Revert on error
+            setEmailNotificationsEnabled(!checked);
+            updateUser({ emailNotificationsEnabled: !checked });
+        }
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -561,6 +608,18 @@ export default function Sidebar({ className }: { className?: string }) {
                 onCheckedChange={toggleVisual}
               />
             </div>
+
+            <div className="flex items-center justify-between space-x-2">
+              <div className="flex flex-col space-y-1">
+                <Label htmlFor="email-notifications">{tSettings('emailTitle') || 'Email Notifications'}</Label>
+                <span className="text-xs text-muted-foreground">{tSettings('emailDesc') || 'Receive emails about unread messages'}</span>
+              </div>
+              <Switch
+                id="email-notifications"
+                checked={emailNotificationsEnabled}
+                onCheckedChange={handleToggleEmailNotifications}
+              />
+            </div>
             
             {/* Color Preference */}
             <div className="flex flex-col space-y-3 pt-4 border-t">
@@ -592,6 +651,16 @@ export default function Sidebar({ className }: { className?: string }) {
                             title={`Color ${index + 1}`}
                         />
                      ))}
+                </div>
+                
+                <div className="pt-4 mt-4 border-t">
+                  <Button variant="outline" className="w-full" onClick={() => {
+                      setSettingsDialogOpen(false);
+                      router.push('/profile');
+                  }}>
+                    <User className="mr-2 h-4 w-4" />
+                    {tSettings('manageProfile')}
+                  </Button>
                 </div>
             </div>
           </div>
