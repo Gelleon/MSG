@@ -29,6 +29,7 @@ interface AddUserModalProps {
 }
 
 export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProps) {
+  const t = useTranslations('Admin.Users');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -43,12 +44,12 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
 
     try {
       await adminService.createUser(formData);
-      toast.success('User created successfully');
+      toast.success(t('addSuccess'));
       onSuccess();
       onOpenChange(false);
       setFormData({ name: '', email: '', password: '', role: 'CLIENT' });
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create user');
+      toast.error(error.response?.data?.message || t('errorCreate'));
     } finally {
       setLoading(false);
     }
@@ -58,15 +59,15 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New User</DialogTitle>
+          <DialogTitle>{t('createUserTitle')}</DialogTitle>
           <DialogDescription>
-            Create a new user account manually.
+            {t('createUserDesc')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
-              Name
+              {t('name')}
             </Label>
             <Input
               id="name"
@@ -78,7 +79,7 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="email" className="text-right">
-              Email
+              {t('email')}
             </Label>
             <Input
               id="email"
@@ -91,7 +92,7 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="password" className="text-right">
-              Password
+              {t('password')}
             </Label>
             <Input
               id="password"
@@ -105,14 +106,14 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="role" className="text-right">
-              Role
+              {t('role')}
             </Label>
             <Select
               value={formData.role}
               onValueChange={(value) => setFormData({ ...formData, role: value })}
             >
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a role" />
+                <SelectValue placeholder={t('selectRole')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="CLIENT">Client</SelectItem>
@@ -123,7 +124,7 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
           </div>
           <DialogFooter>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create User'}
+              {loading ? t('save') : t('create')}
             </Button>
           </DialogFooter>
         </form>

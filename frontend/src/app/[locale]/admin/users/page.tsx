@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from '@/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from '@/navigation';
 import { useAuthStore } from '@/lib/store';
 import { adminService, User } from '@/lib/admin-service';
 import { getUserDisplayName } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +41,8 @@ import { toast } from 'sonner';
 
 export default function AdminUsersPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user: currentUser, isAuthenticated } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -50,14 +54,36 @@ export default function AdminUsersPage() {
   const [isBulkDelete, setIsBulkDelete] = useState(false);
 
   // Filters
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
   const [limit] = useState(10);
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>((searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc');
 
   const allowedEmails = ['svzelenin@yandex.ru', 'pallermo72@gmail.com'];
   const userEmail = currentUser?.email || currentUser?.username;
+
+  // Sync state to URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (search) params.set('search', search);
+    else params.delete('search');
+    
+    if (page > 1) params.set('page', page.toString());
+    else params.delete('page');
+    
+    if (sortBy !== 'createdAt') params.set('sortBy', sortBy);
+    else params.delete('sortBy');
+    
+    if (sortOrder !== 'desc') params.set('sortOrder', sortOrder);
+    else params.delete('sortOrder');
+
+    const newSearch = params.toString();
+    const query = newSearch ? `?${newSearch}` : '';
+    
+    router.replace(`${pathname}${query}`);
+  }, [search, page, sortBy, sortOrder, pathname, router]);
 
   // Debounced search
   useEffect(() => {
@@ -188,7 +214,7 @@ export default function AdminUsersPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
             <p className="text-muted-foreground">Manage system users and permissions</p>
           </div>
           <Button variant="outline" onClick={() => router.push('/dashboard')}>
@@ -205,16 +231,16 @@ export default function AdminUsersPage() {
                     {selectedUsers.length > 0 && (
                         <Button variant="destructive" size="sm" onClick={confirmBulkDelete}>
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Selected ({selectedUsers.length})
+                            {t('bulkDelete')} ({selectedUsers.length})
                         </Button>
                     )}
                     <Button variant="outline" size="sm" onClick={handleExport}>
                         <Download className="mr-2 h-4 w-4" />
-                        Export CSV
+                        {t('export')}
                     </Button>
                     <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
                         <Plus className="mr-2 h-4 w-4" />
-                        Add User
+                        {t('addUser')}
                     </Button>
                 </div>
              </div>
@@ -223,7 +249,7 @@ export default function AdminUsersPage() {
             <div className="mb-4 relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name or email..."
+                  placeholder={t('searchPlaceholder')}
                   className="pl-9 max-w-sm"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -245,30 +271,30 @@ export default function AdminUsersPage() {
                     </th>
                     <th className="h-12 px-4 align-middle font-medium text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => handleSort('name')}>
                         <div className="flex items-center">
-                            Name
+                            {t('name')}
                             <ArrowUpDown className="ml-2 h-4 w-4" />
                         </div>
                     </th>
                     <th className="h-12 px-4 align-middle font-medium text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => handleSort('email')}>
                         <div className="flex items-center">
-                            Email
+                            {t('email')}
                             <ArrowUpDown className="ml-2 h-4 w-4" />
                         </div>
                     </th>
                     <th className="h-12 px-4 align-middle font-medium text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => handleSort('role')}>
                          <div className="flex items-center">
-                            Role
+                            {t('role')}
                             <ArrowUpDown className="ml-2 h-4 w-4" />
                         </div>
                     </th>
                     <th className="h-12 px-4 align-middle font-medium text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => handleSort('createdAt')}>
                         <div className="flex items-center">
-                            Joined
+                            {t('createdAt')}
                             <ArrowUpDown className="ml-2 h-4 w-4" />
                         </div>
                     </th>
-                    <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Status</th>
-                    <th className="h-12 px-4 align-middle font-medium text-muted-foreground text-right">Actions</th>
+                    <th className="h-12 px-4 align-middle font-medium text-muted-foreground">{t('status')}</th>
+                     <th className="h-12 px-4 align-middle font-medium text-muted-foreground text-right">{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
@@ -281,7 +307,7 @@ export default function AdminUsersPage() {
                   ) : users.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="p-4 text-center text-muted-foreground">
-                        No users found
+                        {t('noUsersFound')}
                       </td>
                     </tr>
                   ) : (
@@ -317,7 +343,7 @@ export default function AdminUsersPage() {
                         <td className="p-4 align-middle">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
                         <td className="p-4 align-middle">
                             <span className="inline-flex h-2 w-2 rounded-full bg-green-500" />
-                            <span className="ml-2">Active</span>
+                            <span className="ml-2">{t('active')}</span>
                         </td>
                         <td className="p-4 align-middle text-right">
                             <Button 
@@ -340,7 +366,7 @@ export default function AdminUsersPage() {
             {/* Pagination */}
             <div className="flex items-center justify-end space-x-2 py-4">
               <div className="flex-1 text-sm text-muted-foreground">
-                Total {total} users
+                {t('totalUsers', { count: total })}
               </div>
               <div className="space-x-2">
                 <Button
@@ -350,7 +376,7 @@ export default function AdminUsersPage() {
                   disabled={page === 1 || loading}
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Previous
+                  {t('previous')}
                 </Button>
                 <Button
                   variant="outline"
@@ -358,7 +384,7 @@ export default function AdminUsersPage() {
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages || loading}
                 >
-                  Next
+                  {t('next')}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -378,21 +404,21 @@ export default function AdminUsersPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
-                Confirm Deletion
+                {t('confirmDeleteTitle')}
             </DialogTitle>
             <DialogDescription>
               {isBulkDelete 
-                ? `Are you sure you want to delete ${selectedUsers.length} selected users? This action cannot be undone.`
-                : `Are you sure you want to delete user "${userToDelete?.email}"? This action cannot be undone.`
+                ? t('bulkDeleteDesc', { count: selectedUsers.length })
+                : t('confirmDeleteDesc', { email: userToDelete?.email })
               }
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Delete
+              {t('delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -38,8 +38,10 @@ import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTranslations } from 'next-intl';
 
 export default function AdminPositionsPage() {
+  const t = useTranslations('Admin.Positions');
   const router = useRouter();
   const { user: currentUser } = useAuthStore();
   const [loading, setLoading] = useState(true);
@@ -71,7 +73,7 @@ export default function AdminPositionsPage() {
       setPositions(data);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to fetch positions');
+      toast.error(t('errorFetch'));
     } finally {
       setLoading(false);
     }
@@ -80,12 +82,12 @@ export default function AdminPositionsPage() {
   const handleCreate = async () => {
     try {
       await positionsService.create(formData);
-      toast.success('Position created');
+      toast.success(t('successCreate'));
       setIsAddModalOpen(false);
       setFormData({ nameRu: '', nameZh: '' });
       fetchPositions();
     } catch (error) {
-      toast.error('Failed to create position');
+      toast.error(t('errorCreate'));
     }
   };
 
@@ -93,24 +95,24 @@ export default function AdminPositionsPage() {
     if (!currentPosition) return;
     try {
       await positionsService.update(currentPosition.id, formData);
-      toast.success('Position updated');
+      toast.success(t('successUpdate'));
       setIsEditModalOpen(false);
       setCurrentPosition(null);
       setFormData({ nameRu: '', nameZh: '' });
       fetchPositions();
     } catch (error) {
-      toast.error('Failed to update position');
+      toast.error(t('errorUpdate'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this position?')) return;
+    if (!confirm(t('deleteConfirm'))) return;
     try {
       await positionsService.delete(id);
-      toast.success('Position deleted');
+      toast.success(t('successDelete'));
       fetchPositions();
     } catch (error) {
-      toast.error('Failed to delete position');
+      toast.error(t('errorDelete'));
     }
   };
 
@@ -131,7 +133,7 @@ export default function AdminPositionsPage() {
       
       setIsAssignModalOpen(true);
     } catch (error) {
-      toast.error('Failed to fetch users');
+      toast.error(t('errorFetchUsers'));
     } finally {
       setAssignLoading(false);
     }
@@ -163,11 +165,11 @@ export default function AdminPositionsPage() {
         await positionsService.unassignFromUsers(toUnassign);
       }
 
-      toast.success('Users assigned successfully');
+      toast.success(t('successAssign'));
       setIsAssignModalOpen(false);
       fetchPositions();
     } catch (error) {
-      toast.error('Failed to assign users');
+      toast.error(t('errorAssign'));
     }
   };
 
@@ -179,27 +181,27 @@ export default function AdminPositionsPage() {
   return (
     <div className="container mx-auto py-10 space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-[#8B5CF6]">Position Management</h1>
+        <h1 className="text-3xl font-bold text-[#8B5CF6]">{t('title')}</h1>
         <Button 
           onClick={() => setIsAddModalOpen(true)}
           className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white"
         >
-          <Plus className="mr-2 h-4 w-4" /> Add Position
+          <Plus className="mr-2 h-4 w-4" /> {t('addPosition')}
         </Button>
       </div>
 
       <Card className="border-[#8B5CF6]/20 shadow-lg">
         <CardHeader className="bg-[#8B5CF6]/5 border-b border-[#8B5CF6]/10">
-          <CardTitle className="text-[#8B5CF6]">All Positions</CardTitle>
+          <CardTitle className="text-[#8B5CF6]">{t('allPositions')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-[#8B5CF6]/5">
-                <TableHead className="text-[#8B5CF6]">Name (RU)</TableHead>
-                <TableHead className="text-[#8B5CF6]">Name (ZH)</TableHead>
-                <TableHead className="text-[#8B5CF6]">Users Count</TableHead>
-                <TableHead className="text-right text-[#8B5CF6]">Actions</TableHead>
+                <TableHead className="text-[#8B5CF6]">{t('nameRu')}</TableHead>
+                <TableHead className="text-[#8B5CF6]">{t('nameZh')}</TableHead>
+                <TableHead className="text-[#8B5CF6]">{t('usersCount')}</TableHead>
+                <TableHead className="text-right text-[#8B5CF6]">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -212,7 +214,7 @@ export default function AdminPositionsPage() {
               ) : positions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
-                    No positions found
+                    {t('noPositionsFound')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -263,14 +265,14 @@ export default function AdminPositionsPage() {
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="sm:max-w-[425px] border-[#8B5CF6] bg-white">
           <DialogHeader>
-            <DialogTitle className="text-[#8B5CF6]">Add New Position</DialogTitle>
+            <DialogTitle className="text-[#8B5CF6]">{t('createTitle')}</DialogTitle>
             <DialogDescription>
-              Create a new position with Russian and Chinese translations.
+              {t('createDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="nameRu">Name (Russian)</Label>
+              <Label htmlFor="nameRu">{t('nameRu')}</Label>
               <Input
                 id="nameRu"
                 value={formData.nameRu}
@@ -279,7 +281,7 @@ export default function AdminPositionsPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="nameZh">Name (Chinese)</Label>
+              <Label htmlFor="nameZh">{t('nameZh')}</Label>
               <Input
                 id="nameZh"
                 value={formData.nameZh}
@@ -289,8 +291,8 @@ export default function AdminPositionsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white">Create</Button>
+            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>{t('cancel')}</Button>
+            <Button onClick={handleCreate} className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white">{t('create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -299,11 +301,11 @@ export default function AdminPositionsPage() {
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="sm:max-w-[425px] border-[#8B5CF6] bg-white">
           <DialogHeader>
-            <DialogTitle className="text-[#8B5CF6]">Edit Position</DialogTitle>
+            <DialogTitle className="text-[#8B5CF6]">{t('editTitle')}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="edit-nameRu">Name (Russian)</Label>
+              <Label htmlFor="edit-nameRu">{t('nameRu')}</Label>
               <Input
                 id="edit-nameRu"
                 value={formData.nameRu}
@@ -312,7 +314,7 @@ export default function AdminPositionsPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-nameZh">Name (Chinese)</Label>
+              <Label htmlFor="edit-nameZh">{t('nameZh')}</Label>
               <Input
                 id="edit-nameZh"
                 value={formData.nameZh}
@@ -322,8 +324,8 @@ export default function AdminPositionsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleUpdate} className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white">Save Changes</Button>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>{t('cancel')}</Button>
+            <Button onClick={handleUpdate} className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white">{t('saveChanges')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -332,16 +334,16 @@ export default function AdminPositionsPage() {
       <Dialog open={isAssignModalOpen} onOpenChange={setIsAssignModalOpen}>
         <DialogContent className="sm:max-w-[600px] border-[#8B5CF6] bg-white h-[80vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-[#8B5CF6]">Assign Users to {currentPosition?.nameRu}</DialogTitle>
+            <DialogTitle className="text-[#8B5CF6]">{t('assignTitle', {name: currentPosition?.nameRu})}</DialogTitle>
             <DialogDescription>
-              Select users to assign to this position.
+              {t('assignDesc')}
             </DialogDescription>
           </DialogHeader>
           
           <div className="flex items-center space-x-2 my-4">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search users..." 
+              placeholder={t('searchUsers')} 
               value={userSearch}
               onChange={(e) => setUserSearch(e.target.value)}
               className="flex-1 border-[#8B5CF6]/20 focus-visible:ring-[#8B5CF6]"
@@ -375,16 +377,16 @@ export default function AdminPositionsPage() {
                   </div>
                 ))}
                 {filteredUsers.length === 0 && (
-                  <div className="text-center text-muted-foreground py-4">No users found</div>
+                  <div className="text-center text-muted-foreground py-4">{t('noUsersFound')}</div>
                 )}
               </div>
             )}
           </ScrollArea>
 
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setIsAssignModalOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsAssignModalOpen(false)}>{t('cancel')}</Button>
             <Button onClick={handleAssign} className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white">
-              Save Assignments ({selectedUsers.length})
+              {t('saveAssignments')} ({selectedUsers.length})
             </Button>
           </DialogFooter>
         </DialogContent>

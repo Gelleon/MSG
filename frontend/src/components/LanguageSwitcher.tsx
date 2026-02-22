@@ -30,7 +30,8 @@ export default function LanguageSwitcher() {
 
   const onSelectChange = (nextLocale: string) => {
     localStorage.setItem('NEXT_LOCALE', nextLocale);
-    router.replace(pathname, { locale: nextLocale });
+    const params = searchParams.toString();
+    router.replace(params ? `${pathname}?${params}` : pathname, { locale: nextLocale });
   };
 
   return (

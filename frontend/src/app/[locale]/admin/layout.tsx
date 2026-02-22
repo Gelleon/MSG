@@ -3,7 +3,7 @@
 import { PrivateChatNotifier } from '@/components/chat/PrivateChatNotifier';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 export default function AdminLayout({
@@ -13,13 +13,14 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const locale = useLocale();
+  const t = useTranslations('Admin');
   
   return (
     <>
       <PrivateChatNotifier />
       <div className="border-b bg-background">
         <div className="flex h-16 items-center px-4 container mx-auto">
-          <h2 className="text-lg font-semibold mr-6">Admin Panel</h2>
+          <h2 className="text-lg font-semibold mr-6">{t('title')}</h2>
           <nav className="flex items-center space-x-4 lg:space-x-6">
             <Link
               href={`/${locale}/admin/users`}
@@ -28,7 +29,7 @@ export default function AdminLayout({
                 pathname.includes('/admin/users') ? "text-primary" : "text-muted-foreground"
               )}
             >
-              Users
+              {t('users')}
             </Link>
             <Link
               href={`/${locale}/admin/positions`}
@@ -37,7 +38,7 @@ export default function AdminLayout({
                 pathname.includes('/admin/positions') ? "text-primary" : "text-muted-foreground"
               )}
             >
-              Positions
+              {t('positions')}
             </Link>
              <Link
               href={`/${locale}/dashboard`}
@@ -45,7 +46,7 @@ export default function AdminLayout({
                 "text-sm font-medium transition-colors hover:text-primary text-muted-foreground ml-auto"
               )}
             >
-              Back to Dashboard
+              {t('backToApp')}
             </Link>
           </nav>
         </div>

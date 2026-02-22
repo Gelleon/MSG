@@ -25,7 +25,8 @@ export function LanguageSwitcher() {
 
   const handleLanguageChange = (newLocale: string) => {
     localStorage.setItem('NEXT_LOCALE', newLocale);
-    router.replace(pathname, { locale: newLocale });
+    const params = searchParams.toString();
+    router.replace(params ? `${pathname}?${params}` : pathname, { locale: newLocale });
   };
 
   return (
