@@ -85,17 +85,17 @@ export function GeneralSettings({ user, onUpdate }: GeneralSettingsProps) {
       <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-4 lg:gap-6 lg:grid-cols-2 profile-form-grid">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tCommon('username')}</FormLabel>
+                    <FormLabel className="text-sm lg:text-base">{tCommon('username')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your name" {...field} />
+                      <Input placeholder="Your name" {...field} className="text-sm lg:text-base" />
                     </FormControl>
-                    <FormDescription>
+                    <FormDescription className="text-xs lg:text-sm">
                       {t('usernameDesc') || 'This is your public display name.'}
                     </FormDescription>
                     <FormMessage />
@@ -103,17 +103,17 @@ export function GeneralSettings({ user, onUpdate }: GeneralSettingsProps) {
                 )}
               />
               <div className="grid gap-2">
-                <Label htmlFor="email">{tCommon('email')}</Label>
-                <Input id="email" value={user.email} disabled className="bg-muted/50" />
-                <p className="text-[0.8rem] text-muted-foreground">
+                <Label htmlFor="email" className="text-sm lg:text-base">{tCommon('email')}</Label>
+                <Input id="email" value={user.email} disabled className="bg-muted/50 text-sm lg:text-base break-all" />
+                <p className="text-xs lg:text-sm text-muted-foreground">
                   {t('emailDesc') || 'Email cannot be changed.'}
                 </p>
               </div>
             </div>
             
             <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={isLoading} size="sm" className="lg:text-sm profile-button">
+                {isLoading && <Loader2 className="mr-2 h-3 w-3 lg:h-4 lg:w-4 animate-spin" />}
                 {tCommon('save')}
               </Button>
             </div>

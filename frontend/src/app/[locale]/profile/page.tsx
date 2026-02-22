@@ -9,6 +9,7 @@ import { Loader2, User, Bell, Settings, LogOut } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import './profile.css';
 
 import { UserProfileCard } from '@/components/profile/UserProfileCard';
 import { GeneralSettings } from '@/components/profile/GeneralSettings';
@@ -54,47 +55,47 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container max-w-6xl py-8 space-y-8">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+    <div className="container max-w-7xl py-6 lg:py-8 space-y-6 lg:space-y-8 px-4 sm:px-6 profile-container">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">{t('title')}</h1>
+            <p className="text-muted-foreground text-sm lg:text-base">
                 {tCommon('settings')}
             </p>
         </div>
       </div>
 
-      <Tabs defaultValue={defaultTab} className="flex flex-col md:flex-row gap-8 w-full">
-        <aside className="md:w-1/4 w-full flex-shrink-0 space-y-6 md:sticky md:top-20 self-start">
+      <Tabs defaultValue={defaultTab} className="flex flex-col lg:flex-row gap-6 lg:gap-8 w-full">
+        <aside className="lg:w-80 w-full flex-shrink-0 space-y-4 lg:space-y-6 profile-sidebar-sticky">
             <UserProfileCard user={user} onAvatarUpload={handleAvatarUpload} />
 
-            <TabsList className="flex flex-row md:flex-col overflow-x-auto md:overflow-visible h-auto w-full justify-start gap-1 bg-muted/50 p-1 rounded-lg md:bg-transparent md:p-0 scrollbar-none">
+            <TabsList className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible h-auto w-full justify-start gap-1 bg-muted/50 p-1 rounded-lg lg:bg-transparent lg:p-0 scrollbar-none profile-tabs-list">
                 <TabsTrigger 
                     value="general" 
-                    className="flex-shrink-0 flex-1 md:flex-none w-auto md:w-full justify-center md:justify-start px-4 py-2.5 h-auto data-[state=active]:bg-background md:data-[state=active]:bg-primary/10 data-[state=active]:shadow-sm md:data-[state=active]:shadow-none data-[state=active]:text-foreground md:data-[state=active]:text-primary font-medium transition-all hover:bg-muted whitespace-nowrap rounded-md md:rounded-none md:border-l-2 md:border-transparent md:data-[state=active]:border-primary"
+                    className="flex-shrink-0 flex-1 lg:flex-none w-auto lg:w-full justify-center lg:justify-start px-2 py-2 lg:px-4 lg:py-2.5 h-auto text-xs sm:text-sm lg:text-sm data-[state=active]:bg-background lg:data-[state=active]:bg-primary/10 data-[state=active]:shadow-sm lg:data-[state=active]:shadow-none data-[state=active]:text-foreground lg:data-[state=active]:text-primary font-medium transition-all hover:bg-muted whitespace-nowrap rounded-md lg:rounded-none lg:border-l-2 lg:border-transparent lg:data-[state=active]:border-primary profile-tab-trigger"
                 >
-                    <User className="mr-2 md:mr-3 h-4 w-4" />
-                    {t('general')}
+                    <User className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                    <span className="hidden sm:inline lg:inline">{t('general')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                     value="notifications" 
-                    className="flex-shrink-0 flex-1 md:flex-none w-auto md:w-full justify-center md:justify-start px-4 py-2.5 h-auto data-[state=active]:bg-background md:data-[state=active]:bg-primary/10 data-[state=active]:shadow-sm md:data-[state=active]:shadow-none data-[state=active]:text-foreground md:data-[state=active]:text-primary font-medium transition-all hover:bg-muted whitespace-nowrap rounded-md md:rounded-none md:border-l-2 md:border-transparent md:data-[state=active]:border-primary"
+                    className="flex-shrink-0 flex-1 lg:flex-none w-auto lg:w-full justify-center lg:justify-start px-2 py-2 lg:px-4 lg:py-2.5 h-auto text-xs sm:text-sm lg:text-sm data-[state=active]:bg-background lg:data-[state=active]:bg-primary/10 data-[state=active]:shadow-sm lg:data-[state=active]:shadow-none data-[state=active]:text-foreground lg:data-[state=active]:text-primary font-medium transition-all hover:bg-muted whitespace-nowrap rounded-md lg:rounded-none lg:border-l-2 lg:border-transparent lg:data-[state=active]:border-primary profile-tab-trigger"
                 >
-                    <Bell className="mr-2 md:mr-3 h-4 w-4" />
-                    {t('notifications')}
+                    <Bell className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                    <span className="hidden sm:inline lg:inline">{t('notifications')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                     value="preferences" 
-                    className="flex-shrink-0 flex-1 md:flex-none w-auto md:w-full justify-center md:justify-start px-4 py-2.5 h-auto data-[state=active]:bg-background md:data-[state=active]:bg-primary/10 data-[state=active]:shadow-sm md:data-[state=active]:shadow-none data-[state=active]:text-foreground md:data-[state=active]:text-primary font-medium transition-all hover:bg-muted whitespace-nowrap rounded-md md:rounded-none md:border-l-2 md:border-transparent md:data-[state=active]:border-primary"
+                    className="flex-shrink-0 flex-1 lg:flex-none w-auto lg:w-full justify-center lg:justify-start px-2 py-2 lg:px-4 lg:py-2.5 h-auto text-xs sm:text-sm lg:text-sm data-[state=active]:bg-background lg:data-[state=active]:bg-primary/10 data-[state=active]:shadow-sm lg:data-[state=active]:shadow-none data-[state=active]:text-foreground lg:data-[state=active]:text-primary font-medium transition-all hover:bg-muted whitespace-nowrap rounded-md lg:rounded-none lg:border-l-2 lg:border-transparent lg:data-[state=active]:border-primary profile-tab-trigger"
                 >
-                    <Settings className="mr-2 md:mr-3 h-4 w-4" />
-                    {tCommon('language')}
+                    <Settings className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                    <span className="hidden sm:inline lg:inline">{tCommon('language')}</span>
                 </TabsTrigger>
                 
-                 <div className="hidden md:block pt-4 mt-4 border-t w-full flex-shrink-0">
+                 <div className="hidden lg:block pt-4 mt-4 border-t w-full flex-shrink-0">
                     <Button 
                         variant="ghost" 
-                        className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 px-4 py-2.5 h-auto whitespace-nowrap"
+                        className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 px-4 py-2.5 h-auto whitespace-nowrap profile-button"
                         onClick={handleLogout}
                     >
                         <LogOut className="mr-3 h-4 w-4" />
@@ -103,10 +104,10 @@ export default function ProfilePage() {
                 </div>
             </TabsList>
 
-            <div className="md:hidden w-full">
+            <div className="lg:hidden w-full">
                 <Button 
                     variant="outline" 
-                    className="w-full justify-center text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="w-full justify-center text-destructive hover:text-destructive hover:bg-destructive/10 profile-button"
                     onClick={handleLogout}
                 >
                     <LogOut className="mr-2 h-4 w-4" />

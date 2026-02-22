@@ -31,8 +31,15 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('search')
-  async searchUsers(@Query('search') search: string = '', @Request() req: any) {
+  async searchUsers(
+    @Query('search') search: string = '',
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '50',
+    @Request() req: any
+  ) {
     const currentUserId = req.user.userId || req.user.sub;
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
 
     const where: Prisma.UserWhereInput = {
       id: { not: currentUserId },
@@ -48,18 +55,21 @@ export class UsersController {
     try {
       const users = await this.usersService.findAll({
         where,
-        skip: 0,
-        take: 50,
+        skip,
+        take,
         include: { position: true },
       });
-      return users.data.map((u) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        positionId: u.positionId,
-        position: (u as any).position,
-      }));
+      return {
+        data: users.data.map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          positionId: u.positionId,
+          position: (u as any).position,
+        })),
+        total: users.total,
+      };
     } catch (error) {
       this.logger.error(`Error searching users: ${error.message}`);
       throw new BadRequestException('Failed to search users');
