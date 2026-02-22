@@ -314,7 +314,7 @@ export default function AdminUsersPage() {
                                 </SelectContent>
                             </Select>
                         </td>
-                        <td className="p-4 align-middle">{new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td className="p-4 align-middle">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
                         <td className="p-4 align-middle">
                             <span className="inline-flex h-2 w-2 rounded-full bg-green-500" />
                             <span className="ml-2">Active</span>
