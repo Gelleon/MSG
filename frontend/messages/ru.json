@@ -266,8 +266,10 @@
      "department": "Отдел",
      "location": "Локация",
      "timezone": "Часовой пояс",
-     "statistics": "Статистика"
-   },
+    "statistics": "Статистика",
+    "save": "Сохранить",
+    "saving": "Сохранение..."
+  },
   "Dialogs": {
     "createRoom": {
       "title": "Создать комнату",

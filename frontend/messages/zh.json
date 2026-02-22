@@ -304,8 +304,10 @@
      "department": "部门",
      "location": "地点",
      "timezone": "时区",
-     "statistics": "统计"
-   },
+    "statistics": "统计",
+    "save": "保存",
+    "saving": "保存中..."
+  },
   "Dialogs": {
     "createRoom": {
       "title": "创建房间",

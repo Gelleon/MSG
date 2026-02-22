@@ -7,6 +7,7 @@ export interface User {
   id: string;
   username: string;
   email?: string;
+  phone?: string;
   name?: string;
   role: string;
   emailNotificationsEnabled?: boolean;
@@ -44,6 +45,7 @@ export const useAuthStore = create<AuthState>()(
              email: decoded.username, // username in token payload IS the email
              name: decoded.name,
              role: decoded.role,
+             phone: decoded.phone,
              ...userData // Merge additional user data if provided
           };
           
