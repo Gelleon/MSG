@@ -6,6 +6,11 @@ export interface User {
   email: string;
   role: string;
   positionId?: string;
+  position?: {
+    id: string;
+    nameRu: string;
+    nameZh: string;
+  };
   createdAt?: string;
 }
 

@@ -6,7 +6,7 @@ import { useRouter, usePathname } from '@/navigation';
 import { useAuthStore } from '@/lib/store';
 import { adminService, User } from '@/lib/admin-service';
 import { getUserDisplayName } from '@/lib/utils';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +41,7 @@ import { toast } from 'sonner';
 
 export default function AdminUsersPage() {
   const t = useTranslations('Admin.Users');
+  const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -288,6 +289,9 @@ export default function AdminUsersPage() {
                             <ArrowUpDown className="ml-2 h-4 w-4" />
                         </div>
                     </th>
+                    <th className="h-12 px-4 align-middle font-medium text-muted-foreground">
+                        {t('position')}
+                    </th>
                     <th className="h-12 px-4 align-middle font-medium text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => handleSort('createdAt')}>
                         <div className="flex items-center">
                             {t('createdAt')}
@@ -340,6 +344,9 @@ export default function AdminUsersPage() {
                                     <SelectItem value="ADMIN">Admin</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </td>
+                        <td className="p-4 align-middle">
+                            {user.position ? (locale === 'ru' ? user.position.nameRu : user.position.nameZh) : '-'}
                         </td>
                         <td className="p-4 align-middle">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
                         <td className="p-4 align-middle">

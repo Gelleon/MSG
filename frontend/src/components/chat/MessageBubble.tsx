@@ -191,7 +191,7 @@ export default memo(function MessageBubble({
                 {/* Username */}
                 {!isMe && showName && (
                     <div 
-                       className="text-xs font-bold mb-1 truncate select-none cursor-pointer hover:opacity-80 transition-opacity"
+                       className="flex items-center mb-1 max-w-full select-none cursor-pointer hover:opacity-80 transition-opacity"
                        style={{ 
                            color: getUserColor(message.senderId, getUserDisplayName(message.sender), resolvedTheme) 
                        }}
@@ -200,9 +200,11 @@ export default memo(function MessageBubble({
                            // Future: Open profile or mention
                        }}
                      >
-                        {getUserDisplayName(message.sender)}
+                        <span className="text-xs font-bold truncate min-w-0">
+                          {getUserDisplayName(message.sender)}
+                        </span>
                         {message.sender.position && (
-                          <span className="ml-2 text-[10px] font-normal opacity-80">
+                          <span className="ml-2 inline-block bg-[#8B00FF] text-white text-[10px] px-2 py-1 rounded font-medium flex-shrink-0">
                             {locale === 'ru' ? message.sender.position.nameRu : message.sender.position.nameZh}
                           </span>
                         )}

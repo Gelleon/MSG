@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useState, useEffect } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { adminService } from '@/lib/admin-service';
+import { positionsService, Position } from '@/lib/positions-service';
 import { toast } from 'sonner';
 
 interface AddUserModalProps {
@@ -31,24 +32,49 @@ interface AddUserModalProps {
 
 export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProps) {
   const t = useTranslations('Admin.Users');
+  const locale = useLocale();
   const [loading, setLoading] = useState(false);
+  const [positions, setPositions] = useState<Position[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     role: 'CLIENT',
+    positionId: '',
   });
+
+  useEffect(() => {
+    if (open) {
+      loadPositions();
+    }
+  }, [open]);
+
+  const loadPositions = async () => {
+    try {
+      const data = await positionsService.getAll();
+      setPositions(data);
+    } catch (error) {
+      console.error('Failed to load positions', error);
+      toast.error(t('errorFetch'));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await adminService.createUser(formData);
+      // Clean up empty positionId before sending
+      const dataToSend = {
+        ...formData,
+        positionId: formData.positionId || undefined,
+      };
+      
+      await adminService.createUser(dataToSend);
       toast.success(t('addSuccess'));
       onSuccess();
       onOpenChange(false);
-      setFormData({ name: '', email: '', password: '', role: 'CLIENT' });
+      setFormData({ name: '', email: '', password: '', role: 'CLIENT', positionId: '' });
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errorCreate'));
     } finally {
@@ -123,12 +149,33 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
               </SelectContent>
             </Select>
           </div>
-          <DialogFooter>
-            <Button type="submit" disabled={loading}>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="position" className="text-right">
+              {t('position')}
+            </Label>
+            <Select
+              value={formData.positionId}
+              onValueChange={(value) => setFormData({ ...formData, positionId: value === 'none' ? '' : value })}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder={t('selectPosition') || 'Select position'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{t('noPosition') || 'No position'}</SelectItem>
+                {positions.map((pos) => (
+                  <SelectItem key={pos.id} value={pos.id}>
+                    {locale === 'ru' ? pos.nameRu : pos.nameZh}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </form>
+        <DialogFooter>
+            <Button type="submit" form="create-user-form" disabled={loading}>
               {loading ? t('save') : t('create')}
             </Button>
           </DialogFooter>
-        </form>
       </DialogContent>
     </Dialog>
   );
