@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import {
   Select,
@@ -17,6 +18,7 @@ export function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     // Sync with localStorage on mount if needed, or save current locale

@@ -40,6 +40,7 @@ import {
 import { toast } from 'sonner';
 
 export default function AdminUsersPage() {
+  const t = useTranslations('Admin.Users');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -409,7 +410,7 @@ export default function AdminUsersPage() {
             <DialogDescription>
               {isBulkDelete 
                 ? t('bulkDeleteDesc', { count: selectedUsers.length })
-                : t('confirmDeleteDesc', { email: userToDelete?.email })
+                : t('confirmDeleteDesc', { email: userToDelete?.email || '' })
               }
             </DialogDescription>
           </DialogHeader>

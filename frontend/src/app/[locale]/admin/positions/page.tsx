@@ -334,7 +334,7 @@ export default function AdminPositionsPage() {
       <Dialog open={isAssignModalOpen} onOpenChange={setIsAssignModalOpen}>
         <DialogContent className="sm:max-w-[600px] border-[#8B5CF6] bg-white h-[80vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-[#8B5CF6]">{t('assignTitle', {name: currentPosition?.nameRu})}</DialogTitle>
+            <DialogTitle className="text-[#8B5CF6]">{t('assignTitle', {name: currentPosition?.nameRu || ''})}</DialogTitle>
             <DialogDescription>
               {t('assignDesc')}
             </DialogDescription>
