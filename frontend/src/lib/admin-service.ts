@@ -20,5 +20,10 @@ export const adminService = {
   async updateUser(id: string, data: Partial<User>) {
     const response = await api.patch<User>(`/users/${id}`, data);
     return response.data;
+  },
+
+  async createUser(data: Partial<User> & { password?: string }) {
+    const response = await api.post<User>('/users', data);
+    return response.data;
   }
 };
