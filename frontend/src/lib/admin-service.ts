@@ -25,5 +25,24 @@ export const adminService = {
   async createUser(data: Partial<User> & { password?: string }) {
     const response = await api.post<User>('/users', data);
     return response.data;
+  },
+
+  async exportUsers() {
+    // For now, we'll simulate an export by getting all users and converting to CSV
+    // Ideally, this should be an endpoint like /users/export
+    const response = await api.get<User[]>('/users/search', { params: { limit: 1000 } });
+    const users = response.data;
+    
+    // Convert to CSV
+    const headers = ['id', 'name', 'email', 'role', 'createdAt'];
+    const csvContent = [
+      headers.join(','),
+      ...users.map(user => headers.map(header => 
+        // @ts-ignore
+        JSON.stringify(user[header] || '')
+      ).join(','))
+    ].join('\n');
+
+    return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   }
 };
