@@ -8,7 +8,15 @@ export interface Message {
   id: string;
   content: string;
   senderId: string;
-  sender: { name: string; email: string; role?: string };
+  sender: { 
+    name: string; 
+    email: string; 
+    role?: string;
+    position?: {
+      nameRu: string;
+      nameZh: string;
+    };
+  };
   createdAt: string;
   roomId: string;
   attachmentUrl?: string;

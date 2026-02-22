@@ -26,7 +26,7 @@ import {
 import { cn, getUserDisplayName } from '@/lib/utils';
 import { useChatStore, Message } from '@/lib/chat-store';
 import { Button } from '@/components/ui/button';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { toast } from "sonner";
 import {
   ContextMenu,
@@ -81,6 +81,7 @@ export default memo(function MessageBubble({
   const isResolvingReply = useChatStore(state => state.loadingReplyId === message.id);
   const t = useTranslations('Chat');
   const tCommon = useTranslations('Common');
+  const locale = useLocale();
   
   const replyBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -200,6 +201,11 @@ export default memo(function MessageBubble({
                        }}
                      >
                         {getUserDisplayName(message.sender)}
+                        {message.sender.position && (
+                          <span className="ml-2 text-[10px] font-normal opacity-80">
+                            {locale === 'ru' ? message.sender.position.nameRu : message.sender.position.nameZh}
+                          </span>
+                        )}
                     </div>
                 )}
                 {/* Replied Message */}

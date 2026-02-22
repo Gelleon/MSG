@@ -138,10 +138,18 @@ export class MessagesService {
       take: limit,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       include: {
-        sender: true,
+        sender: {
+          include: {
+            position: true,
+          },
+        },
         replyTo: {
           include: {
-            sender: true,
+            sender: {
+              include: {
+                position: true,
+              },
+            },
           },
         },
       },
@@ -155,10 +163,18 @@ export class MessagesService {
     return this.prisma.message.findUnique({
       where: { id },
       include: {
-        sender: true,
+        sender: {
+          include: {
+            position: true,
+          },
+        },
         replyTo: {
           include: {
-            sender: true,
+            sender: {
+              include: {
+                position: true,
+              },
+            },
           },
         },
       },
