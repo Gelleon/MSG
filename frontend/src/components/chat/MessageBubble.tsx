@@ -204,7 +204,7 @@ export default memo(function MessageBubble({
                           {getUserDisplayName(message.sender)}
                         </span>
                         {message.sender.position && (
-                          <span className="ml-2 text-[11px] text-white font-medium px-2 py-0.5 rounded-md bg-purple-600 dark:bg-purple-700">
+                          <span className="ml-2 text-[11px] text-white font-medium px-2 py-0.5 rounded-md bg-purple-900 dark:bg-purple-950">
                             {locale === 'ru' ? message.sender.position.nameRu : message.sender.position.nameZh}
                           </span>
                         )}
