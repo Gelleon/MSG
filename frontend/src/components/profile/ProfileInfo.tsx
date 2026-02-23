@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { User } from '@/lib/store';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Mail, Phone, Building, User as UserIcon, Calendar, Clock, MapPin, ExternalLink } from 'lucide-react';
+import { Mail, Phone, User as UserIcon, ExternalLink } from 'lucide-react';
 
 interface ProfileInfoProps {
   user: User;
@@ -13,10 +13,6 @@ export function ProfileInfo({ user }: ProfileInfoProps) {
 
   // Mock data for missing fields
   const displayPhone = user.phone || t('notProvided');
-  const mockDepartment = 'IT Department';
-  const mockLocation = 'Moscow HQ, Floor 5';
-  const mockTimezone = 'GMT+3';
-  const mockLanguages = ['English', 'Russian'];
 
   const InfoItem = ({ icon: Icon, label, value, href }: { icon: any, label: string, value: string, href?: string }) => (
     <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
@@ -56,21 +52,6 @@ export function ProfileInfo({ user }: ProfileInfoProps) {
           label={t('phone')} 
           value={displayPhone} 
           href={user.phone ? `tel:${user.phone}` : undefined}
-        />
-        <InfoItem 
-          icon={Building} 
-          label={t('department')} 
-          value={mockDepartment} 
-        />
-        <InfoItem 
-          icon={MapPin} 
-          label={t('location')} 
-          value={mockLocation} 
-        />
-        <InfoItem 
-          icon={Clock} 
-          label={t('timezone')} 
-          value={mockTimezone} 
         />
       </CardContent>
     </Card>

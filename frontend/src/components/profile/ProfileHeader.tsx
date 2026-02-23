@@ -3,7 +3,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { User } from '@/lib/store';
 import { AvatarUpload } from '@/components/ui/avatar-upload';
 import { Button } from '@/components/ui/button';
-import { Edit, MapPin, Calendar, Briefcase } from 'lucide-react';
+import { Edit, Calendar, Briefcase } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -19,7 +19,6 @@ export function ProfileHeader({ user, onAvatarUpload, onEditProfile }: ProfileHe
 
   // Mock data for display purposes
   const joinDate = new Date().toLocaleDateString(locale, { month: 'long', year: 'numeric' });
-  const location = "Moscow, Russia";
   
   // Determine position name based on locale
   const positionName = user.position 
@@ -74,10 +73,6 @@ export function ProfileHeader({ user, onAvatarUpload, onEditProfile }: ProfileHe
             </div>
 
             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-4">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-4 h-4" />
-                {location}
-              </div>
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
                 {t('joined')} {joinDate}
