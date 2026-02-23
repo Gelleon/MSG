@@ -24,7 +24,8 @@
     "username": "用户名",
     "email": "邮箱",
     "password": "密码",
-    "language": "语言"
+    "language": "语言",
+    "dashboard": "仪表板"
   },
   "Auth": {
     "login": "登录",
@@ -306,7 +307,8 @@
      "timezone": "时区",
     "statistics": "统计",
     "save": "保存",
-    "saving": "保存中..."
+    "saving": "保存中...",
+    "notProvided": "未提供"
   },
   "Dialogs": {
     "createRoom": {

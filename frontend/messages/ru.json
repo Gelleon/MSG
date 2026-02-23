@@ -24,7 +24,8 @@
     "username": "Имя пользователя",
     "email": "Email",
     "password": "Пароль",
-    "language": "Язык"
+    "language": "Язык",
+    "dashboard": "Дашборд"
   },
   "Auth": {
     "login": "Войти",
@@ -268,7 +269,8 @@
      "timezone": "Часовой пояс",
     "statistics": "Статистика",
     "save": "Сохранить",
-    "saving": "Сохранение..."
+    "saving": "Сохранение...",
+    "notProvided": "Не указано"
   },
   "Dialogs": {
     "createRoom": {

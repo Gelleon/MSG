@@ -48,26 +48,6 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-/* Skill Tag Element */
-.profile-dashboard__skill-tag {
-  transition: all 0.2s ease;
-}
-
-.profile-dashboard__skill-tag:hover {
-  transform: scale(1.05);
-}
-
-/* Project Card Element */
-.profile-dashboard__project-card {
-  border-left: 3px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.profile-dashboard__project-card:hover {
-  border-left-color: hsl(var(--primary));
-  background-color: hsl(var(--muted) / 0.3);
-}
-
 /* Header Block & Avatar Frame Element */
 .profile-header__avatar-frame {
   position: relative;
@@ -82,24 +62,6 @@
   background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
   z-index: -1;
   opacity: 0.8;
-}
-
-/* Stats Block & Card Element */
-.profile-stats__card {
-  position: relative;
-  overflow: hidden;
-}
-
-.profile-stats__card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 100px;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-  transform: skewX(-20deg) translateX(-150%);
-  transition: transform 0.5s;
 }
 
 /* Additional BEM-compliant utilities */

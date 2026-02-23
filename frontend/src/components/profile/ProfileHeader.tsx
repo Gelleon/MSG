@@ -66,7 +66,7 @@ export function ProfileHeader({ user, onAvatarUpload, onEditProfile }: ProfileHe
               </div>
 
               <div className="flex gap-3">
-                 <Button onClick={onEditProfile} className="shadow-sm gap-2">
+                 <Button onClick={onEditProfile} variant="outline" className="shadow-sm gap-2">
                   <Edit className="w-4 h-4" />
                   <span className="hidden sm:inline">{t('editProfile')}</span>
                 </Button>
@@ -82,22 +82,6 @@ export function ProfileHeader({ user, onAvatarUpload, onEditProfile }: ProfileHe
                 <Calendar className="w-4 h-4" />
                 {t('joined')} {joinDate}
               </div>
-            </div>
-          </div>
-
-          {/* Quick Stats Section (Desktop) */}
-          <div className="hidden md:flex gap-6 pb-2 mr-4">
-            <div className="text-center group/stat cursor-default">
-              <div className="text-2xl font-bold text-primary group-hover/stat:scale-110 transition-transform">124</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">{t('tasks')}</div>
-            </div>
-            <div className="text-center group/stat cursor-default">
-              <div className="text-2xl font-bold text-primary group-hover/stat:scale-110 transition-transform">12</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">{t('projects')}</div>
-            </div>
-            <div className="text-center group/stat cursor-default">
-              <div className="text-2xl font-bold text-primary group-hover/stat:scale-110 transition-transform">4.9</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">{t('rating')}</div>
             </div>
           </div>
         </div>

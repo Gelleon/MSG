@@ -12,7 +12,7 @@ export function ProfileInfo({ user }: ProfileInfoProps) {
   const t = useTranslations('Profile');
 
   // Mock data for missing fields
-  const mockPhone = '+7 (999) 123-45-67';
+  const displayPhone = user.phone || t('notProvided');
   const mockDepartment = 'IT Department';
   const mockLocation = 'Moscow HQ, Floor 5';
   const mockTimezone = 'GMT+3';
@@ -54,8 +54,8 @@ export function ProfileInfo({ user }: ProfileInfoProps) {
         <InfoItem 
           icon={Phone} 
           label={t('phone')} 
-          value={mockPhone} 
-          href={`tel:${mockPhone}`}
+          value={displayPhone} 
+          href={user.phone ? `tel:${user.phone}` : undefined}
         />
         <InfoItem 
           icon={Building} 
