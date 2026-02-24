@@ -8,6 +8,7 @@ jest.mock('@/lib/chat-store');
 jest.mock('@/lib/store');
 jest.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => 'ru',
 }));
 
 // Mock scrollIntoView

@@ -349,7 +349,7 @@ export default function AdminUsersPage() {
                         <td className="p-4 align-middle">
                             {user.position ? (locale === 'ru' ? user.position.nameRu : user.position.nameZh) : '-'}
                         </td>
-                        <td className="p-4 align-middle">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
+                        <td className="p-4 align-middle">{user.createdAt ? new Date(user.createdAt).toLocaleDateString(locale) : '-'}</td>
                         <td className="p-4 align-middle">
                             <span className="inline-flex h-2 w-2 rounded-full bg-green-500" />
                             <span className="ml-2">{t('active')}</span>

@@ -6,10 +6,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format } from 'date-fns';
 import { useChatStore } from '@/lib/chat-store';
 import { Loader2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale, useFormatter } from 'next-intl';
 
 interface MessageHistory {
   id: string;
@@ -30,6 +29,8 @@ export function MessageHistoryDialog({ open, onOpenChange, messageId, roomId }: 
   const { socket } = useChatStore();
   const t = useTranslations('Chat');
   const tCommon = useTranslations('Common');
+  const locale = useLocale();
+  const format = useFormatter();
 
   useEffect(() => {
     if (open && messageId && roomId && socket) {
@@ -62,7 +63,7 @@ export function MessageHistoryDialog({ open, onOpenChange, messageId, roomId }: 
                 <div key={item.id} className="relative pl-4 border-l-2 border-muted pb-4 last:pb-0">
                   <div className="absolute -left-[5px] top-0 h-2.5 w-2.5 rounded-full bg-muted-foreground/30" />
                   <div className="text-xs text-muted-foreground mb-1">
-                    {format(new Date(item.changedAt), 'PPpp')}
+                    {format.dateTime(new Date(item.changedAt), { dateStyle: 'medium', timeStyle: 'short' })}
                   </div>
                   <div className="text-sm whitespace-pre-wrap bg-muted/30 p-2 rounded-md">
                     {item.content}

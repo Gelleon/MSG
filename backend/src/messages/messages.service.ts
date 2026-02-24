@@ -32,10 +32,18 @@ export class MessagesService {
     const message = await this.prisma.message.create({
       data,
       include: {
-        sender: true,
+        sender: {
+          include: {
+            position: true,
+          },
+        },
         replyTo: {
           include: {
-            sender: true,
+            sender: {
+              include: {
+                position: true,
+              },
+            },
           },
         },
       },

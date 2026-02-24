@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useChatStore } from '@/lib/chat-store';
 import { useAuthStore } from '@/lib/store';
-import { cn, stringToColor } from '@/lib/utils';
+import { cn, stringToColor, getRoomDisplayName } from '@/lib/utils';
 import { RotateCw, Lock, MoreVertical, Search, Phone, Video, Languages, UserPlus, Hash, Shield, AlertTriangle, XCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -67,6 +67,7 @@ export default function ChatHeader() {
   if (!currentRoom) return null;
 
   const isPrivate = currentRoom.isPrivate;
+  const displayName = getRoomDisplayName(currentRoom, user?.id);
 
   // Roles allowed to start private session
   const canStartPrivate = !isPrivate && user?.role && ['OWNER', 'ADMIN', 'MANAGER'].includes(user.role.toUpperCase());
@@ -104,15 +105,15 @@ export default function ChatHeader() {
            <Avatar className={cn("h-10 w-10 border shadow-sm cursor-pointer hover:opacity-90 transition-opacity", isPrivate ? "border-primary/20" : "border-border/50")}>
               <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentRoom.id}`} />
               <AvatarFallback 
-                style={{ backgroundColor: isPrivate ? undefined : stringToColor(currentRoom.name, 70, 95), color: isPrivate ? undefined : stringToColor(currentRoom.name, 80, 40) }}
+                style={{ backgroundColor: isPrivate ? undefined : stringToColor(displayName, 70, 95), color: isPrivate ? undefined : stringToColor(displayName, 80, 40) }}
                 className={cn("font-bold text-xs", isPrivate ? "bg-secondary text-secondary-foreground" : "")}>
-                  {isPrivate ? <Lock className="w-4 h-4" /> : currentRoom.name.substring(0, 2).toUpperCase()}
+                  {isPrivate ? <Lock className="w-4 h-4" /> : displayName.substring(0, 2).toUpperCase()}
               </AvatarFallback>
            </Avatar>
            <div className="flex flex-col justify-center cursor-pointer group">
               <div className="flex items-center gap-2">
                 {isPrivate ? <Shield className="w-3.5 h-3.5 text-primary" /> : <Hash className="w-3.5 h-3.5 text-muted-foreground/70" />}
-                <h2 className="text-[17px] font-bold text-foreground leading-none tracking-tight group-hover:underline decoration-2 decoration-primary/30 underline-offset-4">{currentRoom.name}</h2>
+                <h2 className="text-[17px] font-bold text-foreground leading-none tracking-tight group-hover:underline decoration-2 decoration-primary/30 underline-offset-4">{displayName}</h2>
               </div>
               <span className="text-[13px] text-muted-foreground mt-1 flex items-center gap-1.5 truncate max-w-[300px]">
                 {currentRoom.description || (isPrivate ? tChat('encrypted') : tChat('publicChannel'))}

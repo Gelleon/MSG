@@ -41,13 +41,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const payload = this.jwtService.verify(token);
-      client.data.user = payload;
+      let user = payload;
 
-      // Join user specific room
       const userId = payload.sub || payload.userId;
       if (userId) {
+        try {
+          const dbUser = await this.usersService.findById(userId);
+          if (dbUser) {
+            user = { ...payload, ...dbUser, userId: dbUser.id };
+          }
+        } catch (err) {
+          console.error(`Failed to fetch user ${userId} in handleConnection`, err);
+        }
         client.join(`user_${userId}`);
       }
+
+      client.data.user = user;
 
       // Handle disconnecting event to access rooms before they are cleared
       client.on('disconnecting', () => {
@@ -433,7 +442,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.to(payload.roomId).emit('typingStart', {
       roomId: payload.roomId,
       userId: user.sub || user.userId,
-      username: user.username || user.name,
+      username: user.username,
+      name: user.name,
+      email: user.email,
     });
   }
 
@@ -451,7 +462,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.to(payload.roomId).emit('typingStop', {
       roomId: payload.roomId,
       userId: user.sub || user.userId,
-      username: user.username || user.name,
+      name: user.name,
+      username: user.username,
+      email: user.email,
     });
   }
 }

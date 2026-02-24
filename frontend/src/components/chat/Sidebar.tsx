@@ -49,7 +49,7 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 
-import { cn, stringToColor, getUserDisplayName } from '@/lib/utils';
+import { cn, stringToColor, getUserDisplayName, getRoomDisplayName } from '@/lib/utils';
 import { getAllUserColors, getUserColor, getColorByIndex } from '@/lib/color-utils';
 import { useAppearanceStore } from '@/lib/appearance-store';
 import { useTheme } from 'next-themes';
@@ -332,6 +332,8 @@ export default function Sidebar({ className }: { className?: string }) {
                 const isChild = !!room.parentRoomId;
                 const hasUnread = (room.unreadCount || 0) > 0;
                 
+               const displayName = getRoomDisplayName(room, user?.id);
+                
                 return (
                  <ContextMenu key={room.id}>
                    <ContextMenuTrigger asChild>
@@ -362,9 +364,9 @@ export default function Sidebar({ className }: { className?: string }) {
                            )}>
                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room.id}`} loading="lazy" decoding="async" />
                                <AvatarFallback 
-                                style={{ backgroundColor: isPrivate ? undefined : stringToColor(room.name, 70, 95), color: isPrivate ? undefined : stringToColor(room.name, 80, 40) }}
+                                style={{ backgroundColor: isPrivate ? undefined : stringToColor(displayName, 70, 95), color: isPrivate ? undefined : stringToColor(displayName, 80, 40) }}
                                 className={cn("text-xs font-bold", isPrivate ? "bg-secondary text-secondary-foreground" : "")}>
-                                    {isPrivate ? <Lock className="w-3.5 h-3.5" /> : room.name.substring(0, 2).toUpperCase()}
+                                    {isPrivate ? <Lock className="w-3.5 h-3.5" /> : displayName.substring(0, 2).toUpperCase()}
                                </AvatarFallback>
                            </Avatar>
                            {isChild && (
@@ -381,7 +383,7 @@ export default function Sidebar({ className }: { className?: string }) {
                                hasUnread ? "font-bold text-foreground" : "font-semibold",
                                isActive ? "text-foreground" : "text-foreground"
                            )}>
-                               {room.name}
+                               {displayName}
                            </span>
                        </div>
                          <div className="flex justify-between items-center gap-2">

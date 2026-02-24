@@ -432,7 +432,7 @@ export default function ChatArea() {
                                         resolvedTheme
                                     ) 
                                 }}>
-                                    {getUserDisplayName(typingUsers[currentRoomId].filter(u => u.userId !== user?.id)[0] as any)}
+                                    {getUserDisplayName(typingUsers[currentRoomId].filter(u => u.userId !== user?.id)[0])}
                                 </span>
                                 {` ${t('isTyping')}`}
                             </>

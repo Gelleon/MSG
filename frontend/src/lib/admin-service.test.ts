@@ -16,7 +16,7 @@ describe('adminService', () => {
       const params = { page: 1, limit: 10 };
       const result = await adminService.getUsers(params);
 
-      expect(api.get).toHaveBeenCalledWith('/users', { params });
+      expect(api.get).toHaveBeenCalledWith('/users/search', { params });
       expect(result).toEqual(mockResponse.data);
     });
   });

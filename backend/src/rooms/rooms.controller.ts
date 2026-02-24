@@ -114,7 +114,7 @@ export class RoomsController {
     @Request() req: any,
   ) {
     const userId = req.user.userId || req.user.sub;
-    const username = req.user.username || req.user.name;
+    const username = req.user.name || req.user.username;
 
     // Use server.to() to broadcast to everyone (frontend filters out self)
     // or exclude sender if we had their socket id, but via REST we don't have socket id.

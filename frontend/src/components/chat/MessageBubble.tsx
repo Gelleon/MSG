@@ -4,7 +4,6 @@ import { memo, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/lib/store';
 import { getApiBaseUrl } from '@/lib/api';
 import { logger } from '@/lib/logger';
-import { format } from 'date-fns';
 import { useTheme } from 'next-themes';
 import { getUserColor, getColorByIndex } from '@/lib/color-utils';
 import { useAppearanceStore } from '@/lib/appearance-store';
@@ -26,7 +25,7 @@ import {
 import { cn, getUserDisplayName } from '@/lib/utils';
 import { useChatStore, Message } from '@/lib/chat-store';
 import { Button } from '@/components/ui/button';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations, useLocale, useFormatter } from 'next-intl';
 import { toast } from "sonner";
 import {
   ContextMenu,
@@ -82,7 +81,8 @@ export default memo(function MessageBubble({
   const t = useTranslations('Chat');
   const tCommon = useTranslations('Common');
   const locale = useLocale();
-  
+  const format = useFormatter();
+
   const replyBtnRef = useRef<HTMLButtonElement>(null);
 
   // Monitoring for disappearing reply button
@@ -152,7 +152,7 @@ export default memo(function MessageBubble({
        {showDate && (
           <div className="flex justify-center my-6 sticky top-2 z-10">
              <span className="text-[11px] font-medium text-muted-foreground/80 bg-background/80 backdrop-blur-sm border border-border/50 px-3 py-1 rounded-full shadow-sm select-none">
-                {format(new Date(message.createdAt), 'MMMM d, yyyy')}
+                {format.dateTime(new Date(message.createdAt), { year: 'numeric', month: 'long', day: 'numeric' })}
              </span>
           </div>
        )}
@@ -203,7 +203,7 @@ export default memo(function MessageBubble({
                         <span className="text-xs font-bold truncate min-w-0">
                           {getUserDisplayName(message.sender)}
                         </span>
-                        {message.sender.position && (
+                        {message.sender?.position && (
                           <span className="ml-2 text-[11px] text-white font-medium px-2 py-0.5 rounded-md" style={{ backgroundColor: 'lab(33.9588% 50.4109 -83.9808)' }}>
                             {locale === 'ru' ? message.sender.position.nameRu : message.sender.position.nameZh}
                           </span>
@@ -365,14 +365,14 @@ export default memo(function MessageBubble({
                            )}
                        </button>
 
-                       {message.isEdited && (
-                           <span className="text-xs md:text-[10px] italic opacity-80 mr-1" title={message.updatedAt ? format(new Date(message.updatedAt), 'PPpp') : undefined}>
+                        {message.isEdited && (
+                           <span className="text-xs md:text-[10px] italic opacity-80 mr-1" title={message.updatedAt ? format.dateTime(new Date(message.updatedAt), { dateStyle: 'medium', timeStyle: 'short' }) : undefined}>
                                {t('edited')}
                            </span>
                        )}
 
                        <span className="text-xs md:text-[10px] font-medium">
-                          {format(new Date(message.createdAt), 'HH:mm')}
+                          {format.dateTime(new Date(message.createdAt), { hour: '2-digit', minute: '2-digit', hour12: false })}
                        </span>
                        
                        {isMe && (

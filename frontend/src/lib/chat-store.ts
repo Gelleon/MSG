@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import io, { Socket } from 'socket.io-client';
 import api, { getApiBaseUrl } from './api';
-import { useAuthStore } from './store';
+import { useAuthStore, User } from './store';
 import { toast } from 'sonner';
 
 export interface Message {
@@ -9,7 +9,7 @@ export interface Message {
   content: string;
   senderId: string;
   sender: { 
-    name: string; 
+    name: string | null; 
     email: string; 
     role?: string;
     position?: {
@@ -35,14 +35,18 @@ export interface RoomMember {
   roomId: string;
   lastReadAt: string;
   role?: string;
+  user?: User;
+  name?: string | null;
+  email?: string;
 }
 
-interface Room {
+export interface Room {
   id: string;
   name: string;
   description?: string;
   unreadCount?: number;
   members?: RoomMember[];
+  users?: User[];
   isPrivate?: boolean;
   parentRoomId?: string;
   parentRoom?: {
@@ -64,7 +68,7 @@ interface ChatState {
   
   isLoadingHistory: boolean;
   hasMoreMessages: boolean;
-  typingUsers: Record<string, { userId: string; username: string }[]>;
+  typingUsers: Record<string, { userId: string; username: string; name?: string; email?: string }[]>;
   
   connect: () => void;
   disconnect: () => void;
@@ -218,7 +222,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     });
 
-    socket.on('typingStart', ({ roomId, userId, username }: { roomId: string, userId: string, username: string }) => {
+    socket.on('typingStart', ({ roomId, userId, name, username, email }: { roomId: string, userId: string, name?: string, username: string, email?: string }) => {
         set((state) => {
             const roomTypingUsers = state.typingUsers[roomId] || [];
             if (roomTypingUsers.some(u => u.userId === userId)) {
@@ -227,7 +231,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             return {
                 typingUsers: {
                     ...state.typingUsers,
-                    [roomId]: [...roomTypingUsers, { userId, username }]
+                    [roomId]: [...roomTypingUsers, { userId, name, username, email }]
                 }
             };
         });

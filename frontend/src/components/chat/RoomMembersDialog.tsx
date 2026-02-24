@@ -24,6 +24,7 @@ import { useAppearanceStore } from '@/lib/appearance-store';
 interface RoomMember {
   id: string;
   name: string | null;
+  email?: string | null;
   role: string;
   joinedAt: string;
   status: 'online' | 'offline'; // This will be mocked for now as per backend
