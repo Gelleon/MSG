@@ -12,6 +12,8 @@ export interface User {
   role: string;
   emailNotificationsEnabled?: boolean;
   avatarUrl?: string;
+  status?: 'ONLINE' | 'DND' | 'OFFLINE';
+  lastSeen?: string;
   position?: {
     id: string;
     nameRu: string;

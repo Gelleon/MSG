@@ -79,7 +79,6 @@ export default function Sidebar({ className }: { className?: string }) {
   const tCommon = useTranslations('Common');
   const tDialogs = useTranslations('Dialogs');
   const tSettings = useTranslations('Settings');
-
   // Edit Dialog State
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [roomToEdit, setRoomToEdit] = useState<{id: string, name: string, description?: string} | null>(null);
@@ -463,10 +462,6 @@ export default function Sidebar({ className }: { className?: string }) {
                   >
                     {getUserDisplayName(user)}
                   </p>
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <p className="text-xs text-muted-foreground truncate">{tSidebar('online')}</p>
-                  </div>
                 </div>
                 <Settings className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
               </div>
@@ -474,7 +469,7 @@ export default function Sidebar({ className }: { className?: string }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent 
             align="end" 
-            className="w-56 mb-2 max-w-[calc(100vw-2rem)] overflow-x-hidden" 
+            className="w-64 mb-2 max-w-[calc(100vw-2rem)] overflow-x-hidden" 
             side={isMobile ? "top" : "right"}
           >
             <DropdownMenuLabel>{tSidebar('myAccount')}</DropdownMenuLabel>

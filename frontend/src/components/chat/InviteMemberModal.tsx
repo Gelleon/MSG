@@ -50,8 +50,10 @@ export default function InviteMemberModal({ isOpen, onClose, roomId }: InviteMem
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const data = await adminService.searchUsers(search);
-      setUsers(data);
+      const result = await adminService.searchUsers(search);
+      // Ensure result is an array
+      const usersData = Array.isArray(result) ? result : (result as any)?.data || [];
+      setUsers(usersData);
     } catch (error) {
       console.error(error);
       toast.error(t('fetchError'));

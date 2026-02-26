@@ -176,13 +176,13 @@ export default memo(function MessageBubble({
           )}
 
           <div className={cn(
-              "flex flex-col max-w-[80%] md:max-w-[75%] lg:max-w-[65%]",
+              "flex flex-col min-w-0 max-w-[calc(100vw-3.5rem)] sm:max-w-[80%] md:max-w-[75%] lg:max-w-[65%]",
               isMe ? "items-end" : "items-start"
           )}>
               <ContextMenu>
               <ContextMenuTrigger>
               <div className={cn(
-                  "relative px-4 py-2.5 text-[15px] shadow-sm transition-all duration-200 max-w-full border hover:shadow-md",
+                  "relative px-4 py-2.5 text-[15px] shadow-sm transition-all duration-200 max-w-full border hover:shadow-md min-w-0",
                 isMe 
                     ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm border-primary/20 shadow-md" 
                     : "bg-white dark:bg-zinc-900 text-foreground rounded-2xl rounded-tl-sm border-border hover:border-primary/20 shadow-sm",
@@ -291,14 +291,14 @@ export default memo(function MessageBubble({
 
                    {/* Message Content */}
                   {message.content && (
-                      <div className="whitespace-pre-wrap break-words leading-relaxed tracking-wide text-[15px] md:text-sm">
+                      <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] [word-break:break-word] leading-relaxed tracking-wide text-[15px] md:text-sm">
                           {message.content.split(/(@[\w\u0400-\u04FF]+)(?=\s|$|[.,!?;:])/g).map((part, index) => {
                               if (part.startsWith('@') && part.length > 1) {
                                   return (
                                       <span 
                                           key={index} 
                                           className={cn(
-                                              "font-semibold hover:underline cursor-pointer inline-flex items-center",
+                                              "font-semibold hover:underline cursor-pointer inline-flex items-center max-w-full break-all",
                                               "px-1.5 py-0.5 mx-0.5 rounded transition-all duration-200",
                                               "text-sm md:text-xs sm:text-sm",
                                               isMe 

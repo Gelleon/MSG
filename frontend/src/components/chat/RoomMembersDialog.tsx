@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,10 +24,12 @@ import { useAppearanceStore } from '@/lib/appearance-store';
 interface RoomMember {
   id: string;
   name: string | null;
+  username: string | null;
   email?: string | null;
   role: string;
   joinedAt: string;
-  status: 'online' | 'offline'; // This will be mocked for now as per backend
+  status?: 'ONLINE' | 'OFFLINE' | 'DND';
+  lastSeen?: string;
 }
 
 interface ActionLog {
@@ -84,8 +86,9 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
   const [logEndDate, setLogEndDate] = useState<string>('');
 
   const { user: currentUser } = useAuthStore();
-  const { socket } = useChatStore();
+  const { socket, userPresence, fetchUserPresence } = useChatStore();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [showOnlineOnly, setShowOnlineOnly] = useState(false);
   const [userToRemove, setUserToRemove] = useState<RoomMember | null>(null);
   const [removeReason, setRemoveReason] = useState('');
   const [removing, setRemoving] = useState(false);
@@ -111,33 +114,6 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
   }, [search, view, logSearch, logAction, logAdminId, logStartDate, logEndDate]);
 
   useEffect(() => {
-    if (!socket) return;
-
-    const handleUserRemoved = (data: { userId: string; roomId: string; reason?: string }) => {
-      if (data.roomId === roomId) {
-        setMembers(prev => prev.filter(m => m.id !== data.userId));
-        setTotal(prev => Math.max(0, prev - 1));
-        
-        // Refresh logs if viewing logs
-        if (view === 'logs') {
-            setLogsPage(1);
-            fetchLogs();
-        }
-
-        if (data.userId === currentUser?.id) {
-             onClose();
-             toast.error(`${t('youRemoved')}: ${data.reason || t('noReason')}`);
-        }
-      }
-    };
-
-    socket.on('userRemoved', handleUserRemoved);
-    return () => {
-      socket.off('userRemoved', handleUserRemoved);
-    };
-  }, [socket, roomId, currentUser, onClose, view, t]);
-
-  useEffect(() => {
     if (isOpen) {
         if (view === 'members') {
             fetchMembers();
@@ -161,6 +137,36 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
         setLogEndDate('');
     }
   }, [isOpen, page, search, view, logsPage, logSearch, logAction, logAdminId, logStartDate, logEndDate]);
+
+  useEffect(() => {
+    if (isOpen && view === 'members' && members.length > 0) {
+      members.forEach(member => {
+        if (member.id && typeof member.id === 'string' && member.id.length > 0) {
+          fetchUserPresence(member.id);
+        }
+      });
+    }
+  }, [isOpen, view, members, fetchUserPresence]);
+
+  const filteredMembers = useMemo(() => {
+    let result = members;
+    if (showOnlineOnly) {
+      result = result.filter(m => {
+        const presence = userPresence[m.id];
+        const status = presence?.status || m.status || 'OFFLINE';
+        return (status === 'ONLINE' || status === 'DND');
+      });
+    }
+    return result;
+  }, [members, showOnlineOnly, userPresence]);
+
+  const onlineCount = useMemo(() => {
+    return members.filter(m => {
+      const presence = userPresence[m.id];
+      const status = presence?.status || m.status || 'OFFLINE';
+      return status === 'ONLINE' || status === 'DND';
+    }).length;
+  }, [members, userPresence]);
 
   const handleRemoveClick = (member: RoomMember) => {
     setUserToRemove(member);
@@ -197,17 +203,19 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
 
   const confirmRemove = async () => {
     if (!userToRemove) return;
+    
     setRemoving(true);
     try {
       await api.delete(`/rooms/${roomId}/members/${userToRemove.id}`, {
-        params: { reason: removeReason }
+        data: { reason: removeReason }
       });
-      toast.success(t('removedSuccess', { name: getUserDisplayName(userToRemove) }));
+      toast.success(t('removeSuccess'));
       setConfirmOpen(false);
       setUserToRemove(null);
-      // Logs will be updated via socket or manual refresh if needed
+      setRemoveReason('');
+      fetchMembers(); // Refresh list
     } catch (error: any) {
-      console.error('Failed to remove user', error);
+      console.error('Failed to remove member:', error);
       toast.error(error.response?.data?.message || t('removeFail'));
     } finally {
       setRemoving(false);
@@ -230,7 +238,6 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
       } else {
         setMembers(prev => [...prev, ...res.data.data]);
       }
-      
       setTotal(res.data.total);
       setHasMore(page < res.data.totalPages);
     } catch (error) {
@@ -320,50 +327,71 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
         </DialogHeader>
 
         {view === 'members' ? (
-            <div className="px-6 py-2">
-            <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                placeholder={t('searchPlaceholder')}
-                className="pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                />
-            </div>
-            </div>
+             <div className="px-6 py-2 space-y-2">
+                 <div className="flex items-center justify-between">
+                     <div className="relative flex-1">
+                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                         <Input
+                             placeholder={t('searchPlaceholder')}
+                             className="pl-9"
+                             value={search}
+                             onChange={(e) => setSearch(e.target.value)}
+                         />
+                     </div>
+                     <Button
+                         variant={showOnlineOnly ? "secondary" : "ghost"}
+                         size="icon"
+                         className="ml-2"
+                         onClick={() => setShowOnlineOnly(!showOnlineOnly)}
+                         title={showOnlineOnly ? tCommon('showAll') : tCommon('showOnline')}
+                     >
+                         <Filter className={cn("h-4 w-4", showOnlineOnly && "text-green-500 fill-green-500")} />
+                     </Button>
+                 </div>
+                 <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                        <span className="flex h-2 w-2 rounded-full bg-green-500" />
+                        {t('onlineCount', { count: onlineCount })}
+                    </div>
+                    {showOnlineOnly && (
+                        <div className="flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                            {t('onlineFilterActive')}
+                        </div>
+                    )}
+                 </div>
+             </div>
         ) : (
-            <div className="px-6 py-2 space-y-2">
-                <div className="flex gap-2">
+            <div className="px-6 py-2">
+                <div className="flex items-center gap-2">
                     <div className="relative flex-1">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder={t('searchLogsPlaceholder')}
-                            className="pl-9 h-9 text-xs"
-                            value={logSearch}
-                            onChange={(e) => setLogSearch(e.target.value)}
+                        placeholder={t('searchLogsPlaceholder')}
+                        className="pl-9 h-9"
+                        value={logSearch}
+                        onChange={(e) => setLogSearch(e.target.value)}
                         />
                     </div>
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 gap-2">
+                            <Button variant="outline" size="icon" className="h-9 w-9">
                                 <Filter className="h-4 w-4" />
-                                {t('filters')}
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-80 p-4" align="end">
+                        <PopoverContent className="w-80" align="end">
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-medium">{t('filterAction')}</label>
+                                    <label className="text-xs font-medium">{t('actionType')}</label>
                                     <Select value={logAction} onValueChange={setLogAction}>
                                         <SelectTrigger className="h-8 text-xs">
-                                            <SelectValue placeholder={t('allActions')} />
+                                            <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">{t('allActions')}</SelectItem>
-                                            <SelectItem value="REMOVE_USER">{t('actionRemove')}</SelectItem>
-                                            <SelectItem value="ADD_USER">{t('actionAdd')}</SelectItem>
-                                            <SelectItem value="ROLE_CHANGED">{t('actionRole')}</SelectItem>
-                                            <SelectItem value="CREATE_ROOM">{t('actionCreate')}</SelectItem>
+                                            <SelectItem value="JOIN_ROOM">{t('actionJoin')}</SelectItem>
+                                            <SelectItem value="LEAVE_ROOM">{t('actionLeave')}</SelectItem>
+                                            <SelectItem value="REMOVE_MEMBER">{t('actionRemove')}</SelectItem>
+                                            <SelectItem value="CHANGE_ROLE">{t('actionRole')}</SelectItem>
                                             <SelectItem value="UPDATE_SETTINGS">{t('actionUpdate')}</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -411,109 +439,94 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
         <ScrollArea className="flex-1 p-6 pt-0" onScrollCapture={handleScroll}>
           {view === 'members' ? (
               <div className="space-y-4">
-                {members.length === 0 && !loading ? (
+                {filteredMembers.length === 0 && !loading ? (
                 <div className="text-center py-12 text-muted-foreground">
                     {t('noMembers')}
                 </div>
                 ) : (
                 <div className="space-y-3">
-                    {members.map((member) => (
-                    <div
-                        key={member.id}
-                        className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors group"
-                    >
-                        <div className="relative">
-                        <Avatar className="h-10 w-10">
-                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.id}`} />
-                            <AvatarFallback>
-                                {getUserDisplayName(member).substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                        </Avatar>
-                        <span className={cn(
-                            "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background",
-                            member.status === 'online' ? "bg-green-500" : "bg-gray-400"
-                        )} />
-                        </div>
+                    {filteredMembers.map((member) => {
+                        const presence = userPresence[member.id];
+                        const status = presence?.status || member.status || 'OFFLINE';
                         
-                        <div className="flex-1 min-w-0 pr-2">
-                        <div className="flex items-center gap-2 mb-1">
-                            <span 
-                                className="font-semibold truncate"
-                                style={{ 
-                                    color: (currentUser?.id === member.id && customColorIndex !== null) 
-                                        ? getColorByIndex(customColorIndex, resolvedTheme) 
-                                        : getUserColor(member.id, getUserDisplayName(member), resolvedTheme) 
-                                }}
+                        return (
+                            <div
+                                key={member.id}
+                                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors group"
                             >
-                            {getUserDisplayName(member)}
-                            </span>
-                            {member.role === 'ADMIN' && (
-                            <Shield className="h-3 w-3 text-primary shrink-0 fill-primary/20" />
-                            )}
-                        </div>
-                        <RoleBadge role={member.role} className="w-fit p-1.5 gap-2" />
-                        <div className="text-xs text-muted-foreground truncate flex items-center gap-2 mt-1">
-                            <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3 shrink-0" />
-                            <span className="truncate">
-                                {t('joined')} {format.dateTime(new Date(member.joinedAt), { year: 'numeric', month: 'short', day: 'numeric' })}
-                            </span>
-                            </span>
-                        </div>
-                        </div>
+                                <div className="relative">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.id}`} />
+                                    <AvatarFallback>
+                                        {getUserDisplayName(member).substring(0, 2).toUpperCase()}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <span className={cn(
+                                    "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background transition-colors",
+                                    status === 'ONLINE' ? "bg-green-500" : 
+                                    status === 'DND' ? "bg-red-500" : "bg-gray-400"
+                                )} />
+                                </div>
+                                
+                                <div className="flex-1 min-w-0 pr-2">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span 
+                                        className="font-semibold truncate"
+                                        style={{ 
+                                            color: (currentUser?.id === member.id && customColorIndex !== null) 
+                                                ? getColorByIndex(customColorIndex, resolvedTheme) 
+                                                : getUserColor(member.id, getUserDisplayName(member), resolvedTheme) 
+                                        }}
+                                    >
+                                    {getUserDisplayName(member)}
+                                    </span>
+                                    {member.role === 'ADMIN' && (
+                                    <Shield className="h-3 w-3 text-primary shrink-0 fill-primary/20" />
+                                    )}
+                                </div>
+                                <RoleBadge role={member.role} className="w-fit p-1.5 gap-2" />
+                                <div className="text-xs text-muted-foreground truncate flex items-center gap-2 mt-1">
+                                    <span className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">
+                                        {t('joined')} {format.dateTime(new Date(member.joinedAt), { year: 'numeric', month: 'short', day: 'numeric' })}
+                                    </span>
+                                    </span>
+                                </div>
+                                </div>
 
-                        <div className="flex items-center gap-2 ml-auto min-w-0 flex-wrap justify-end" style={{ marginRight: '3.5cm', transform: 'translateX(-1cm)' }}>
-                        {currentUser?.role?.toUpperCase() === 'ADMIN' && member.id !== currentUser.id && (
-                            <>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-8 text-xs gap-1 text-muted-foreground hover:text-primary min-w-0 max-w-[160px]"
+                                <div className="flex items-center gap-2 ml-auto min-w-0 flex-wrap justify-end" style={{ marginRight: '3.5cm', transform: 'translateX(-1cm)' }}>
+                                {currentUser?.role?.toUpperCase() === 'ADMIN' && member.id !== currentUser.id && (
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Select 
+                                            value={member.role} 
+                                            onValueChange={(val) => handleChangeRole(member.id, val)}
                                             disabled={changingRole === member.id}
                                         >
-                                            {changingRole === member.id ? (
-                                                <Loader2 className="h-3 w-3 animate-spin shrink-0" />
-                                            ) : (
-                                                <Shield className="h-3 w-3 shrink-0" />
-                                            )}
-                                            <span className="truncate">{t('changeRole')}</span>
+                                            <SelectTrigger className="h-7 w-[100px] text-[10px] px-2">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="ADMIN">{tCommon('roleAdmin')}</SelectItem>
+                                                <SelectItem value="MANAGER">{tCommon('roleManager')}</SelectItem>
+                                                <SelectItem value="CLIENT">{tCommon('roleClient')}</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => handleRemoveClick(member)}
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
                                         </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-56 p-2" align="end">
-                                        <div className="space-y-1">
-                                            {(['ADMIN', 'MANAGER', 'CLIENT'] as const).map((r) => (
-                                                <Button
-                                                    key={r}
-                                                    variant="ghost"
-                                                    className={cn(
-                                                        "w-full justify-start text-xs h-8",
-                                                        member.role?.toUpperCase() === r && "bg-accent"
-                                                    )}
-                                                    onClick={() => handleChangeRole(member.id, r)}
-                                                >
-                                                    <RoleBadge role={r} className="border-none bg-transparent p-0 shadow-none hover:bg-transparent hover:shadow-none" />
-                                                </Button>
-                                            ))}
-                                        </div>
-                                    </PopoverContent>
-                                </Popover>
-                                <Button
-                                    variant="destructive"
-                                    size="icon"
-                                    className="h-8 w-8 shrink-0 shadow-sm"
-                                    onClick={() => handleRemoveClick(member)}
-                                    title={t('remove')}
-                                    aria-label={t('remove')}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </>
-                        )}
-                        </div>
-                    </div>
-                    ))}
+                                    </div>
+                                )}
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
                 )}
                 
@@ -524,144 +537,141 @@ export default function RoomMembersDialog({ isOpen, onClose, roomId, roomName }:
                 )}
               </div>
           ) : (
-              <div className="space-y-4">
-                  {logs.length === 0 && !logsLoading ? (
-                      <div className="text-center py-12 text-muted-foreground">
-                          {t('noLogs')}
-                      </div>
-                  ) : (
-                      <div className="space-y-3">
-                          {logs.map((log) => (
-                              <div key={log.id} className="flex flex-col gap-1 p-3 rounded-lg border bg-card text-sm">
-                                  <div className="flex items-center justify-between">
-                                      <div className="flex-1">
-                                          <span className="font-medium">
-                                              {getUserDisplayName(log.admin)}
-                                          </span>{" "}
-                                          <span className="text-muted-foreground">
-                                              {log.action === "KICK" && t("kicked")}
-                                              {log.action === "BAN" && t("banned")}
-                                              {log.action === "UNBAN" && t("unbanned")}
-                                              {log.action === "MUTE" && t("muted")}
-                                              {log.action === "UNMUTE" && t("unmuted")}
-                                              {log.action === "CREATE_ROOM" && t("created")}
-                                              {log.action === "JOIN_ROOM" && t("joinedRoom")}
-                                              {log.action === "ADD_USER" && t("addedUser")}
-                                              {log.action === "UPDATE_SETTINGS" && t("updatedSettings")}
-                                              {log.action === "UPLOAD_FILE" && t("uploadedFile")}
-                                              {log.action === "REMOVE_USER" && t("removedUser")}
-                                              {log.action === "ROLE_CHANGED" && t("roleChanged")}
-                                          </span>
-                                          {log.target && log.target.id !== log.admin?.id && (
-                                            <>
-                                              {" "}
-                                              <span className="font-medium">
-                                                  {getUserDisplayName(log.target)}
-                                              </span>
-                                            </>
-                                          )}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground whitespace-nowrap">
-                                          {format.dateTime(new Date(log.createdAt), { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
-                                      </div>
-                                  </div>
-                                  
-                                  {log.action === 'ROLE_CHANGED' && log.previousRole && log.newRole && (
-                                      <div className="flex items-center gap-2 mt-1">
-                                          <RoleBadge role={log.previousRole} className="h-6 p-1 gap-1 text-[10px] border-none opacity-70" />
-                                          <span className="text-muted-foreground">→</span>
-                                          <RoleBadge role={log.newRole} className="h-6 p-1 gap-1 text-[10px] border-none" />
-                                      </div>
-                                  )}
+            <div className="space-y-3">
+                {logs.length === 0 && !logsLoading ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                        {t('noLogs')}
+                    </div>
+                ) : (
+                    logs.map((log) => (
+                        <div key={log.id} className="p-3 rounded-lg border bg-card text-xs space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="font-semibold text-primary uppercase">
+                                    {t(`action${log.action.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('')}`)}
+                                </span>
+                                <span className="text-muted-foreground flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {format.dateTime(new Date(log.createdAt), { 
+                                        month: 'short', 
+                                        day: 'numeric', 
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                    })}
+                                </span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1">
+                                    <span className="text-[10px] text-muted-foreground block uppercase font-medium">{t('logAdmin')}</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <Avatar className="h-5 w-5">
+                                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${log.admin?.id}`} />
+                                            <AvatarFallback className="text-[8px]">{getUserDisplayName(log.admin as any).substring(0, 2)}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="truncate font-medium">{getUserDisplayName(log.admin as any)}</span>
+                                    </div>
+                                </div>
+                                {log.target && (
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] text-muted-foreground block uppercase font-medium">{t('logTarget')}</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <Avatar className="h-5 w-5">
+                                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${log.target.id}`} />
+                                                <AvatarFallback className="text-[8px]">{getUserDisplayName(log.target as any).substring(0, 2)}</AvatarFallback>
+                                            </Avatar>
+                                            <span className="truncate font-medium">{getUserDisplayName(log.target as any)}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
-                                  {(log.ipAddress || log.userAgent) && (
-                                      <div className="flex items-center gap-3 mt-1 pt-1 border-t border-dashed">
-                                          {log.ipAddress && (
-                                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                                  <Shield className="h-2.5 w-2.5" />
-                                                  {log.ipAddress}
-                                              </span>
-                                          )}
-                                          {log.userAgent && (
-                                              <span className="text-[10px] text-muted-foreground flex items-center gap-1 truncate max-w-[200px]" title={log.userAgent}>
-                                                  <Clock className="h-2.5 w-2.5" />
-                                                  {log.userAgent}
-                                              </span>
-                                          )}
-                                      </div>
-                                  )}
-                              </div>
-                          ))}
-                      </div>
-                  )}
-                   {logsLoading && (
+                            {log.details && (
+                                <div className="bg-muted/50 p-2 rounded border-l-2 border-primary/30 text-muted-foreground italic">
+                                    {log.details}
+                                </div>
+                            )}
+
+                            {(log.previousRole || log.newRole) && (
+                                <div className="flex items-center gap-2 pt-1 border-t border-dashed">
+                                    <RoleBadge role={log.previousRole || ''} className="h-5 text-[9px]" />
+                                    <CornerDownRight className="h-3 w-3 text-muted-foreground" />
+                                    <RoleBadge role={log.newRole || ''} className="h-5 text-[9px]" />
+                                </div>
+                            )}
+                        </div>
+                    ))
+                )}
+                {logsLoading && (
                     <div className="flex justify-center py-4">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
-                    )}
-              </div>
+                )}
+            </div>
           )}
         </ScrollArea>
       </DialogContent>
     </Dialog>
 
+    {/* Remove Member Confirmation */}
     <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-5 w-5" />
-            {t('removeTitle')}
-          </DialogTitle>
-          <DialogDescription>
-            {t('removeDesc', { name: getUserDisplayName(userToRemove) })}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4">
-          <label className="text-sm font-medium mb-2 block">{t('reasonLabel')}</label>
-          <Textarea
-            placeholder={t('reasonPlaceholder')}
-            value={removeReason}
-            onChange={(e) => setRemoveReason(e.target.value)}
-          />
-        </div>
-        <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
-          <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={removing} className="w-full sm:w-auto">{tCommon('cancel')}</Button>
-          <Button variant="destructive" onClick={confirmRemove} disabled={removing} className="w-full sm:w-auto">
-            {removing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t('remove')}
-          </Button>
-        </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="h-5 w-5" />
+                    {t('removeTitle')}
+                </DialogTitle>
+                <DialogDescription>
+                    {t('removeDesc', { name: userToRemove ? getUserDisplayName(userToRemove) : '' })}
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+                <label className="text-sm font-medium mb-2 block">{t('reasonLabel')}</label>
+                <Textarea 
+                    placeholder={t('reasonPlaceholder')}
+                    value={removeReason}
+                    onChange={(e) => setRemoveReason(e.target.value)}
+                    className="min-h-[100px]"
+                />
+            </div>
+            <DialogFooter>
+                <Button variant="ghost" onClick={() => setConfirmOpen(false)} disabled={removing}>
+                    {t('cancel')}
+                </Button>
+                <Button variant="destructive" onClick={confirmRemove} disabled={removing}>
+                    {removing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    {t('remove')}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 
-        <Dialog open={!!roleToConfirm} onOpenChange={(open) => !open && setRoleToConfirm(null)}>
-            <DialogContent className="sm:max-w-[400px]">
-                <DialogHeader>
-                    <DialogTitle>{t('changeRole')}</DialogTitle>
-                    <DialogDescription>
-                        {t('changeRoleDesc', { 
-                            name: roleToConfirm ? getUserDisplayName(members.find(m => m.id === roleToConfirm.userId)) : '',
-                            role: roleToConfirm ? t(`Roles.${roleToConfirm.role.toLowerCase()}` as any) : ''
-                        })}
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="gap-3 sm:gap-2 mt-2">
-                    <Button 
-                        variant="outline" 
-                        onClick={() => setRoleToConfirm(null)}
-                        className="flex-1 sm:flex-none min-w-[100px]"
-                    >
-                        {t('cancel')}
-                    </Button>
-                    <Button 
-                        onClick={confirmRoleChange}
-                        className="flex-1 sm:flex-none min-w-[100px]"
-                    >
-                        {t('confirm')}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+    {/* Role Change Confirmation */}
+    <Dialog open={!!roleToConfirm} onOpenChange={(open) => !open && setRoleToConfirm(null)}>
+        <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-primary" />
+                    {t('changeRole')}
+                </DialogTitle>
+                <DialogDescription>
+                    {t('changeRoleDesc', { 
+                        name: roleToConfirm ? getUserDisplayName(members.find(m => m.id === roleToConfirm.userId) as any) : '',
+                        role: roleToConfirm ? t(`Roles.${roleToConfirm.role.toLowerCase()}`) : ''
+                    })}
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+                <Button variant="ghost" onClick={() => setRoleToConfirm(null)}>
+                    {t('cancel')}
+                </Button>
+                <Button variant="default" onClick={confirmRoleChange}>
+                    {t('confirm')}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
     </>
   );
 }
+
+import { CornerDownRight } from 'lucide-react';

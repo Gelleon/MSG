@@ -25,7 +25,9 @@
     "email": "邮箱",
     "password": "密码",
     "language": "语言",
-    "dashboard": "仪表板"
+    "dashboard": "仪表板",
+    "showOnline": "仅看在线",
+    "showAll": "查看全部"
   },
   "Auth": {
     "login": "登录",
@@ -246,10 +248,16 @@
     "unmuted": "取消禁言",
     "removedUser": "移除了一名成员",
     "roleChanged": "更改了角色",
+    "onlineCount": "在线人数: {count}",
+    "showOnlineOnly": "仅看在线",
+    "onlineFilterActive": "过滤器：仅限在线",
     "searchLogsPlaceholder": "搜索日志...",
     "filters": "过滤器",
+    "actionType": "操作类型",
     "filterAction": "操作",
     "allActions": "所有操作",
+    "actionJoin": "加入",
+    "actionLeave": "退出",
     "actionRemove": "移除",
     "actionAdd": "添加",
     "actionRole": "更改角色",
@@ -309,7 +317,16 @@
     "statistics": "统计",
     "save": "保存",
     "saving": "保存中...",
-    "notProvided": "未提供"
+    "notProvided": "未提供",
+    "status": "状态",
+    "online": "在线",
+    "offline": "离线",
+    "dnd": "请勿打扰",
+    "lastSeen": "上次在线：{time}",
+    "justNow": "刚刚",
+    "minutesAgo": "{count} 分钟前",
+    "hoursAgo": "{count} 小时前",
+    "daysAgo": "{count} 天前"
   },
   "Dialogs": {
     "createRoom": {
@@ -390,6 +407,10 @@
     "linkHelp": "此链接24小时内有效，且仅可使用一次。",
     "generateNew": "生成新链接",
     "failedGenerate": "生成邀请失败",
-    "copied": "链接已复制"
+    "copied": "链接已复制",
+    "RoomMembers": {
+      "logAdmin": "管理员",
+      "logTarget": "目标"
+    }
   }
 }

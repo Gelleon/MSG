@@ -69,6 +69,7 @@ interface ChatState {
   isLoadingHistory: boolean;
   hasMoreMessages: boolean;
   typingUsers: Record<string, { userId: string; username: string; name?: string; email?: string }[]>;
+  userPresence: Record<string, { status: 'ONLINE' | 'DND' | 'OFFLINE'; lastSeen: string; updatedAt: number }>;
   
   connect: () => void;
   disconnect: () => void;
@@ -82,6 +83,8 @@ interface ChatState {
   sendMessage: (content: string, attachmentUrl?: string, attachmentType?: string, attachmentName?: string) => void;
   startTyping: (roomId: string) => void;
   stopTyping: (roomId: string) => void;
+  updateStatus: (status: 'ONLINE' | 'DND' | 'OFFLINE') => void;
+  fetchUserPresence: (userId: string) => Promise<void>;
   editMessage: (messageId: string, content: string) => void;
   deleteMessage: (messageId: string) => void;
   addMessage: (message: Message) => void;
@@ -108,7 +111,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoadingHistory: false,
   hasMoreMessages: true,
   typingUsers: {},
-
+  userPresence: {},
+  
   setTranslationTargetLang: (lang: string) => set({ translationTargetLang: lang }),
   setReplyingTo: (message: Message | null) => set({ replyingTo: message }),
   fetchReplyMessage: async (messageId: string) => {
@@ -140,19 +144,63 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (!token) return;
 
     const socket = io(getApiBaseUrl(), {
-      extraHeaders: {
-        Authorization: `Bearer ${token}`,
+      auth: {
+        token,
       },
     });
 
     socket.on('connect', () => {
       console.log('Connected to WebSocket');
       set({ isConnected: true });
+
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser?.id) {
+        const now = new Date().toISOString();
+        set(state => ({
+          userPresence: {
+            ...state.userPresence,
+            [currentUser.id]: { status: 'ONLINE', lastSeen: now, updatedAt: Date.now() }
+          }
+        }));
+        useAuthStore.getState().updateUser({ status: 'ONLINE', lastSeen: now });
+      }
+
+      const heartbeatInterval = setInterval(() => {
+        const { socket, isConnected } = get();
+        if (socket && isConnected) {
+          socket.emit('heartbeat');
+        }
+      }, 30000);
+
+      socket.on('disconnect', () => {
+        clearInterval(heartbeatInterval);
+        console.log('Disconnected from WebSocket');
+        set({ isConnected: false });
+        const disconnectedUser = useAuthStore.getState().user;
+        if (disconnectedUser?.id) {
+          const now = new Date().toISOString();
+          set(state => ({
+            userPresence: {
+              ...state.userPresence,
+              [disconnectedUser.id]: { status: 'OFFLINE', lastSeen: now, updatedAt: Date.now() }
+            }
+          }));
+          useAuthStore.getState().updateUser({ status: 'OFFLINE', lastSeen: now });
+        }
+      });
     });
 
-    socket.on('disconnect', () => {
-      console.log('Disconnected from WebSocket');
-      set({ isConnected: false });
+    socket.on('userStatusChanged', ({ userId, status, lastSeen }: { userId: string, status: 'ONLINE' | 'DND' | 'OFFLINE', lastSeen: string }) => {
+      set(state => ({
+        userPresence: {
+          ...state.userPresence,
+          [userId]: { status, lastSeen, updatedAt: Date.now() }
+        }
+      }));
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser?.id === userId) {
+        useAuthStore.getState().updateUser({ status, lastSeen });
+      }
     });
 
     socket.on('error', (error: string) => {
@@ -480,6 +528,61 @@ export const useChatStore = create<ChatState>((set, get) => ({
         socket.emit('typingStop', { roomId });
     } else {
         api.post(`/rooms/${roomId}/typing`, { status: false }).catch(console.error);
+    }
+  },
+
+  updateStatus: (status: 'ONLINE' | 'DND' | 'OFFLINE') => {
+    const { socket, isConnected } = get();
+    if (socket && isConnected) {
+      socket.emit('updateStatus', status);
+    }
+  },
+
+  fetchUserPresence: async (userId: string) => {
+    if (!userId) {
+      console.warn('[chat-store] fetchUserPresence called with empty userId');
+      return;
+    }
+
+    const presence = get().userPresence[userId];
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    // Use cache if it's fresh (less than 5 minutes old)
+    if (presence && (Date.now() - presence.updatedAt < fiveMinutes)) {
+      return;
+    }
+    
+    try {
+      console.log(`[chat-store] Fetching presence for user: ${userId}`);
+      const response = await api.get(`/users/${userId}/status`);
+      if (response.data) {
+        console.log(`[chat-store] Received presence for ${userId}:`, response.data);
+        set(state => ({
+          userPresence: {
+            ...state.userPresence,
+            [userId]: {
+              status: response.data.status,
+              lastSeen: response.data.lastSeen,
+              updatedAt: Date.now()
+            }
+          }
+        }));
+      }
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        set(state => ({
+          userPresence: {
+            ...state.userPresence,
+            [userId]: {
+              status: 'OFFLINE',
+              lastSeen: '',
+              updatedAt: Date.now()
+            }
+          }
+        }));
+        return;
+      }
+      console.error(`[chat-store] Failed to fetch user presence for ${userId}:`, error);
     }
   },
 

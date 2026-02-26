@@ -343,11 +343,11 @@ export default function ChatArea() {
     >
       
       <ScrollArea 
-        className="flex-1 min-h-0 px-4 md:px-6" 
+        className="flex-1 min-h-0 px-[3vw] sm:px-4 md:px-6 overflow-x-hidden" 
         onScrollCapture={handleScrollCapture}
         onWheelCapture={handleWheelCapture}
       >
-        <div ref={contentRef} className="space-y-6 pb-4 max-w-4xl mx-auto w-full pt-6">
+        <div ref={contentRef} className="space-y-6 pb-4 max-w-full sm:max-w-4xl mx-auto w-full min-w-0 pt-6">
           <div ref={topRef} className="h-px w-full" />
           
           {hasMoreMessages && !isLoadingHistory && (

@@ -21,6 +21,12 @@ export const metadata: Metadata = {
   description: "Multilingual Chat Application",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default async function LocaleLayout({
   children,
   params
