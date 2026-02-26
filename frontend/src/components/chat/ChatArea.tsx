@@ -347,7 +347,7 @@ export default function ChatArea() {
         onScrollCapture={handleScrollCapture}
         onWheelCapture={handleWheelCapture}
       >
-        <div ref={contentRef} className="space-y-6 pb-4 max-w-full sm:max-w-4xl mx-auto w-full min-w-0 pt-6">
+        <div ref={contentRef} className="space-y-6 pb-4 max-w-full sm:max-w-4xl mx-auto w-full min-w-0 pt-6 overflow-x-hidden">
           <div ref={topRef} className="h-px w-full" />
           
           {hasMoreMessages && !isLoadingHistory && (

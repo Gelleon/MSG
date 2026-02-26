@@ -176,7 +176,7 @@ export default memo(function MessageBubble({
           )}
 
           <div className={cn(
-              "flex flex-col min-w-0 max-w-[calc(100vw-3.5rem)] sm:max-w-[80%] md:max-w-[75%] lg:max-w-[65%]",
+              "flex flex-col min-w-0 max-w-[92%] sm:max-w-[80%] md:max-w-[75%] lg:max-w-[65%]",
               isMe ? "items-end" : "items-start"
           )}>
               <ContextMenu>
