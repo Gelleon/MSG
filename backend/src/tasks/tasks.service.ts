@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RoomsService } from '../rooms/rooms.service';
 import { ChatGateway } from '../chat/chat.gateway';
+import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class TasksService {
@@ -10,7 +12,52 @@ export class TasksService {
   constructor(
     private roomsService: RoomsService,
     private chatGateway: ChatGateway,
+    private prisma: PrismaService,
   ) {}
+
+  // Check for inactive users every 5 minutes
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async handleUserPresenceCleanup() {
+    this.logger.debug('Checking for inactive users...');
+
+    // Threshold: 15 minutes of inactivity
+    const threshold = new Date(Date.now() - 15 * 60 * 1000);
+
+    try {
+      const inactiveUsers = await this.prisma.user.findMany({
+        where: {
+          status: 'ONLINE',
+          lastSeen: {
+            lt: threshold,
+          },
+        } as Prisma.UserWhereInput,
+        select: {
+          id: true,
+        },
+      });
+
+      if (inactiveUsers.length > 0) {
+        this.logger.log(
+          `Found ${inactiveUsers.length} inactive users. Setting to OFFLINE...`,
+        );
+
+        for (const user of inactiveUsers) {
+          await this.prisma.user.update({
+            where: { id: user.id },
+            data: { status: 'OFFLINE' } as Prisma.UserUpdateInput,
+          });
+
+          this.chatGateway.server.emit('userStatusChanged', {
+            userId: user.id,
+            status: 'OFFLINE',
+            lastSeen: new Date(),
+          });
+        }
+      }
+    } catch (error) {
+      this.logger.error('Error in user presence cleanup task', error);
+    }
+  }
 
   // Check every hour
   @Cron(CronExpression.EVERY_HOUR)

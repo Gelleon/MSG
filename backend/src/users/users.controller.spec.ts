@@ -52,12 +52,17 @@ describe('UsersController', () => {
       mockUsersService.findAll.mockResolvedValue({ data: users, total: 2 });
 
       const req = { user: { userId: 'current-user-id' } };
-      const result = await controller.searchUsers('User', req);
+      const result = await controller.searchUsers('User', '1', '50', req);
 
-      expect(result).toHaveLength(2);
-      expect(result[0]).not.toHaveProperty('email');
-      expect(result[1]).not.toHaveProperty('email');
-      expect(result[0]).toEqual({ id: '1', name: 'User 1', role: 'USER' });
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]).toHaveProperty('email');
+      expect(result.data[1]).toHaveProperty('email');
+      expect(result.data[0]).toMatchObject({
+        id: '1',
+        name: 'User 1',
+        email: 'user1@example.com',
+        role: 'USER',
+      });
     });
   });
 

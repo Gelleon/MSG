@@ -1,4 +1,9 @@
-import { Injectable, Inject, forwardRef, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  forwardRef,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { ChatGateway } from '../chat/chat.gateway';
@@ -48,7 +53,11 @@ export class RoomsService {
     return trimmedName;
   }
 
-  async create(data: Prisma.RoomUncheckedCreateInput, creatorId?: string, metadata?: { ipAddress?: string; userAgent?: string }) {
+  async create(
+    data: Prisma.RoomUncheckedCreateInput,
+    creatorId?: string,
+    metadata?: { ipAddress?: string; userAgent?: string },
+  ) {
     const validatedName = await this.validateRoomName(data.name);
     try {
       return await this.prisma.$transaction(async (tx) => {
@@ -128,7 +137,9 @@ export class RoomsService {
 
     if (user) {
       try {
-        const counts = await this.prisma.$queryRaw<Array<{ roomId: string; count: bigint }>>`
+        const counts = await this.prisma.$queryRaw<
+          Array<{ roomId: string; count: bigint }>
+        >`
           SELECT 
             rm.roomId, 
             COUNT(m.id) as count
@@ -137,7 +148,7 @@ export class RoomsService {
           WHERE rm.userId = ${user.userId}
           GROUP BY rm.roomId
         `;
-        
+
         const countMap = new Map<string, number>();
         counts.forEach((row) => {
           countMap.set(row.roomId, Number(row.count));
@@ -261,8 +272,15 @@ export class RoomsService {
     });
   }
 
-  async addUser(roomId: string, userId: string, invitationCode?: string, metadata?: { ipAddress?: string; userAgent?: string }) {
-    console.log(`[RoomsService.addUser] Adding user ${userId} to room ${roomId} (code: ${invitationCode || 'none'})`);
+  async addUser(
+    roomId: string,
+    userId: string,
+    invitationCode?: string,
+    metadata?: { ipAddress?: string; userAgent?: string },
+  ) {
+    console.log(
+      `[RoomsService.addUser] Adding user ${userId} to room ${roomId} (code: ${invitationCode || 'none'})`,
+    );
 
     const room = await this.prisma.room.findUnique({
       where: { id: roomId },
@@ -285,13 +303,20 @@ export class RoomsService {
 
     if (invitationCode) {
       try {
-        const result = await this.invitationsService.validateAndAccept(invitationCode, userId);
+        const result = await this.invitationsService.validateAndAccept(
+          invitationCode,
+          userId,
+        );
         if (result.roomId !== roomId) {
-          throw new BadRequestException('Invitation code is for a different room');
+          throw new BadRequestException(
+            'Invitation code is for a different room',
+          );
         }
         return this.findOne(roomId);
       } catch (error) {
-        throw new BadRequestException(error.message || 'Invalid invitation code');
+        throw new BadRequestException(
+          error.message || 'Invalid invitation code',
+        );
       }
     }
 
@@ -300,15 +325,19 @@ export class RoomsService {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
       });
-      
+
       if (user && user.role && user.role.toUpperCase() === 'CLIENT') {
-        console.warn(`[RoomsService.addUser] Client ${userId} tried to join private room ${roomId}`);
+        console.warn(
+          `[RoomsService.addUser] Client ${userId} tried to join private room ${roomId}`,
+        );
         throw new Error('Clients cannot be added to private rooms');
       }
     }
 
     if (!isUserInRoom) {
-      console.log(`[RoomsService.addUser] Creating membership for user ${userId} in room ${roomId}`);
+      console.log(
+        `[RoomsService.addUser] Creating membership for user ${userId} in room ${roomId}`,
+      );
       await this.prisma.$transaction(async (tx) => {
         await tx.roomMember.create({
           data: {
@@ -330,7 +359,9 @@ export class RoomsService {
         });
       });
     } else {
-      console.log(`[RoomsService.addUser] User ${userId} is already in room ${roomId}`);
+      console.log(
+        `[RoomsService.addUser] User ${userId} is already in room ${roomId}`,
+      );
     }
 
     // Return the full room object using findOne to ensure consistency
@@ -348,7 +379,12 @@ export class RoomsService {
     });
   }
 
-  async addUsers(roomId: string, userIds: string[], adminId?: string, metadata?: { ipAddress?: string; userAgent?: string }) {
+  async addUsers(
+    roomId: string,
+    userIds: string[],
+    adminId?: string,
+    metadata?: { ipAddress?: string; userAgent?: string },
+  ) {
     const room = await this.prisma.room.findUnique({
       where: { id: roomId },
       include: { members: true },
@@ -362,11 +398,13 @@ export class RoomsService {
     if (room.isPrivate) {
       const users = await this.prisma.user.findMany({
         where: {
-          id: { in: userIds }
-        }
+          id: { in: userIds },
+        },
       });
 
-      const hasClient = users.some(u => u.role && u.role.toUpperCase() === 'CLIENT');
+      const hasClient = users.some(
+        (u) => u.role && u.role.toUpperCase() === 'CLIENT',
+      );
       if (hasClient) {
         throw new Error('Clients cannot be added to private rooms');
       }
@@ -424,7 +462,11 @@ export class RoomsService {
       }
 
       // If room is private, only members or admins/managers can view members
-      if (room.isPrivate && requestingUser.role !== 'ADMIN' && requestingUser.role !== 'MANAGER') {
+      if (
+        room.isPrivate &&
+        requestingUser.role !== 'ADMIN' &&
+        requestingUser.role !== 'MANAGER'
+      ) {
         const userId = requestingUser.userId || requestingUser.sub;
         const isMember = await this.prisma.roomMember.findFirst({
           where: {
@@ -434,7 +476,9 @@ export class RoomsService {
         });
 
         if (!isMember) {
-          throw new Error('Access denied: You are not a member of this private room');
+          throw new Error(
+            'Access denied: You are not a member of this private room',
+          );
         }
       }
     }
@@ -453,7 +497,16 @@ export class RoomsService {
       };
     }
 
-    const [total, members] = await Promise.all([
+    const userSelect = {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      lastSeen: true,
+    } as Prisma.UserSelect;
+
+    const [total, members] = (await Promise.all([
       this.prisma.roomMember.count({ where }),
       this.prisma.roomMember.findMany({
         where,
@@ -461,19 +514,21 @@ export class RoomsService {
         take: limit,
         include: {
           user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-            },
+            select: userSelect,
           },
         },
         orderBy: {
           joinedAt: 'desc',
         },
       }),
-    ]);
+    ])) as [
+      number,
+      Array<
+        Prisma.RoomMemberGetPayload<{
+          include: { user: { select: Prisma.UserSelect } };
+        }>
+      >,
+    ];
 
     return {
       data: members.map((m) => ({
@@ -486,7 +541,12 @@ export class RoomsService {
     };
   }
 
-  async update(id: string, data: Prisma.RoomUpdateInput, userId?: string, metadata?: { ipAddress?: string; userAgent?: string }) {
+  async update(
+    id: string,
+    data: Prisma.RoomUpdateInput,
+    userId?: string,
+    metadata?: { ipAddress?: string; userAgent?: string },
+  ) {
     if (typeof data.name === 'string') {
       data.name = await this.validateRoomName(data.name, id);
     }
@@ -633,9 +693,9 @@ export class RoomsService {
     },
   ) {
     const skip = (page - 1) * limit;
-    
+
     const where: Prisma.ActionLogWhereInput = { roomId };
-    
+
     if (filters?.search) {
       where.OR = [
         { admin: { name: { contains: filters.search } } },
@@ -643,15 +703,15 @@ export class RoomsService {
         { details: { contains: filters.search } },
       ];
     }
-    
+
     if (filters?.action && filters.action.length > 0) {
       where.action = { in: filters.action };
     }
-    
+
     if (filters?.adminId) {
       where.adminId = filters.adminId;
     }
-    
+
     if (filters?.startDate || filters?.endDate) {
       where.createdAt = {};
       if (filters.startDate) where.createdAt.gte = filters.startDate;

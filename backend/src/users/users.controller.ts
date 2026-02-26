@@ -14,6 +14,7 @@ import {
   Res,
   Header,
   Delete,
+  NotFoundException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -35,7 +36,7 @@ export class UsersController {
     @Query('search') search: string = '',
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '50',
-    @Request() req: any
+    @Request() req: any,
   ) {
     const currentUserId = req.user.userId || req.user.sub;
     const skip = (Number(page) - 1) * Number(limit);
@@ -45,9 +46,7 @@ export class UsersController {
       id: { not: currentUserId },
       ...(search
         ? {
-            OR: [
-              { name: { contains: search } },
-            ],
+            OR: [{ name: { contains: search } }],
           }
         : {}),
     };
@@ -201,12 +200,32 @@ export class UsersController {
       ),
     ].join('\n');
 
-    res.send(csv);
+    return res.send(csv);
   }
 
   @Get('profile')
   getProfile(@Request() req: any) {
     return req.user;
+  }
+
+  @Get(':id/status')
+  async getStatus(@Param('id') id: string) {
+    this.logger.log(`Received status request for user ID: ${id}`);
+    const user = await this.usersService.findById(id);
+    if (!user) {
+      this.logger.warn(`User with ID ${id} not found for status request`);
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    const presenceUser = user as {
+      id: string;
+      status?: string | null;
+      lastSeen?: Date | null;
+    };
+    return {
+      userId: presenceUser.id,
+      status: presenceUser.status ?? 'OFFLINE',
+      lastSeen: presenceUser.lastSeen ?? null,
+    };
   }
 
   @Get(':id')

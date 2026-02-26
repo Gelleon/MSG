@@ -5,10 +5,7 @@ import { FilesModule } from '../files/files.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [
-    PrismaModule,
-    FilesModule,
-  ],
+  imports: [PrismaModule, FilesModule],
   providers: [CleanupService],
 })
 export class CleanupModule {}

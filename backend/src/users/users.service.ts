@@ -88,6 +88,25 @@ export class UsersService {
     });
   }
 
+  async updateStatus(userId: string, status: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        status,
+        lastSeen: new Date(),
+      },
+    });
+  }
+
+  async updateLastSeen(userId: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        lastSeen: new Date(),
+      },
+    });
+  }
+
   async findAll(
     params: {
       skip?: number;

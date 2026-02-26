@@ -88,7 +88,6 @@ describe('RoomsService', () => {
     invitationsService = module.get<InvitationsService>(InvitationsService);
   });
 
-
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -236,7 +235,9 @@ describe('RoomsService', () => {
     });
 
     it('should update room description successfully', async () => {
-      const updateDto: Prisma.RoomUpdateInput = { description: 'New Description' };
+      const updateDto: Prisma.RoomUpdateInput = {
+        description: 'New Description',
+      };
       mockPrismaService.room.update.mockResolvedValue({
         id: 'room-id',
         name: 'Existing Name',
@@ -244,7 +245,11 @@ describe('RoomsService', () => {
       });
 
       const result = await service.update('room-id', updateDto);
-      expect(result).toEqual({ id: 'room-id', name: 'Existing Name', description: 'New Description' });
+      expect(result).toEqual({
+        id: 'room-id',
+        name: 'Existing Name',
+        description: 'New Description',
+      });
       expect(mockPrismaService.room.findFirst).not.toHaveBeenCalled();
       expect(mockPrismaService.room.update).toHaveBeenCalledWith({
         where: { id: 'room-id' },
@@ -264,7 +269,7 @@ describe('RoomsService', () => {
       ];
       mockPrismaService.room.findMany.mockResolvedValue(rooms);
       mockPrismaService.$queryRaw.mockResolvedValue([
-        { roomId: 'room-1', count: BigInt(5) }
+        { roomId: 'room-1', count: BigInt(5) },
       ]);
 
       const result = await service.findAll(undefined, user);
@@ -412,10 +417,10 @@ describe('RoomsService', () => {
     });
 
     it('should not create membership if user already in room', async () => {
-      const room = { 
-        id: 'room-1', 
-        isPrivate: false, 
-        members: [{ userId: 'user-1' }] 
+      const room = {
+        id: 'room-1',
+        isPrivate: false,
+        members: [{ userId: 'user-1' }],
       };
       mockPrismaService.room.findUnique.mockResolvedValue(room);
       // Mock findOne dependencies
@@ -427,26 +432,33 @@ describe('RoomsService', () => {
     });
 
     it('should throw if room is full', async () => {
-      const room = { 
-        id: 'room-1', 
-        isPrivate: false, 
-        members: Array(1000).fill({ userId: 'other' }) 
+      const room = {
+        id: 'room-1',
+        isPrivate: false,
+        members: Array(1000).fill({ userId: 'other' }),
       };
       mockPrismaService.room.findUnique.mockResolvedValue(room);
 
-      await expect(service.addUser('room-1', 'user-1')).rejects.toThrow('Room is full');
+      await expect(service.addUser('room-1', 'user-1')).rejects.toThrow(
+        'Room is full',
+      );
     });
 
     it('should join with valid invitation code', async () => {
       const room = { id: 'room-1', isPrivate: true, members: [] };
       mockPrismaService.room.findUnique.mockResolvedValue(room);
-      mockInvitationsService.validateAndAccept.mockResolvedValue({ roomId: 'room-1' });
+      mockInvitationsService.validateAndAccept.mockResolvedValue({
+        roomId: 'room-1',
+      });
       // Mock findOne for return
       mockPrismaService.message.findMany.mockResolvedValue([]);
 
       await service.addUser('room-1', 'client-1', 'valid-code');
 
-      expect(mockInvitationsService.validateAndAccept).toHaveBeenCalledWith('valid-code', 'client-1');
+      expect(mockInvitationsService.validateAndAccept).toHaveBeenCalledWith(
+        'valid-code',
+        'client-1',
+      );
       // Should NOT call roomMember.create because validateAndAccept handles it
       expect(mockPrismaService.roomMember.create).not.toHaveBeenCalled();
     });
@@ -454,17 +466,25 @@ describe('RoomsService', () => {
     it('should throw if invitation code is for different room', async () => {
       const room = { id: 'room-1', isPrivate: true, members: [] };
       mockPrismaService.room.findUnique.mockResolvedValue(room);
-      mockInvitationsService.validateAndAccept.mockResolvedValue({ roomId: 'other-room' });
+      mockInvitationsService.validateAndAccept.mockResolvedValue({
+        roomId: 'other-room',
+      });
 
-      await expect(service.addUser('room-1', 'client-1', 'valid-code')).rejects.toThrow('Invitation code is for a different room');
+      await expect(
+        service.addUser('room-1', 'client-1', 'valid-code'),
+      ).rejects.toThrow('Invitation code is for a different room');
     });
 
     it('should throw if invitation code is invalid', async () => {
       const room = { id: 'room-1', isPrivate: true, members: [] };
       mockPrismaService.room.findUnique.mockResolvedValue(room);
-      mockInvitationsService.validateAndAccept.mockRejectedValue(new Error('Invalid token'));
+      mockInvitationsService.validateAndAccept.mockRejectedValue(
+        new Error('Invalid token'),
+      );
 
-      await expect(service.addUser('room-1', 'client-1', 'invalid-code')).rejects.toThrow('Invalid token');
+      await expect(
+        service.addUser('room-1', 'client-1', 'invalid-code'),
+      ).rejects.toThrow('Invalid token');
     });
   });
 
@@ -480,14 +500,16 @@ describe('RoomsService', () => {
     });
 
     it('should throw if room capacity exceeded', async () => {
-      const room = { 
-        id: 'room-1', 
-        isPrivate: false, 
-        members: Array(999).fill({ userId: 'other' }) 
+      const room = {
+        id: 'room-1',
+        isPrivate: false,
+        members: Array(999).fill({ userId: 'other' }),
       };
       mockPrismaService.room.findUnique.mockResolvedValue(room);
 
-      await expect(service.addUsers('room-1', ['user-1', 'user-2'])).rejects.toThrow('Room capacity exceeded');
+      await expect(
+        service.addUsers('room-1', ['user-1', 'user-2']),
+      ).rejects.toThrow('Room capacity exceeded');
     });
   });
 
@@ -525,7 +547,10 @@ describe('RoomsService', () => {
     });
 
     it('should deny access to private room if user is not member', async () => {
-      mockPrismaService.room.findUnique.mockResolvedValue({ id: 'room-1', isPrivate: true });
+      mockPrismaService.room.findUnique.mockResolvedValue({
+        id: 'room-1',
+        isPrivate: true,
+      });
       mockPrismaService.roomMember.findFirst.mockResolvedValue(null); // Not a member
 
       await expect(
@@ -538,8 +563,13 @@ describe('RoomsService', () => {
     });
 
     it('should allow access to private room if user is member', async () => {
-      mockPrismaService.room.findUnique.mockResolvedValue({ id: 'room-1', isPrivate: true });
-      mockPrismaService.roomMember.findFirst.mockResolvedValue({ userId: 'user-1' }); // Is member
+      mockPrismaService.room.findUnique.mockResolvedValue({
+        id: 'room-1',
+        isPrivate: true,
+      });
+      mockPrismaService.roomMember.findFirst.mockResolvedValue({
+        userId: 'user-1',
+      }); // Is member
       mockPrismaService.roomMember.count.mockResolvedValue(10);
       mockPrismaService.roomMember.findMany.mockResolvedValue([
         { user: { id: 'user-1' }, joinedAt: new Date() },
@@ -594,13 +624,25 @@ describe('RoomsService', () => {
 
   describe('changeUserRole', () => {
     it('should change user role and log action', async () => {
-      mockPrismaService.user.findUnique.mockResolvedValue({ id: 'user-1', role: 'CLIENT' });
-      mockPrismaService.user.update.mockResolvedValue({ id: 'user-1', role: 'ADMIN' });
-
-      const result = await service.changeUserRole('room-1', 'user-1', 'ADMIN', 'admin-1', {
-        ipAddress: '127.0.0.1',
-        userAgent: 'test-agent',
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        role: 'CLIENT',
       });
+      mockPrismaService.user.update.mockResolvedValue({
+        id: 'user-1',
+        role: 'ADMIN',
+      });
+
+      const result = await service.changeUserRole(
+        'room-1',
+        'user-1',
+        'ADMIN',
+        'admin-1',
+        {
+          ipAddress: '127.0.0.1',
+          userAgent: 'test-agent',
+        },
+      );
 
       expect(result.role).toBe('ADMIN');
       expect(mockPrismaService.actionLog.create).toHaveBeenCalledWith(
@@ -617,7 +659,10 @@ describe('RoomsService', () => {
     });
 
     it('should not update if role is same', async () => {
-      mockPrismaService.user.findUnique.mockResolvedValue({ id: 'user-1', role: 'ADMIN' });
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        role: 'ADMIN',
+      });
 
       await service.changeUserRole('room-1', 'user-1', 'ADMIN', 'admin-1');
 

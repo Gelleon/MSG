@@ -1,4 +1,3 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { CleanupService } from './cleanup.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -76,12 +75,18 @@ describe('CleanupService', () => {
 
       // Check file deletion
       expect(filesService.deleteFile).toHaveBeenCalledTimes(1);
-      expect(filesService.deleteFile).toHaveBeenCalledWith('/uploads/file1.jpg');
+      expect(filesService.deleteFile).toHaveBeenCalledWith(
+        '/uploads/file1.jpg',
+      );
 
       // Check message deletion
       expect(mockPrismaService.message.delete).toHaveBeenCalledTimes(2);
-      expect(mockPrismaService.message.delete).toHaveBeenCalledWith({ where: { id: 'msg1' } });
-      expect(mockPrismaService.message.delete).toHaveBeenCalledWith({ where: { id: 'msg2' } });
+      expect(mockPrismaService.message.delete).toHaveBeenCalledWith({
+        where: { id: 'msg1' },
+      });
+      expect(mockPrismaService.message.delete).toHaveBeenCalledWith({
+        where: { id: 'msg2' },
+      });
     });
 
     it('should NOT delete file if it is used by other messages', async () => {
@@ -98,18 +103,24 @@ describe('CleanupService', () => {
 
       // Check message deletion - should still be called
       expect(mockPrismaService.message.delete).toHaveBeenCalledTimes(1);
-      expect(mockPrismaService.message.delete).toHaveBeenCalledWith({ where: { id: 'msg1' } });
+      expect(mockPrismaService.message.delete).toHaveBeenCalledWith({
+        where: { id: 'msg1' },
+      });
     });
 
     it('should handle errors during file deletion gracefully', async () => {
       const messages = [{ id: 'msg1', attachmentUrl: '/uploads/file1.jpg' }];
       mockPrismaService.message.findMany.mockResolvedValue(messages);
       mockPrismaService.message.count.mockResolvedValue(0);
-      mockFilesService.deleteFile.mockRejectedValue(new Error('File not found'));
+      mockFilesService.deleteFile.mockRejectedValue(
+        new Error('File not found'),
+      );
 
       await service.handleCleanup();
-      
-      expect(filesService.deleteFile).toHaveBeenCalledWith('/uploads/file1.jpg');
+
+      expect(filesService.deleteFile).toHaveBeenCalledWith(
+        '/uploads/file1.jpg',
+      );
       expect(mockPrismaService.message.delete).not.toHaveBeenCalled();
     });
   });

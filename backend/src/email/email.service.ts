@@ -12,9 +12,12 @@ export class EmailService {
   }
 
   private createTransporter() {
-    const host = this.configService.get<string>('SMTP_HOST') || 'smtp.ethereal.email';
+    const host =
+      this.configService.get<string>('SMTP_HOST') || 'smtp.ethereal.email';
     const port = this.configService.get<number>('SMTP_PORT') || 587;
-    const user = this.configService.get<string>('SMTP_USER') || 'ethereal.user@ethereal.email'; // Default or from env
+    const user =
+      this.configService.get<string>('SMTP_USER') ||
+      'ethereal.user@ethereal.email'; // Default or from env
     const pass = this.configService.get<string>('SMTP_PASS') || 'ethereal.pass';
 
     this.transporter = nodemailer.createTransport({
@@ -35,7 +38,7 @@ export class EmailService {
     unsubscribeLink: string,
   ) {
     const subject = `У вас ${unreadCount} непрочитанных сообщений в MSG`;
-    
+
     // HTML Template (Russian)
     const html = `
       <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
@@ -81,7 +84,7 @@ export class EmailService {
         subject,
         html,
       });
-      
+
       this.logger.log(`Email sent to ${to}: ${info.messageId}`);
       return info;
     } catch (error) {
@@ -98,7 +101,7 @@ export class EmailService {
         subject,
         html,
       });
-      
+
       this.logger.log(`Generic email sent to ${to}: ${info.messageId}`);
       return info;
     } catch (error) {

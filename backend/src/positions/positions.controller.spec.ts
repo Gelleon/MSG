@@ -93,15 +93,21 @@ describe('PositionsController', () => {
   describe('assignToUsers', () => {
     it('should assign position to users', async () => {
       mockPositionsService.assignToUsers.mockResolvedValue({ count: 2 });
-      
+
       const body = { userIds: ['1', '2'] };
-      expect(await controller.assignToUsers('pos1', body)).toEqual({ count: 2 });
+      expect(await controller.assignToUsers('pos1', body)).toEqual({
+        count: 2,
+      });
       expect(service.assignToUsers).toHaveBeenCalledWith('pos1', ['1', '2']);
     });
 
     it('should throw BadRequestException if userIds is invalid', async () => {
-      await expect(controller.assignToUsers('pos1', { userIds: [] })).rejects.toThrow(BadRequestException);
-      await expect(controller.assignToUsers('pos1', { userIds: null as any })).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.assignToUsers('pos1', { userIds: [] }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.assignToUsers('pos1', { userIds: null as any }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

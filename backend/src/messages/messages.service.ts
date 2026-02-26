@@ -251,7 +251,9 @@ export class MessagesService {
     //   await this.filesService.deleteFile(message.attachmentUrl);
     // }
 
-    console.log(`[MessagesService.delete] Soft deleting message ${messageId} by user ${userId}`);
+    console.log(
+      `[MessagesService.delete] Soft deleting message ${messageId} by user ${userId}`,
+    );
 
     return this.prisma.message.update({
       where: { id: messageId },
@@ -260,7 +262,11 @@ export class MessagesService {
     });
   }
 
-  async update(messageId: string, userId: string, content: string): Promise<Message> {
+  async update(
+    messageId: string,
+    userId: string,
+    content: string,
+  ): Promise<Message> {
     const message = await this.prisma.message.findUnique({
       where: { id: messageId },
     });
@@ -275,12 +281,12 @@ export class MessagesService {
 
     // Create history entry with OLD content
     if (message.content) {
-        await this.prisma.messageHistory.create({
+      await this.prisma.messageHistory.create({
         data: {
-            messageId: message.id,
-            content: message.content,
+          messageId: message.id,
+          content: message.content,
         },
-        });
+      });
     }
 
     // Update message
@@ -302,9 +308,9 @@ export class MessagesService {
   }
 
   async getHistory(messageId: string) {
-     return this.prisma.messageHistory.findMany({
-        where: { messageId },
-        orderBy: { changedAt: 'desc' }
-     });
+    return this.prisma.messageHistory.findMany({
+      where: { messageId },
+      orderBy: { changedAt: 'desc' },
+    });
   }
 }

@@ -43,7 +43,7 @@ export class FilesController {
   @Get('download/:filename')
   downloadFile(@Param('filename') filename: string, @Res() res: Response) {
     const filePath = join(process.cwd(), 'uploads', filename);
-    
+
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException('File not found');
     }
@@ -53,7 +53,7 @@ export class FilesController {
         // Handle error, but response might have already started
         console.error('Error downloading file:', err);
         if (!res.headersSent) {
-           res.status(500).send('Could not download file');
+          res.status(500).send('Could not download file');
         }
       }
     });

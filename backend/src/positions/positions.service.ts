@@ -21,9 +21,9 @@ export class PositionsService {
             id: true,
             name: true,
             email: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
   }
 
@@ -36,9 +36,9 @@ export class PositionsService {
             id: true,
             name: true,
             email: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
     if (!position) {
       throw new NotFoundException(`Position with ID ${id} not found`);
@@ -67,7 +67,7 @@ export class PositionsService {
         where: { id },
       });
     } catch (error) {
-       if (error.code === 'P2025') {
+      if (error.code === 'P2025') {
         throw new NotFoundException(`Position with ID ${id} not found`);
       }
       throw error;
@@ -81,22 +81,22 @@ export class PositionsService {
     // Update users
     return this.prisma.user.updateMany({
       where: {
-        id: { in: userIds }
+        id: { in: userIds },
       },
       data: {
-        positionId
-      }
+        positionId,
+      },
     });
   }
-  
+
   async unassignFromUsers(userIds: string[]) {
     return this.prisma.user.updateMany({
       where: {
-        id: { in: userIds }
+        id: { in: userIds },
       },
       data: {
-        positionId: null
-      }
+        positionId: null,
+      },
     });
   }
 }

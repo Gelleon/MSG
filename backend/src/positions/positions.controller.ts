@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { PositionsService } from './positions.service';
 import { CreatePositionDto } from './dto/create-position.dto';
 import { UpdatePositionDto } from './dto/update-position.dto';
@@ -30,7 +40,10 @@ export class PositionsController {
 
   @Patch(':id')
   @Roles('ADMIN')
-  update(@Param('id') id: string, @Body() updatePositionDto: UpdatePositionDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updatePositionDto: UpdatePositionDto,
+  ) {
     return this.positionsService.update(id, updatePositionDto);
   }
 
@@ -42,8 +55,15 @@ export class PositionsController {
 
   @Post(':id/assign')
   @Roles('ADMIN')
-  async assignToUsers(@Param('id') id: string, @Body() body: { userIds: string[] }) {
-    if (!body.userIds || !Array.isArray(body.userIds) || body.userIds.length === 0) {
+  async assignToUsers(
+    @Param('id') id: string,
+    @Body() body: { userIds: string[] },
+  ) {
+    if (
+      !body.userIds ||
+      !Array.isArray(body.userIds) ||
+      body.userIds.length === 0
+    ) {
       throw new BadRequestException('userIds must be a non-empty array');
     }
     return this.positionsService.assignToUsers(id, body.userIds);
@@ -52,7 +72,11 @@ export class PositionsController {
   @Post('unassign')
   @Roles('ADMIN')
   async unassignFromUsers(@Body() body: { userIds: string[] }) {
-    if (!body.userIds || !Array.isArray(body.userIds) || body.userIds.length === 0) {
+    if (
+      !body.userIds ||
+      !Array.isArray(body.userIds) ||
+      body.userIds.length === 0
+    ) {
       throw new BadRequestException('userIds must be a non-empty array');
     }
     return this.positionsService.unassignFromUsers(body.userIds);

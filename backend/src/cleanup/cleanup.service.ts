@@ -34,7 +34,9 @@ export class CleanupService {
         return;
       }
 
-      this.logger.log(`Found ${messagesToDelete.length} messages to permanently delete.`);
+      this.logger.log(
+        `Found ${messagesToDelete.length} messages to permanently delete.`,
+      );
 
       for (const message of messagesToDelete) {
         try {
@@ -49,7 +51,9 @@ export class CleanupService {
             });
 
             if (otherUsageCount === 0) {
-              this.logger.log(`Deleting file for message ${message.id}: ${message.attachmentUrl}`);
+              this.logger.log(
+                `Deleting file for message ${message.id}: ${message.attachmentUrl}`,
+              );
               await this.filesService.deleteFile(message.attachmentUrl);
             } else {
               this.logger.log(
@@ -65,7 +69,10 @@ export class CleanupService {
 
           this.logger.log(`Permanently deleted message ${message.id}`);
         } catch (error) {
-          this.logger.error(`Error processing cleanup for message ${message.id}`, error);
+          this.logger.error(
+            `Error processing cleanup for message ${message.id}`,
+            error,
+          );
         }
       }
     } catch (error) {

@@ -55,7 +55,7 @@ describe('NotificationsService', () => {
   describe('checkUnreadMessages', () => {
     it('should not send email if no users enabled notifications', async () => {
       mockPrismaService.user.findMany.mockResolvedValue([]);
-      
+
       await service.checkUnreadMessages();
 
       expect(mockPrismaService.user.findMany).toHaveBeenCalled();
@@ -64,12 +64,17 @@ describe('NotificationsService', () => {
     });
 
     it('should send email to user with unread messages', async () => {
-      const mockUser = { id: 'user1', email: 'test@example.com', emailNotificationsEnabled: true, lastNotificationSentAt: null };
+      const mockUser = {
+        id: 'user1',
+        email: 'test@example.com',
+        emailNotificationsEnabled: true,
+        lastNotificationSentAt: null,
+      };
       mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
-      
+
       // Mock unread count query result
       mockPrismaService.$queryRaw.mockResolvedValue([{ unreadCount: 5 }]);
-      
+
       // Mock last message query
       mockPrismaService.message.findFirst.mockResolvedValue({
         sender: { name: 'Sender Name' },
@@ -83,7 +88,7 @@ describe('NotificationsService', () => {
         'test@example.com',
         5,
         'Sender Name',
-        expect.stringContaining('/profile?tab=notifications')
+        expect.stringContaining('/profile?tab=notifications'),
       );
       expect(mockPrismaService.user.update).toHaveBeenCalledWith({
         where: { id: 'user1' },
@@ -92,9 +97,13 @@ describe('NotificationsService', () => {
     });
 
     it('should not send email if unread count is 0', async () => {
-      const mockUser = { id: 'user1', email: 'test@example.com', emailNotificationsEnabled: true };
+      const mockUser = {
+        id: 'user1',
+        email: 'test@example.com',
+        emailNotificationsEnabled: true,
+      };
       mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
-      
+
       // Mock unread count query result
       mockPrismaService.$queryRaw.mockResolvedValue([{ unreadCount: 0 }]);
 
@@ -105,7 +114,11 @@ describe('NotificationsService', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      const mockUser = { id: 'user1', email: 'test@example.com', emailNotificationsEnabled: true };
+      const mockUser = {
+        id: 'user1',
+        email: 'test@example.com',
+        emailNotificationsEnabled: true,
+      };
       mockPrismaService.user.findMany.mockResolvedValue([mockUser]);
       mockPrismaService.$queryRaw.mockRejectedValue(new Error('DB Error'));
 

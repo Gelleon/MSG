@@ -55,7 +55,9 @@ describe('PositionsService', () => {
 
   describe('findAll', () => {
     it('should return an array of positions', async () => {
-      const result = [{ id: '1', nameRu: 'Менеджер', nameZh: 'Manager', users: [] }];
+      const result = [
+        { id: '1', nameRu: 'Менеджер', nameZh: 'Manager', users: [] },
+      ];
       mockPrismaService.position.findMany.mockResolvedValue(result);
 
       expect(await service.findAll()).toEqual(result);
@@ -76,24 +78,26 @@ describe('PositionsService', () => {
       await expect(service.findOne('999')).rejects.toThrow(NotFoundException);
     });
   });
-  
+
   describe('assignToUsers', () => {
     it('should assign position to users', async () => {
-        mockPrismaService.position.findUnique.mockResolvedValue({ id: 'pos1' });
-        mockPrismaService.user.updateMany.mockResolvedValue({ count: 2 });
-        
-        const result = await service.assignToUsers('pos1', ['user1', 'user2']);
-        expect(result).toEqual({ count: 2 });
-        expect(mockPrismaService.user.updateMany).toHaveBeenCalledWith({
-            where: { id: { in: ['user1', 'user2'] } },
-            data: { positionId: 'pos1' }
-        });
+      mockPrismaService.position.findUnique.mockResolvedValue({ id: 'pos1' });
+      mockPrismaService.user.updateMany.mockResolvedValue({ count: 2 });
+
+      const result = await service.assignToUsers('pos1', ['user1', 'user2']);
+      expect(result).toEqual({ count: 2 });
+      expect(mockPrismaService.user.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['user1', 'user2'] } },
+        data: { positionId: 'pos1' },
+      });
     });
 
     it('should throw if position not found', async () => {
-        mockPrismaService.position.findUnique.mockResolvedValue(null);
-        
-        await expect(service.assignToUsers('pos999', ['user1'])).rejects.toThrow(NotFoundException);
+      mockPrismaService.position.findUnique.mockResolvedValue(null);
+
+      await expect(service.assignToUsers('pos999', ['user1'])).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

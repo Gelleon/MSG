@@ -34,7 +34,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.headers.authorization?.split(' ')[1];
+      const headerToken = client.handshake.headers.authorization?.split(' ')[1];
+      const authToken =
+        typeof client.handshake.auth?.token === 'string'
+          ? client.handshake.auth.token
+          : undefined;
+      const queryTokenRaw = client.handshake.query?.token;
+      const queryToken = Array.isArray(queryTokenRaw)
+        ? queryTokenRaw[0]
+        : queryTokenRaw;
+      const token =
+        authToken ||
+        headerToken ||
+        (typeof queryToken === 'string' ? queryToken : undefined);
       if (!token) {
         client.disconnect();
         return;
@@ -51,12 +63,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             user = { ...payload, ...dbUser, userId: dbUser.id };
           }
         } catch (err) {
-          console.error(`Failed to fetch user ${userId} in handleConnection`, err);
+          console.error(
+            `Failed to fetch user ${userId} in handleConnection`,
+            err,
+          );
         }
         client.join(`user_${userId}`);
       }
 
       client.data.user = user;
+
+      // Update status to ONLINE
+      await this.usersService.updateStatus(userId, 'ONLINE');
+      this.server.emit('userStatusChanged', {
+        userId,
+        status: 'ONLINE',
+        lastSeen: new Date(),
+      });
 
       // Handle disconnecting event to access rooms before they are cleared
       client.on('disconnecting', () => {
@@ -80,8 +103,57 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
+    const user = client.data.user;
+    if (user) {
+      const userId = user.sub || user.userId;
+      if (userId) {
+        // Only set OFFLINE if this was the last session for this user
+        const sockets = await this.server.in(`user_${userId}`).fetchSockets();
+        if (sockets.length === 0) {
+          await this.usersService.updateStatus(userId, 'OFFLINE');
+          this.server.emit('userStatusChanged', {
+            userId,
+            status: 'OFFLINE',
+            lastSeen: new Date(),
+          });
+        }
+      }
+    }
     console.log(`Client disconnected: ${client.id}`);
+  }
+
+  @SubscribeMessage('heartbeat')
+  async handleHeartbeat(@ConnectedSocket() client: Socket) {
+    const user = client.data.user;
+    if (user) {
+      const userId = user.sub || user.userId;
+      if (userId) {
+        await this.usersService.updateLastSeen(userId);
+        // Optionally update status to ONLINE if it was somehow lost
+        // this.server.emit('userStatusChanged', { userId, status: 'ONLINE', lastSeen: new Date() });
+      }
+    }
+    return { status: 'ok' };
+  }
+
+  @SubscribeMessage('updateStatus')
+  async handleUpdateStatus(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() status: 'ONLINE' | 'DND' | 'OFFLINE',
+  ) {
+    const user = client.data.user;
+    if (user) {
+      const userId = user.sub || user.userId;
+      if (userId) {
+        await this.usersService.updateStatus(userId, status);
+        this.server.emit('userStatusChanged', {
+          userId,
+          status,
+          lastSeen: new Date(),
+        });
+      }
+    }
   }
 
   async validateRoomAccess(client: Socket, roomId: string): Promise<boolean> {
@@ -219,7 +291,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const users = (room as any).members
       .map((member: any) => member.user)
-      .filter((user: any) => !user.role || user.role.toUpperCase() !== 'CLIENT'); // Server-side validation
+      .filter(
+        (user: any) => !user.role || user.role.toUpperCase() !== 'CLIENT',
+      ); // Server-side validation
 
     return users.map((user: any) => ({
       id: user.id,
@@ -384,7 +458,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('editMessage')
   async handleEditMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { messageId: string; roomId: string; content: string },
+    @MessageBody()
+    payload: { messageId: string; roomId: string; content: string },
   ) {
     try {
       const user = client.data.user;
@@ -405,9 +480,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         payload.content,
       );
 
-      this.server
-        .to(payload.roomId)
-        .emit('messageUpdated', updatedMessage);
+      this.server.to(payload.roomId).emit('messageUpdated', updatedMessage);
 
       return updatedMessage;
     } catch (error) {
@@ -418,11 +491,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('getMessageHistory')
   async handleGetMessageHistory(
-      @ConnectedSocket() client: Socket,
-      @MessageBody() payload: { messageId: string; roomId: string }
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { messageId: string; roomId: string },
   ) {
-      const hasAccess = await this.validateRoomAccess(client, payload.roomId);
-      if (!hasAccess) {
+    const hasAccess = await this.validateRoomAccess(client, payload.roomId);
+    if (!hasAccess) {
       throw new WsException('Forbidden');
     }
     return this.messagesService.getHistory(payload.messageId);

@@ -19,6 +19,8 @@ model User {
   resetTokenExpires DateTime?
   emailNotificationsEnabled Boolean @default(true)
   lastNotificationSentAt DateTime?
+  lastSeen    DateTime @default(now())
+  status      String   @default("OFFLINE") // ONLINE, OFFLINE, DND
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

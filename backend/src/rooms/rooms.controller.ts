@@ -30,7 +30,8 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 export class RoomsController {
   constructor(
     private readonly roomsService: RoomsService,
-    @Inject(forwardRef(() => ChatGateway)) private readonly chatGateway: ChatGateway,
+    @Inject(forwardRef(() => ChatGateway))
+    private readonly chatGateway: ChatGateway,
   ) {}
 
   @Post()
@@ -44,7 +45,10 @@ export class RoomsController {
     try {
       console.log('Creating room:', createRoomDto);
       const userId = req.user?.userId || req.user?.sub;
-      return await this.roomsService.create(createRoomDto, userId, { ipAddress: ip, userAgent });
+      return await this.roomsService.create(createRoomDto, userId, {
+        ipAddress: ip,
+        userAgent,
+      });
     } catch (error) {
       console.error('Error creating room:', error);
       // Pass the error message to the client
@@ -91,19 +95,24 @@ export class RoomsController {
         );
       }
 
-      console.log(`[RoomsController.joinRoom] Request: Room ${id}, User ${uid}, Code: ${body.invitationCode || 'none'}`);
-      return await this.roomsService.addUser(id, uid, body.invitationCode, { ipAddress: ip, userAgent });
+      console.log(
+        `[RoomsController.joinRoom] Request: Room ${id}, User ${uid}, Code: ${body.invitationCode || 'none'}`,
+      );
+      return await this.roomsService.addUser(id, uid, body.invitationCode, {
+        ipAddress: ip,
+        userAgent,
+      });
     } catch (e) {
       console.error(`[RoomsController.joinRoom] Error joining room ${id}:`, e);
-      
-      const status = e instanceof HttpException 
-        ? e.getStatus() 
-        : (e.message === 'Room not found' ? HttpStatus.NOT_FOUND : HttpStatus.INTERNAL_SERVER_ERROR);
 
-      throw new HttpException(
-        e.message || 'Failed to join room',
-        status,
-      );
+      const status =
+        e instanceof HttpException
+          ? e.getStatus()
+          : e.message === 'Room not found'
+            ? HttpStatus.NOT_FOUND
+            : HttpStatus.INTERNAL_SERVER_ERROR;
+
+      throw new HttpException(e.message || 'Failed to join room', status);
     }
   }
 
@@ -146,7 +155,10 @@ export class RoomsController {
         throw new HttpException('No user IDs provided', HttpStatus.BAD_REQUEST);
       }
       const adminId = req.user.userId || req.user.sub;
-      return await this.roomsService.addUsers(id, userIds, adminId, { ipAddress: ip, userAgent });
+      return await this.roomsService.addUsers(id, userIds, adminId, {
+        ipAddress: ip,
+        userAgent,
+      });
     } catch (e) {
       console.error('Add members error:', e);
       throw new HttpException(
@@ -164,11 +176,15 @@ export class RoomsController {
     @Query('search') search: string = '',
     @Request() req: any,
   ) {
-    return this.roomsService.getMembers(id, {
-      page: Number(page),
-      limit: Number(limit),
-      search,
-    }, req.user);
+    return this.roomsService.getMembers(
+      id,
+      {
+        page: Number(page),
+        limit: Number(limit),
+        search,
+      },
+      req.user,
+    );
   }
 
   @Patch(':id')
@@ -182,7 +198,10 @@ export class RoomsController {
   ) {
     try {
       const userId = req.user.userId || req.user.sub;
-      return await this.roomsService.update(id, updateRoomDto, userId, { ipAddress: ip, userAgent });
+      return await this.roomsService.update(id, updateRoomDto, userId, {
+        ipAddress: ip,
+        userAgent,
+      });
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to update room',
