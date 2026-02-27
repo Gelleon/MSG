@@ -6,8 +6,17 @@ const prisma = new PrismaClient();
 async function main() {
   const admins = [
     { email: 'pallermo72@gmail.com', name: 'Super Admin 1' },
-    { email: 'svzelenin@gmail.com', name: 'Super Admin 2' },
+    { email: 'svzelenin@yandex.ru', name: 'Super Admin 2' },
   ];
+
+  // Также удалим старый email, если он существует, чтобы не было дублей
+  const oldEmail = 'svzelenin@gmail.com';
+  try {
+    await prisma.user.delete({ where: { email: oldEmail } });
+    console.log(`Removed old admin email: ${oldEmail}`);
+  } catch (e) {
+    // Игнорируем если не найден
+  }
 
   // Можно задать временный пароль, который пользователи потом сменят
   const tempPassword = 'AdminPassword123!';
